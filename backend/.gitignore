@@ -1,0 +1,57 @@
+### Maven ###
+target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/timing.properties
+**/pom.xml.tag
+**/pom.xml.releaseBackup
+**/pom.xml.versionsBackup
+**/pom.xml.next
+
+### Spring Boot ###
+# Logs
+*.log
+logs/
+spring.log
+
+# Devtools
+.spring-boot-devtools.properties
+
+### IntelliJ IDEA ###
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+# IntelliJ Modules
+*.idea_modules/
+
+### VS Code ###
+.vscode/
+
+### OS files ###
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+### Java ###
+*.class
+*.jar
+*.war
+*.ear
+
+### Backup / temp ###
+*.swp
+*.swo
+*.tmp
+*~
+.idea_modules/
+
+# Local environment files
+application.properties
+.env
