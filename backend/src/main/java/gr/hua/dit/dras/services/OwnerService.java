@@ -68,7 +68,7 @@ public class OwnerService {
             owner.setUser(user); //associates owner with the current user
             user = owner.getUser();
             user.setOwner(owner);
-            Optional<Role> optionalRole = roleRepository.findByName("ROLE_OWNER");
+            Optional<Role> optionalRole = roleRepository.findByName("OWNER");
 
             if (optionalRole.isPresent()) {
                 Role ownerRole = optionalRole.get();

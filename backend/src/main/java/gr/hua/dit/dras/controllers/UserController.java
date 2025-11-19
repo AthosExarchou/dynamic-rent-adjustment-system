@@ -196,6 +196,7 @@ public class UserController {
                         oldEmail, the_user.getUsername(), user.getEmail(),
                         oldUsername, oldEmail, usernameChanged, emailChanged
                 );
+
                 /* Also notify the new email address */
                 emailService.sendUserDetailsChangedEmail(
                         user.getEmail(), the_user.getUsername(), user.getEmail(),
@@ -242,7 +243,7 @@ public class UserController {
         User user = (User) userService.getUser(user_id);
         if (role_id.equals(4)) {
             if (user.getOwner() != null) {
-                Optional<Role> optionalRole = roleRepository.findByName("ROLE_OWNER");
+                Optional<Role> optionalRole = roleRepository.findByName("OWNER");
 
                 if (optionalRole.isPresent()) {
                     Role ownerRole = optionalRole.get();
@@ -258,13 +259,14 @@ public class UserController {
                 }
                 return "auth/users";
             }
+
             Owner owner = new Owner();
             model.addAttribute("owner", owner);
             model.addAttribute("userId", user_id);
             return "owner/ownerform";
         } else if (role_id.equals(3)) {
             if (user.getTenant() != null) {
-                Optional<Role> optionalRole = roleRepository.findByName("ROLE_TENANT");
+                Optional<Role> optionalRole = roleRepository.findByName("TENANT");
 
                 if (optionalRole.isPresent()) {
                     Role tenantRole = optionalRole.get();
@@ -279,6 +281,7 @@ public class UserController {
                 }
                 return "auth/users";
             }
+
             Tenant tenant = new Tenant();
             tenant.setId(user.getId());
             tenant.setEmail(user.getEmail());
@@ -287,7 +290,7 @@ public class UserController {
             return "tenant/tenantformforadmin";
         } else if (role_id.equals(1)) {
             if (user != null) {
-                Optional<Role> optionalRole = roleRepository.findByName("ROLE_USER");
+                Optional<Role> optionalRole = roleRepository.findByName("USER");
 
                 if (optionalRole.isPresent()) {
                     Role tenantRole = optionalRole.get();
@@ -337,7 +340,7 @@ public class UserController {
     }
 
     /* Allows users to delete their own account */
-    @Secured("ROLE_USER")
+    @Secured("USER")
     @PostMapping("/user/delete/self")
     public String deleteOwnAccount(Authentication authentication, Model model, HttpSession session) {
 
