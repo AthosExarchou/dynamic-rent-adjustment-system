@@ -54,7 +54,7 @@ public class OwnerService {
     @Transactional
     public Owner getOwnerByAdmin(Integer ownerId, String firstName, String lastName, String phoneNumber) {
 
-        User user = (User) userService.getUser(ownerId); //fetches current user by ID
+        User user = userService.getUser(ownerId); //fetches current user by ID
         /* owner creation */
         Optional<Owner> existingOwner = ownerRepository.findByUserId(ownerId);
 
@@ -89,7 +89,7 @@ public class OwnerService {
     public Owner createOwnerForCurrentUser(String firstName, String lastName, String phoneNumber) {
 
         Integer userId = userService.getCurrentUserId();
-        User user = (User) userService.getUser(userId); //fetches current user by ID
+        User user = userService.getUser(userId); //fetches current user by ID
         /* owner creation */
         Optional<Owner> existingOwner = ownerRepository.findByUserId(userId);
 

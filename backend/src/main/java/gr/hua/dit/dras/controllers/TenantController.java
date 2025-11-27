@@ -21,11 +21,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("tenant")
 public class TenantController {
 
-    private TenantService tenantService;
-    private UserService userService;
-    private RoleRepository roleRepository;
-    private ListingService listingService;
-    private EmailService emailService;
+    private final TenantService tenantService;
+    private final UserService userService;
+    private final RoleRepository roleRepository;
+    private final ListingService listingService;
+    private final EmailService emailService;
 
     public TenantController(TenantService tenantService, UserService userService, RoleRepository roleRepository, ListingService listingService, EmailService emailService) {
         this.tenantService = tenantService;
@@ -81,7 +81,7 @@ public class TenantController {
             return "tenant/tenantformforadmin";
         }
 
-        User user = (User) userService.getUser(userId);
+        User user = userService.getUser(userId);
         if (user == null) {
             model.addAttribute("errorMessage", "User not found.");
             return "auth/users";

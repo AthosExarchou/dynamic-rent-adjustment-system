@@ -2,6 +2,8 @@ package gr.hua.dit.dras.services;
 
 /* imports */
 import gr.hua.dit.dras.entities.*;
+import gr.hua.dit.dras.model.enums.ListingStatus;
+import gr.hua.dit.dras.model.enums.RentalStatus;
 import gr.hua.dit.dras.repositories.TenantRepository;
 import gr.hua.dit.dras.repositories.ListingRepository;
 import gr.hua.dit.dras.repositories.UserRepository;
@@ -62,7 +64,7 @@ public class TenantService {
     public Tenant createTenantForCurrentUser(String firstName, String lastName, String phoneNumber) {
 
         Integer userId = userService.getCurrentUserId();
-        User user = (User) userService.getUser(userId); //fetches current user by ID
+        User user = userService.getUser(userId); //fetches current user by ID
         /* tenant creation */
         Optional<Tenant> existingTenant = tenantRepository.findByUserId(userId);
 
@@ -85,7 +87,7 @@ public class TenantService {
     public void assignRoleToUserForFirstListing(Tenant tenant, HttpSession session) {
 
         if (isFirstListing(tenant)) {
-            User user = (User) userService.getUser(userService.getCurrentUserId());
+            User user = userService.getUser(userService.getCurrentUserId());
             Optional<Role> optionalRole = roleRepository.findByName("TENANT");
 
             if (optionalRole.isPresent()) {
@@ -129,7 +131,7 @@ public class TenantService {
         if (currentUserId == null) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User id must not be null.");
         }
-        User currentUser = (User) userService.getUser(currentUserId);
+        User currentUser = userService.getUser(currentUserId);
 
         for (Role role : currentUser.getRoles()) {
             if ("TENANT".equals(role.getName())) {
@@ -149,7 +151,7 @@ public class TenantService {
             return true;
         }
 
-        tenant.setRentalStatus(Tenant.RentalStatus.APPLIED);
+        tenant.setRentalStatus(RentalStatus.APPLIED);
         listing.addApplicant(tenant);
         tenant.applyToListing(listing);
         tenantRepository.save(tenant);
@@ -166,7 +168,7 @@ public class TenantService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found with ID: " + listingId));
 
         /* checks if the listing already has an approved tenant */
-        if (listing.getTenant() != null && listing.getTenant().getRentalStatus() == Tenant.RentalStatus.RENTING) {
+        if (listing.getTenant() != null && listing.getTenant().getRentalStatus() == RentalStatus.RENTING) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "This listing is already being rented.");
         }
 
@@ -174,16 +176,17 @@ public class TenantService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "This tenant is already renting a listing.");
         }
 
-        tenant.setRentalStatus(Tenant.RentalStatus.RENTING);
+        tenant.setRentalStatus(RentalStatus.RENTING);
         listing.setTenant(tenant);
         tenantRepository.save(tenant);
+        listing.setStatus(ListingStatus.RENTED);
         listingRepository.save(listing);
     }
 
     @Transactional
     public Tenant getTenantByAdmin(@Valid Integer tenantId, String firstName, String lastName, String phoneNumber) {
 
-        User user = (User) userService.getUser(tenantId); //fetches current user by ID
+        User user = userService.getUser(tenantId); //fetches current user by ID
         /* tenant creation */
         Optional<Tenant> existingTenant = tenantRepository.findByUserId(tenantId);
 
@@ -195,7 +198,7 @@ public class TenantService {
             tenant.setUsername(user.getUsername());
             tenant.setPhoneNumber(phoneNumber);
             tenant.setUser(user); //associates tenant with the current user
-            tenant.setRentalStatus(Tenant.RentalStatus.APPLIED);
+            tenant.setRentalStatus(RentalStatus.APPLIED);
             user = tenant.getUser();
             user.setTenant(tenant);
             Optional<Role> optionalRole = roleRepository.findByName("TENANT");

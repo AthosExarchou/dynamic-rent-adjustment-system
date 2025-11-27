@@ -9,7 +9,9 @@ import java.util.List;
 
 @Repository
 public interface ListingRepository extends JpaRepository<Listing, Integer> {
+
     List<Listing> findByOwner(Owner owner);
     List<Listing> findByPriceBetween(int minPrice, int maxPrice);
     List<Listing> findByTitleContainingIgnoreCaseAndPriceBetween(String title, int minPrice, int maxPrice);
+
 }

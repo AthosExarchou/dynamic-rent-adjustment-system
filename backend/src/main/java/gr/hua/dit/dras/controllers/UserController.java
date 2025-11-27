@@ -31,9 +31,9 @@ public class UserController {
     private final OwnerService ownerService;
     private final OwnerRepository ownerRepository;
     private final TenantRepository tenantRepository;
-    private UserService userService;
-    private RoleRepository roleRepository;
-    private EmailService emailService;
+    private final UserService userService;
+    private final RoleRepository roleRepository;
+    private final EmailService emailService;
 
     public UserController(UserRepository userRepository, UserService userService,
                           RoleRepository roleRepository, OwnerService ownerService,
@@ -132,7 +132,7 @@ public class UserController {
     @GetMapping("/user/{user_id}")
     public String showUser(@PathVariable Integer user_id, Model model) {
 
-        User user = (User) userService.getUser(user_id);
+        User user = userService.getUser(user_id);
         System.out.println(user);
         model.addAttribute("user", user);
         return "auth/user";
@@ -143,7 +143,7 @@ public class UserController {
                            @ModelAttribute("user") User user,
                            Model model, HttpSession session) {
 
-        User the_user = (User) userService.getUser(user_id);
+        User the_user = userService.getUser(user_id);
 
         if (user.getUsername() == null || user.getUsername().isBlank()) {
             model.addAttribute("errorMessage", "Username cannot be empty or just spaces.");
@@ -224,7 +224,7 @@ public class UserController {
     @GetMapping("/user/role/delete/{user_id}/{role_id}")
     public String deleteRolefromUser(@PathVariable Integer user_id, @PathVariable Integer role_id, Model model) {
 
-        User user = (User) userService.getUser(user_id);
+        User user = userService.getUser(user_id);
         Role role = roleRepository.findById(role_id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid role ID: " + role_id));
         user.getRoles().remove(role);
@@ -240,7 +240,7 @@ public class UserController {
     @GetMapping("/user/role/add/{user_id}/{role_id}")
     public String addRoletoUser(@PathVariable Integer user_id, @PathVariable Integer role_id, Model model) {
 
-        User user = (User) userService.getUser(user_id);
+        User user = userService.getUser(user_id);
         if (role_id.equals(4)) {
             if (user.getOwner() != null) {
                 Optional<Role> optionalRole = roleRepository.findByName("OWNER");
@@ -317,7 +317,7 @@ public class UserController {
     @GetMapping("/user/delete/{user_id}")
     public String deleteUser(@PathVariable Integer user_id, Model model) {
 
-        User user = (User) userService.getUser(user_id);
+        User user = userService.getUser(user_id);
         Optional<Role> adminRole = roleRepository.findByName("ADMIN");
 
         if (adminRole.isPresent() && user.getRoles().contains(adminRole.get())) {

@@ -101,7 +101,7 @@ public class UserService implements UserDetailsService {
         if (currentUserId == null) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User id must not be null");
         }
-        User currentUser = (User) getUser(currentUserId);
+        User currentUser = getUser(currentUserId);
         for (Role role : currentUser.getRoles()) {
             if ("OWNER".equals(role.getName())) {
                 return true;
@@ -153,12 +153,12 @@ public class UserService implements UserDetailsService {
 
 
     @Transactional
-    public Object getUsers() {
+    public List<User> getUsers() {
         return userRepository.findAll();
     }
 
     @Transactional
-    public Object getUser(Integer userId) {
+    public User getUser(Integer userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " not found"));
     }

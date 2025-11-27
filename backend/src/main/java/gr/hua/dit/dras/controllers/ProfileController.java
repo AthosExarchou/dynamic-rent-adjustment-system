@@ -64,7 +64,7 @@ public class ProfileController {
                                  @RequestParam String confirmPassword,
                                  Model model) {
 
-        User user = (User) userService.getUser(id);
+        User user = userService.getUser(id);
 
         /* Check old password */
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
@@ -109,7 +109,7 @@ public class ProfileController {
     @Secured("USER")
     public String showEditProfileForm(@PathVariable Integer id, Model model) {
 
-        User user = (User) userService.getUser(id);
+        User user = userService.getUser(id);
         model.addAttribute("user", user);
         return "profile/edit-profile"; //new template
     }
@@ -124,7 +124,7 @@ public class ProfileController {
             return "profile/edit-profile";
         }
 
-        User user = (User) userService.getUser(id);
+        User user = userService.getUser(id);
         user.setUsername(updatedUser.getUsername());
         user.setEmail(updatedUser.getEmail());
         userService.updateUser(user);

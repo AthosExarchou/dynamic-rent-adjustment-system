@@ -1,6 +1,5 @@
 package gr.hua.dit.dras.config;
 
-
 /* imports */
 import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.entities.Role;
@@ -27,6 +26,7 @@ public class AdminInitializer {
 
     @EventListener(ApplicationReadyEvent.class)
     public void createDefaultAdminUser() {
+
         Optional<User> defaultAdmin = userRepository.findByUsername("admin");
 
         /* creates default admin user if not exists */
@@ -41,5 +41,3 @@ public class AdminInitializer {
         }
     }
 }
-
-

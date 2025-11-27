@@ -1,6 +1,5 @@
 package gr.hua.dit.dras.config;
 
-
 /* imports */
 import gr.hua.dit.dras.repositories.UserRepository;
 import jakarta.servlet.ServletException;
