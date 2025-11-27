@@ -38,6 +38,9 @@ public class Owner {
     @Pattern(regexp = "^\\+?[0-9. ()-]{7,25}$", message = "Invalid phone number format") //accepts phone numbers worldwide
     private String phoneNumber;
 
+    @Column(nullable = false)
+    private boolean systemOwner = false;
+
     /* Owner-Listing relationship */
     @OneToMany(mappedBy = "owner", cascade= {CascadeType.PERSIST, CascadeType.MERGE,
             CascadeType.DETACH, CascadeType.REFRESH, CascadeType.REMOVE, CascadeType.DETACH})
@@ -47,6 +50,17 @@ public class Owner {
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH, CascadeType.REMOVE})
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    public Owner(String firstName, String lastName, String email, String phoneNumber,  boolean systemOwner) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.systemOwner = systemOwner;
+    }
+
+    public Owner() {
+    }
 
     public User getUser() {
         return user;
@@ -63,7 +77,9 @@ public class Owner {
     public void setListings(List<Listing> listings) {
         this.listings = listings;
     }
+
     private String username;
+
     public String getUsername() {
         return username;
     }
@@ -112,14 +128,12 @@ public class Owner {
         this.phoneNumber = phoneNumber;
     }
 
-    public Owner() {
+    public boolean isSystemOwner() {
+        return systemOwner;
     }
 
-    public Owner(String firstName, String lastName, String email, String phoneNumber) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.phoneNumber = phoneNumber;
+    public void setSystemOwner(boolean systemOwner) {
+        this.systemOwner = systemOwner;
     }
 
     @Override
@@ -130,6 +144,7 @@ public class Owner {
                 ", lastName='" + lastName + '\'' +
                 ", email='" + email + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
+                ", systemOwner=" + systemOwner +
                 ", username='" + username + '\'' +
                 ", listings=" + listings +
                 '}';

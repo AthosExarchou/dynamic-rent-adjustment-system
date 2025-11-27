@@ -32,18 +32,18 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests((requests) -> requests
                         /* specific restrictions */
-                        .requestMatchers("/apartment/new", "/apartment/assign/**").hasRole("USER")
+                        .requestMatchers("/listing/new", "/listing/assign/**").hasRole("USER")
                         .requestMatchers("/users").hasRole("ADMIN")
-                        .requestMatchers("/apartment/delete/**").hasRole("OWNER")
+                        .requestMatchers("/listing/delete/**").hasRole("OWNER")
                         /* public endpoints */
-                        .requestMatchers("/", "/home", "/apartment", "/contact/contactus", "/privacy", "/about", "/TermsOfService", "/register", "/saveUser", "/images/**", "/js/**", "/css/**").permitAll()
+                        .requestMatchers("/", "/home", "/listing", "/api/external-import/**", "/contact/contactus", "/privacy", "/about", "/TermsOfService", "/register", "/saveUser", "/images/**", "/js/**", "/css/**").permitAll()
                         /* any other request */
                         .anyRequest().authenticated()
                 )
 
                 .formLogin((form) -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/apartment", true)
+                        .defaultSuccessUrl("/listing", true)
                         .successHandler(successHandler)
                         .permitAll())
                 .logout((logout) -> logout.permitAll());

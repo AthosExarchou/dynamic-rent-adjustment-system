@@ -8,5 +8,8 @@ import java.util.Optional;
 
 @Repository
 public interface OwnerRepository extends JpaRepository<Owner, Integer> {
+
     Optional<Owner> findByUserId(Integer userId);
+    Optional<Owner> findBySystemOwnerTrue();
+
 }
