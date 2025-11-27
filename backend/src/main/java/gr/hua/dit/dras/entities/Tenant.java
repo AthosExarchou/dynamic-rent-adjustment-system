@@ -1,6 +1,7 @@
 package gr.hua.dit.dras.entities;
 
 /* imports */
+import gr.hua.dit.dras.model.enums.RentalStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -57,6 +58,10 @@ public class Tenant {
     public void setAppliedListings(Set<Listing> appliedListings) {
         this.appliedListings = appliedListings;
     }
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RentalStatus rentalStatus;
 
     /* Tenant-User relationship */
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH, CascadeType.REMOVE})
@@ -134,14 +139,6 @@ public class Tenant {
     public void setListing(Listing listing) {
         this.listing = listing;
     }
-
-    public enum RentalStatus {
-        APPLIED,
-        RENTING,
-        CANCELED
-    }
-
-    private RentalStatus rentalStatus;
 
     public RentalStatus getRentalStatus() {
         return rentalStatus;
