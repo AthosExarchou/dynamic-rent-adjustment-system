@@ -2,6 +2,8 @@ package gr.hua.dit.dras.controllers;
 
 /* imports */
 import gr.hua.dit.dras.entities.*;
+import gr.hua.dit.dras.model.enums.ListingStatus;
+import gr.hua.dit.dras.model.enums.RentalStatus;
 import gr.hua.dit.dras.services.*;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -21,11 +23,12 @@ public class ListingController {
 
     private final UserService userService;
     private final TenantService tenantService;
-    private ListingService listingService;
-    private OwnerService ownerService;
-    private EmailService emailService;
+    private final ListingService listingService;
+    private final OwnerService ownerService;
+    private final EmailService emailService;
 
-    public ListingController(UserService userService, ListingService listingService, OwnerService ownerService, TenantService tenantService, EmailService emailService) {
+    public ListingController(UserService userService, ListingService listingService,
+                             OwnerService ownerService, TenantService tenantService, EmailService emailService) {
         this.userService = userService;
         this.listingService = listingService;
         this.ownerService = ownerService;
@@ -46,10 +49,17 @@ public class ListingController {
         model.addAttribute("currentUserId", currentUserId);
     }
 
-    @RequestMapping()
+    @GetMapping("/listings")
     public String showListings(Model model) {
-        Integer currentUserId = userService.getCurrentUserId();
+
         model.addAttribute("listings", listingService.getListings());
+        return "listing/listings";
+    }
+
+    @GetMapping("/listings/local")
+    public String showLocalListings(Model model) {
+
+        model.addAttribute("listings", listingService.getLocalListings());
         return "listing/listings";
     }
 
@@ -61,7 +71,7 @@ public class ListingController {
             model.addAttribute("errorMessage", "This listing could not be found!");
             return "listing/listings";
         }
-        model.addAttribute("listings", listing);
+        model.addAttribute("listing", listing);
         return "listing/listings";
     }
 
@@ -167,7 +177,7 @@ public class ListingController {
             }
         }
 
-        listing.setApproved(false);
+        listing.setStatus(ListingStatus.PENDING);
         listing.setTenant(null); //newly added listings start without a tenant
         listingService.saveListing(listing);
         listingService.assignOwnerToListing(listing.getId(), owner);
@@ -312,7 +322,7 @@ public class ListingController {
 
         /* filters listings where approved == false */
         List<Listing> unapprovedListings = listings.stream()
-                .filter(listing -> Boolean.FALSE.equals(listing.getApproved()))
+                .filter(listing -> listing.getStatus() == ListingStatus.PENDING)
                 .collect(Collectors.toList());
 
         model.addAttribute("listings", unapprovedListings);
@@ -329,7 +339,7 @@ public class ListingController {
             model.addAttribute("errorMessage", "This listing could not be found!");
             return "listing/listings";
         }
-        listing.setApproved(true);
+        listing.setStatus(ListingStatus.APPROVED);
         listingService.saveListing(listing);
 
         /* sends email notification to the owner of said listing */
