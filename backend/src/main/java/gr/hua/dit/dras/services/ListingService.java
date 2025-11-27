@@ -2,6 +2,7 @@ package gr.hua.dit.dras.services;
 
 /* imports */
 import gr.hua.dit.dras.entities.*;
+import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.repositories.*;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
@@ -35,6 +36,15 @@ public class ListingService {
         return listingRepository.findAll();
     }
 
+    @Transactional
+    public List<Listing> getLocalListings() {
+        return listingRepository.findAll()
+                .stream()
+                .filter(listing -> !listing.isExternal())
+                .toList();
+    }
+
+    @Transactional
     public List<Listing> getListingsByOwner(Owner owner) {
         return listingRepository.findByOwner(owner);
     }
@@ -112,6 +122,7 @@ public class ListingService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found"));
 
         listing.setTenant(tenant);
+        listing.setStatus(ListingStatus.RENTED);
 
         Integer currentUserId = userService.getCurrentUserId();
         User currentUser = userRepository.findById(currentUserId)
@@ -124,7 +135,7 @@ public class ListingService {
 
         if (!RoleUserIs.equals("owner")) {
             currentUser.getRoles().add(tenantRole);
-            userService.updateUser(currentUser); //saves the user
+            userService.updateUser(currentUser); //saves user
         }
         listingRepository.save(listing);
     }
@@ -180,5 +191,16 @@ public class ListingService {
         return listingRepository.findByTitleContainingIgnoreCaseAndPriceBetween(title, minPrice, maxPrice);
     }
 
-}
+    @Transactional
+    public void markAsRented(Listing listing) {
+        listing.setStatus(ListingStatus.RENTED);
+        listingRepository.save(listing);
+    }
 
+    @Transactional
+    public void markAsAvailable(Listing listing) {
+        listing.setStatus(ListingStatus.APPROVED);
+        listingRepository.save(listing);
+    }
+
+}

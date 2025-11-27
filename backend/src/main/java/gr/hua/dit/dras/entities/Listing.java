@@ -1,6 +1,7 @@
 package gr.hua.dit.dras.entities;
 
 /* imports */
+import gr.hua.dit.dras.model.enums.ListingStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.util.HashSet;
@@ -17,58 +18,66 @@ public class Listing {
 
     @NotBlank
     @Size(max = 150)
-    @Column(name = "title", nullable = false, length = 150)
+    @Column(nullable = false, length = 150)
     private String title;
 
-    @Column
-    @Min(value = -3, message = "Floor level must be no lower than -3")
-    @Max(value = 164, message = "Floor level must be no higher than 164")
-    private int floor;
+    @Size(max = 250)
+    @Column(length = 250)
+    private String subtitle;
 
-    @Column
-    @Min(value = 1, message = "There must be at least one bathroom")
-    @Max(value = 4, message = "There can be no more than 4 bathrooms")
-    private int bathrooms;
+    @NotBlank
+    @Size(max = 5000)
+    @Column(nullable = false, length = 5000)
+    private String description;
 
-    @Column
-    @Min(value = 1, message = "Listing must have at least one bedroom")
-    @Max(value = 10, message = "Listing must have no more than 10 bedrooms")
-    private int bedrooms;
+    @NotNull
+    @Min(0)
+    @Max(20000)
+    @Column(nullable = false)
+    private Integer price;
 
-    @Column
-    @NotEmpty(message = "City is required")
-    @Size(min = 1, max = 50)
-    private String city;
+    @NotNull
+    @Min(0)
+    @Max(200) //0-200 €/m2
+    @Column(nullable = false)
+    private Integer pricePerM2;
 
-    @Column
-    @NotEmpty(message = "Street is required")
-    @Size(min = 1, max = 50)
-    private String street;
+    @NotBlank
+    @Size(max = 255)
+    @Column(nullable = false)
+    private String address;
 
-    @Column
-    @Min(value = 1000, message = "Postal code must be at least 1000")
-    private int pc;
+    @NotNull
+    @Min(5)
+    @Max(1000)
+    @Column(nullable = false)
+    private Integer sizeM2;
 
-    @Column
-    @Min(value = 10, message = "Listing must be at least 10 square meters")
-    @Max(value = 900, message = "Listing must be no more than 900 square meters")
-    private int squareMeters;
+    @NotNull
+    @Min(1)
+    @Max(20)
+    private Integer rooms;
 
-    @Column
-    @Min(value = 0, message = "Price must be a positive value")
-    @Max(value = 20000, message = "Price can be no more than 20000 euros")
-    private int price;
+    @NotBlank
+    @Size(max = 50)
+    @Column(nullable = false, length = 50)
+    private String propertyType;
 
-    @Column
-    private Boolean parking;
+    @NotBlank
+    @Size(max = 50)
+    @Column(nullable = false, length = 50)
+    private String rentalDuration;
 
-    @Column
-    @Min(value = 1800, message = "Year built must be 1800 or later")
-    @Max(value = 2100, message = "Year built must be 2100 or earlier")
-    private int yearBuilt;
+    @Size(max = 500)
+    @Column(length = 500)
+    private String sourceUrl;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ListingStatus status = ListingStatus.PENDING;
 
     @Column(nullable = false)
-    private Boolean approved = false;
+    private boolean external = false;
 
     /* Listing-Owner relationship */
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE,
@@ -94,19 +103,23 @@ public class Listing {
         this.applicants = applicants;
     }
 
-    public Listing(String title, int floor, int bathrooms, int bedrooms, String city, String street, int pc, int squareMeters, int price, Boolean parking, int yearBuilt, Boolean approved, Owner owner, Tenant tenant) {
+    public Listing(Integer id, String title, String subtitle, String description, Integer price, Integer pricePerM2,
+                   String address, Integer sizeM2, Integer rooms, String propertyType, String rentalDuration,
+                   String sourceUrl, ListingStatus status, boolean external, Owner owner, Tenant tenant) {
+        this.id = id;
         this.title = title;
-        this.floor = floor;
-        this.bathrooms = bathrooms;
-        this.bedrooms = bedrooms;
-        this.city = city;
-        this.street = street;
-        this.pc = pc;
-        this.squareMeters = squareMeters;
+        this.subtitle = subtitle;
+        this.description = description;
         this.price = price;
-        this.parking = parking;
-        this.yearBuilt = yearBuilt;
-        this.approved = approved;
+        this.pricePerM2 = pricePerM2;
+        this.address = address;
+        this.sizeM2 = sizeM2;
+        this.rooms = rooms;
+        this.propertyType = propertyType;
+        this.rentalDuration = rentalDuration;
+        this.sourceUrl = sourceUrl;
+        this.status = status;
+        this.external = external;
         this.owner = owner;
         this.tenant = tenant;
     }
@@ -122,6 +135,94 @@ public class Listing {
         this.id = id;
     }
 
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getSubtitle() {
+        return subtitle;
+    }
+
+    public void setSubtitle(String subtitle) {
+        this.subtitle = subtitle;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Integer getPrice() {
+        return price;
+    }
+
+    public void setPrice(Integer price) {
+        this.price = price;
+    }
+
+    public Integer getPricePerM2() {
+        return pricePerM2;
+    }
+
+    public void setPricePerM2(Integer pricePerM2) {
+        this.pricePerM2 = pricePerM2;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public Integer getSizeM2() {
+        return sizeM2;
+    }
+
+    public void setSizeM2(Integer sizeM2) {
+        this.sizeM2 = sizeM2;
+    }
+
+    public Integer getRooms() {
+        return rooms;
+    }
+
+    public void setRooms(Integer rooms) {
+        this.rooms = rooms;
+    }
+
+    public String getPropertyType() {
+        return propertyType;
+    }
+
+    public void setPropertyType(String propertyType) {
+        this.propertyType = propertyType;
+    }
+
+    public String getRentalDuration() {
+        return rentalDuration;
+    }
+
+    public void setRentalDuration(String rentalDuration) {
+        this.rentalDuration = rentalDuration;
+    }
+
+    public String getSourceUrl() {
+        return sourceUrl;
+    }
+
+    public void setSourceUrl(String sourceUrl) {
+        this.sourceUrl = sourceUrl;
+    }
+
     public Owner getOwner() {
         return owner;
     }
@@ -130,89 +231,41 @@ public class Listing {
         this.owner = owner;
     }
 
-    public int getFloor() {
-        return floor;
+    public ListingStatus getStatus() {
+        return status;
     }
 
-    public void setFloor(int floor) {
-        this.floor = floor;
+    public void setStatus(ListingStatus status) {
+        this.status = status;
     }
 
-    public int getBathrooms() {
-        return bathrooms;
+    public boolean isApproved() {
+        return status == ListingStatus.APPROVED;
     }
 
-    public void setBathrooms(int bathrooms) {
-        this.bathrooms = bathrooms;
+    public boolean isPending() {
+        return status == ListingStatus.PENDING;
     }
 
-    public int getBedrooms() {
-        return bedrooms;
+    public boolean isDisabled() {
+        return status == ListingStatus.DISABLED;
     }
 
-    public void setBedrooms(int bedrooms) {
-        this.bedrooms = bedrooms;
+    public boolean isRejected() {
+        return status == ListingStatus.REJECTED;
     }
 
-    public String getCity() {
-        return city;
+    public boolean isRented() {
+        return status == ListingStatus.RENTED;
     }
 
-    public void setCity(String city) {
-        this.city = city;
+    public boolean isExternal() {
+        return external;
     }
 
-    public String getStreet() {
-        return street;
+    public void setExternal(boolean external) {
+        this.external = external;
     }
-
-    public void setStreet(String street) {
-        this.street = street;
-    }
-
-    public int getPc() {
-        return pc;
-    }
-
-    public void setPc(int pc) {
-        this.pc = pc;
-    }
-
-    public int getSquareMeters() {
-        return squareMeters;
-    }
-
-    public void setSquareMeters(int squareMeters) {
-        this.squareMeters = squareMeters;
-    }
-
-    public Boolean getParking() {
-        return parking;
-    }
-
-    public void setParking(Boolean parking) {
-        this.parking = parking;
-    }
-
-    public int getPrice() {
-        return price;
-    }
-
-    public void setPrice(int price) {
-        this.price = price;
-    }
-
-    public int getYearBuilt() {
-        return yearBuilt;
-    }
-
-    public void setYearBuilt(int yearBuilt) {
-        this.yearBuilt = yearBuilt;
-    }
-
-    public Boolean getApproved() {return approved;}
-
-    public void setApproved(Boolean approved) {this.approved = approved;}
 
     public void setTenant(Tenant tenant) {
         this.tenant = tenant;
@@ -220,18 +273,6 @@ public class Listing {
 
     public Tenant getTenant() {
         return tenant;
-    }
-
-    public boolean isRented() {
-        return tenant != null && tenant.getRentalStatus() == Tenant.RentalStatus.RENTING;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
     }
 
     public void addApplicant(Tenant tenant) {
@@ -246,19 +287,21 @@ public class Listing {
         return "Listing{" +
                 "id=" + id +
                 ", title='" + title + '\'' +
-                ", floor=" + floor +
-                ", bathrooms=" + bathrooms +
-                ", bedrooms=" + bedrooms +
-                ", city='" + city + '\'' +
-                ", street='" + street + '\'' +
-                ", pc=" + pc +
-                ", squareMeters=" + squareMeters +
+                ", subtitle='" + subtitle + '\'' +
+                ", description='" + description + '\'' +
                 ", price=" + price +
-                ", parking=" + parking +
-                ", yearBuilt=" + yearBuilt +
-                ", approved=" + approved +
+                ", pricePerM2=" + pricePerM2 +
+                ", address='" + address + '\'' +
+                ", sizeM2=" + sizeM2 +
+                ", rooms=" + rooms +
+                ", propertyType='" + propertyType + '\'' +
+                ", rentalDuration='" + rentalDuration + '\'' +
+                ", sourceUrl='" + sourceUrl + '\'' +
+                ", status=" + status +
+                ", external=" + external +
                 ", owner=" + owner +
                 ", tenant=" + tenant +
                 '}';
     }
+
 }
