@@ -3,7 +3,6 @@ package gr.hua.dit.dras.controllers;
 /* imports */
 import gr.hua.dit.dras.entities.*;
 import gr.hua.dit.dras.model.enums.ListingStatus;
-import gr.hua.dit.dras.model.enums.RentalStatus;
 import gr.hua.dit.dras.services.*;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -27,8 +26,13 @@ public class ListingController {
     private final OwnerService ownerService;
     private final EmailService emailService;
 
-    public ListingController(UserService userService, ListingService listingService,
-                             OwnerService ownerService, TenantService tenantService, EmailService emailService) {
+    public ListingController(
+            UserService userService,
+            ListingService listingService,
+            OwnerService ownerService,
+            TenantService tenantService,
+            EmailService emailService
+    ) {
         this.userService = userService;
         this.listingService = listingService;
         this.ownerService = ownerService;
@@ -180,7 +184,7 @@ public class ListingController {
         listing.setStatus(ListingStatus.PENDING);
         listing.setTenant(null); //newly added listings start without a tenant
         listingService.saveListing(listing);
-        listingService.assignOwnerToListing(listing.getId(), owner);
+        ownerService.assignOwnerToListing(listing.getId(), owner);
 
         /* sends email notification to the owner of said listing */
         try {
@@ -213,7 +217,7 @@ public class ListingController {
     @GetMapping("/unassign/owner/{id}")
     public String unassignOwnerToListing(@PathVariable Integer id, Model model) {
 
-        listingService.unassignOwnerFromListing(id);
+        ownerService.unassignOwnerFromListing(id);
         model.addAttribute("listings", listingService.getListings());
         return "listing/listings";
     }
@@ -221,7 +225,7 @@ public class ListingController {
     @GetMapping("/unassign/tenant/{id}")
     public String unassignTenantToListing(@PathVariable Integer id, Model model) {
 
-        listingService.unassignTenantFromListing(id, tenantService.getTenantIdForCurrentUser());
+        tenantService.unassignTenantFromListing(id, tenantService.getTenantIdForCurrentUser());
         model.addAttribute("listings", listingService.getListings());
         return "listing/listings";
     }
@@ -245,7 +249,7 @@ public class ListingController {
         Owner owner = ownerService.getOwner(ownerId);
         Listing listing = listingService.getListing(id);
         System.out.println(listing);
-        listingService.assignOwnerToListing(id, owner);
+        ownerService.assignOwnerToListing(id, owner);
         model.addAttribute("listings", listingService.getListings());
         model.addAttribute("successMessage", "Form submitted successfully!");
         return "listing/listings";
@@ -261,7 +265,7 @@ public class ListingController {
         Listing listing = listingService.getListing(id);
         System.out.println(listing);
         String roleUserIs = "tenant";
-        listingService.assignTenantToListing(id, tenant, roleUserIs);
+        tenantService.assignTenantToListing(id, tenant, roleUserIs);
         model.addAttribute("listings", listingService.getListings());
         return "listing/listings";
     }

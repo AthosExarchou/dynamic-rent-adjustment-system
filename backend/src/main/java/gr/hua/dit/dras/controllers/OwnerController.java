@@ -1,6 +1,7 @@
 package gr.hua.dit.dras.controllers;
 
 /* imports */
+import gr.hua.dit.dras.dto.OwnerCreateRequest;
 import gr.hua.dit.dras.entities.Listing;
 import gr.hua.dit.dras.entities.Owner;
 import gr.hua.dit.dras.entities.User;
@@ -9,9 +10,13 @@ import gr.hua.dit.dras.services.OwnerService;
 import gr.hua.dit.dras.services.UserService;
 import gr.hua.dit.dras.repositories.RoleRepository;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,66 +28,66 @@ public class OwnerController {
     private final UserService userService;
     private final RoleRepository roleRepository;
 
-    public OwnerController(OwnerService ownerService, UserService userService, RoleRepository roleRepository) {
+    public OwnerController(
+            OwnerService ownerService,
+            UserService userService,
+            RoleRepository roleRepository
+    ) {
         this.ownerService = ownerService;
         this.userService = userService;
         this.roleRepository = roleRepository;
     }
 
     @PostMapping("/new")
-    public String saveOwner(@Valid @RequestParam("userId") Integer userId,
-                            @RequestParam(value = "firstName", required = false) String firstName,
-                            @RequestParam(value = "lastName", required = false) String lastName,
-                            @RequestParam(value = "phoneNumber", required = false) String phoneNumber,
-                            Model model) {
-
-        if (firstName == null || lastName == null || phoneNumber == null) {
-            model.addAttribute("errorMessage",
-                    "First name, last name, and phone number are required for new owner.");
+    @PreAuthorize("hasRole('ADMIN')")
+    public String createOwner(
+            @Valid @ModelAttribute OwnerCreateRequest request,
+            BindingResult bindingResult,
+            Model model
+    ) {
+        if (bindingResult.hasErrors()) {
             return "owner/ownerform";
         }
 
-        User user = userService.getUser(userId);
-        if (user == null || "external-system".equals(user.getUsername())) {
-            model.addAttribute("errorMessage", "User not found or cannot assign system owner.");
-            return "auth/users";
-        }
-
-        Owner owner = ownerService.getOwnerByAdmin(userId, firstName, lastName, phoneNumber);
-        if (owner == null) {
-            model.addAttribute("errorMessage",
-                    "Your role as 'OWNER' has been revoked by the Administrator. " +
-                            "Please contact us for further details.");
-            return "listing/listing";
-        }
-
-        ownerService.saveOwner(owner);
+        ownerService.createOwnerForUser(
+                request.getUserId(),
+                request.getFirstName(),
+                request.getLastName(),
+                request.getPhoneNumber()
+        );
 
         /* Filters out system user from the user list */
         List<User> users = userService.getUsers()
                 .stream()
                 .filter(u -> !"external-system".equals(u.getUsername()))
-                .collect(Collectors.toList());
+                .toList();
 
         model.addAttribute("users", users);
         model.addAttribute("roles", roleRepository.findAll());
+
         return "auth/users";
     }
 
     @GetMapping("/{id}/listings")
-    public String showListings(@PathVariable("id") Integer id, Model model) {
+    @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
+    public String showListings(@PathVariable Integer id, Model model) {
 
         Owner owner = ownerService.getOwner(id);
 
-        if (owner == null) {
-            model.addAttribute("errorMessage", "Owner not found.");
-            return "error/404";
+        Integer currentUserId = userService.getCurrentUserId();
+        boolean isAdmin = userService.currentUserHasRole("ADMIN");
+
+        if (!isAdmin && !owner.getUser().getId().equals(currentUserId)) {
+
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
         }
 
         /* Protects system owner from direct UI access */
         if (owner.isSystemOwner()) {
-            model.addAttribute("errorMessage", "External/System listings cannot be viewed directly.");
-            return "error/403";
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "System owner listings cannot be viewed"
+            );
         }
 
         /* Filters external listings */

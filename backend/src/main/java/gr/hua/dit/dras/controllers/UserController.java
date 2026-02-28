@@ -284,7 +284,6 @@ public class UserController {
 
             Tenant tenant = new Tenant();
             tenant.setId(user.getId());
-            tenant.setEmail(user.getEmail());
             model.addAttribute("tenant", tenant);
             model.addAttribute("userId", user_id);
             return "tenant/tenantformforadmin";
@@ -325,7 +324,7 @@ public class UserController {
             return "index";
         }
 
-        /* sends email before deleting the user */
+        /* Sends email before deleting the user */
         try {
             emailService.sendAccountDeletionEmail(user.getEmail(), user);
             System.out.println("Account deletion email sent to user.");
