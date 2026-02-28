@@ -36,14 +36,14 @@ public class SystemOwnerInitializer {
     @EventListener(ApplicationReadyEvent.class)
     public void createSystemOwner() {
 
-        /* checks if system owner already exists */
+        /* Checks if system owner already exists */
         Optional<Owner> existingOwner = ownerRepository.findBySystemOwnerTrue();
         if (existingOwner.isPresent()) {
             return;
         }
         System.out.println("Creating SYSTEM OWNER...");
 
-        /* ensures system user exists */
+        /* Ensures system user exists */
         Optional<User> existingUser = userRepository.findByUsername("external-system");
         User systemUser;
 
@@ -63,10 +63,14 @@ public class SystemOwnerInitializer {
             userRepository.save(systemUser);
         }
 
-        /* Create system owner */
+        /* Creates system owner */
         Owner systemOwner = new Owner();
         systemOwner.setUser(systemUser);
         systemOwner.setSystemOwner(true);
+
+        systemOwner.setFirstName("System");
+        systemOwner.setLastName("Owner");
+        systemOwner.setPhoneNumber("+0000000000");
 
         ownerRepository.save(systemOwner);
 
