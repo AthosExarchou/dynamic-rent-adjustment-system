@@ -19,6 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
+@Transactional
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
@@ -28,12 +29,14 @@ public class UserService implements UserDetailsService {
     private final TenantRepository tenantRepository;
     private final OwnerRepository  ownerRepository;
 
-    public UserService(UserRepository userRepository,
-                       RoleRepository roleRepository,
-                       BCryptPasswordEncoder passwordEncoder,
-                       ListingRepository listingRepository,
-                       TenantRepository tenantRepository,
-                       OwnerRepository  ownerRepository) {
+    public UserService(
+            UserRepository userRepository,
+            RoleRepository roleRepository,
+            BCryptPasswordEncoder passwordEncoder,
+            ListingRepository listingRepository,
+            TenantRepository tenantRepository,
+            OwnerRepository  ownerRepository
+    ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
@@ -167,6 +170,17 @@ public class UserService implements UserDetailsService {
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found: " + email));
+    }
+
+    public boolean currentUserHasRole(String roleName) {
+        Integer currentUserId = getCurrentUserId();
+        if (currentUserId == null) {
+            return false;
+        }
+
+        User currentUser = getUser(currentUserId);
+        return currentUser.getRoles().stream()
+                .anyMatch(r -> r.getName().equals(roleName));
     }
 
 }

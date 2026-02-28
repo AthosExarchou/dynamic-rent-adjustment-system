@@ -1,131 +1,203 @@
 package gr.hua.dit.dras.services;
 
 /* imports */
+import gr.hua.dit.dras.entities.Listing;
 import gr.hua.dit.dras.entities.Owner;
 import gr.hua.dit.dras.entities.Role;
 import gr.hua.dit.dras.entities.User;
+import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.repositories.ListingRepository;
 import gr.hua.dit.dras.repositories.OwnerRepository;
 import gr.hua.dit.dras.repositories.RoleRepository;
+import gr.hua.dit.dras.repositories.UserRepository;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
-import java.util.Optional;
 
 @Service
+@Transactional
 public class OwnerService {
 
-    @Autowired
-    private OwnerRepository ownerRepository;
-    private RoleRepository roleRepository;
-    private ListingRepository listingRepository;
-    @Autowired
-    private UserService userService;
+    private final OwnerRepository ownerRepository;
+    private final RoleRepository roleRepository;
+    private final UserService userService;
+    private final ListingRepository listingRepository;
+    private final UserRepository userRepository;
 
-    public OwnerService(RoleRepository roleRepository, OwnerRepository ownerRepository, ListingRepository listingRepository, UserService userService) {
+    public OwnerService(
+            OwnerRepository ownerRepository,
+            RoleRepository roleRepository,
+            UserService userService,
+            ListingRepository listingRepository,
+            UserRepository userRepository
+    ) {
         this.ownerRepository = ownerRepository;
-        this.listingRepository = listingRepository;
-        this.userService = userService;
         this.roleRepository = roleRepository;
+        this.userService = userService;
+        this.listingRepository = listingRepository;
+        this.userRepository = userRepository;
     }
 
-    @Transactional
     public List<Owner> getOwners() {
         return ownerRepository.findAll();
     }
 
-    @Transactional
     public Owner getOwner(Integer ownerId) {
-
-        Optional<Owner> optionalOwner = ownerRepository.findById(ownerId);
-
-        if (optionalOwner.isPresent()) {
-            return optionalOwner.get();
-        } else {
-            Integer currentUserId = userService.getCurrentUserId();
-            return ownerRepository.findByUserId(currentUserId)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Owner not found with current user ID: " + currentUserId));
+        if (ownerId != null) {
+            return ownerRepository.findById(ownerId)
+                    .orElseThrow(() ->
+                            new ResponseStatusException(
+                                    HttpStatus.NOT_FOUND,
+                                    "Owner not found with id: " + ownerId
+                            )
+                    );
         }
+
+        Integer currentUserId = userService.getCurrentUserId();
+        return ownerRepository.findByUserId(currentUserId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Owner not found for current user"
+                        )
+                );
     }
 
-    @Transactional
-    public Owner getOwnerByAdmin(Integer ownerId, String firstName, String lastName, String phoneNumber) {
+    public Owner createOwnerForUser(
+            Integer userId,
+            String firstName,
+            String lastName,
+            String phoneNumber
+    ) {
 
-        User user = userService.getUser(ownerId); //fetches current user by ID
-        /* owner creation */
-        Optional<Owner> existingOwner = ownerRepository.findByUserId(ownerId);
+        User user = userService.getUser(userId); //fetches user by ID
 
-        if (existingOwner.isEmpty()) {
-            Owner owner = new Owner();
-            owner.setFirstName(firstName);
-            owner.setLastName(lastName);
-            owner.setEmail(user.getEmail());
-            owner.setUsername(user.getUsername());
-            owner.setPhoneNumber(phoneNumber);
-            owner.setUser(user); //associates owner with the current user
-            user = owner.getUser();
-            user.setOwner(owner);
-            Optional<Role> optionalRole = roleRepository.findByName("OWNER");
+        ownerRepository.findByUserId(userId).ifPresent(o -> {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "User already has an Owner profile"
+            );
+        });
 
-            if (optionalRole.isPresent()) {
-                Role ownerRole = optionalRole.get();
-                System.out.println("User roles before adding: " + user.getRoles());
-                if (!user.getRoles().contains(ownerRole)) {
-                    user.getRoles().add(ownerRole);
-                }
-                userService.updateUser(user);
-                System.out.println("User roles after adding: " + user.getRoles());
-            }
-            return owner;
-        }
-        return null;
+        Owner owner = new Owner();
+        owner.setFirstName(firstName);
+        owner.setLastName(lastName);
+        owner.setPhoneNumber(phoneNumber);
+        owner.setUser(user); //associates owner with the user
 
+        Owner savedOwner = ownerRepository.save(owner);
+
+        assignOwnerRole(user);
+
+        return savedOwner;
     }
 
-    @Transactional
-    public Owner createOwnerForCurrentUser(String firstName, String lastName, String phoneNumber) {
-
+    public Owner createOwnerForCurrentUser(
+            String firstName,
+            String lastName,
+            String phoneNumber
+    ) {
         Integer userId = userService.getCurrentUserId();
-        User user = userService.getUser(userId); //fetches current user by ID
-        /* owner creation */
-        Optional<Owner> existingOwner = ownerRepository.findByUserId(userId);
-
-        if (existingOwner.isEmpty()) {
-            Owner owner = new Owner();
-            owner.setFirstName(firstName);
-            owner.setLastName(lastName);
-            owner.setEmail(user.getEmail());
-            owner.setUsername(user.getUsername());
-            owner.setPhoneNumber(phoneNumber);
-            owner.setUser(user); //associates owner with the current user
-            return ownerRepository.save(owner);
-        } else {
-            System.out.println("User with id: " + userId + " is an owner");
-            return null;
-        }
+        return createOwnerForUser(userId, firstName, lastName, phoneNumber);
     }
 
-    @Transactional
     public Integer getOwnerIdForCurrentUser() {
-
         Integer userId = userService.getCurrentUserId();
-        System.out.println("Current User id: " + userId);
-        Optional<Owner> ownerOptional = ownerRepository.findByUserId(userId);
 
-        if (ownerOptional.isPresent()) {
-            System.out.println("Owner id: " + ownerOptional.get().getId());
-            return ownerOptional.get().getId();
+        return ownerRepository.findByUserId(userId)
+                .map(Owner::getId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Owner profile not found for current user"
+                        )
+                );
+    }
+
+    private void assignOwnerRole(User user) {
+
+        Role ownerRole = roleRepository.findByName("OWNER")
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.INTERNAL_SERVER_ERROR,
+                                "OWNER role not found in database"
+                        )
+                );
+
+        if (!user.getRoles().contains(ownerRole)) {
+            user.getRoles().add(ownerRole);
+            userService.updateUser(user);
         }
-        System.out.println("No owner found for user id: " + userId);
-        return null;
     }
 
     @Transactional
     public void saveOwner(Owner owner) {
         ownerRepository.save(owner);
+    }
+
+    @Transactional
+    public void assignOwnerToListing(Integer listingId, Owner owner) {
+
+        Listing listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found"));
+
+        listing.setOwner(owner);
+
+        Integer currentUserId = userService.getCurrentUserId();
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        Role ownerRole = roleRepository.findByName("OWNER")
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
+
+        if (!currentUser.getRoles().contains(ownerRole)) {
+            currentUser.getRoles().add(ownerRole);
+            userService.updateUser(currentUser); //saves the user
+        }
+        listingRepository.save(listing);
+    }
+
+    @Transactional
+    public void deactivateOwner(Integer ownerId) {
+
+        Owner owner = getOwner(ownerId);
+
+        if (!owner.isActive()) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Owner already deactivated"
+            );
+        }
+
+        List<Listing> listings = listingRepository.findByOwner(owner);
+
+        for (Listing listing : listings) {
+
+            if (listing.isRented()) {
+                throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Owner has active rented listings. Cannot deactivate."
+                );
+            }
+
+            listing.disable();
+        }
+
+        owner.deactivate();
+    }
+
+    @Transactional
+    public void unassignOwnerFromListing(Integer listingId) {
+
+        Listing listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Listing not found"
+                ));
+        listing.setOwner(null);
+        listing.disable();
+        listingRepository.save(listing);
     }
 
 }

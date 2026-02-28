@@ -6,34 +6,39 @@ import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.model.enums.RentalStatus;
 import gr.hua.dit.dras.repositories.TenantRepository;
 import gr.hua.dit.dras.repositories.ListingRepository;
-import gr.hua.dit.dras.repositories.UserRepository;
 import gr.hua.dit.dras.repositories.RoleRepository;
-import jakarta.servlet.http.HttpSession;
+import gr.hua.dit.dras.repositories.UserRepository;
 import jakarta.transaction.Transactional;
-import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
 
 @Service
+@Transactional
 public class TenantService {
 
-    private TenantRepository tenantRepository;
-    private ListingRepository listingRepository;
-    private UserService userService;
-    private UserRepository userRepository;
-    private RoleRepository roleRepository;
+    private final TenantRepository tenantRepository;
+    private final ListingRepository listingRepository;
+    private final UserService userService;
+    private final RoleRepository roleRepository;
+    private final UserRepository userRepository;
+    private final ListingService listingService;
 
-    public TenantService(TenantRepository tenantRepository, ListingRepository listingRepository, UserService userService, UserRepository userRepository, RoleRepository roleRepository) {
+    public TenantService(
+            TenantRepository tenantRepository,
+            ListingRepository listingRepository,
+            UserService userService,
+            RoleRepository roleRepository,
+            UserRepository userRepository,
+            ListingService listingService
+    ) {
         this.tenantRepository = tenantRepository;
         this.listingRepository = listingRepository;
         this.userService = userService;
-        this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.userRepository = userRepository;
+        this.listingService = listingService;
     }
 
     @Transactional
@@ -46,175 +51,238 @@ public class TenantService {
         tenantRepository.save(tenant);
     }
 
-    @Transactional
     public Tenant getTenant(Integer tenantId) {
 
-        Optional<Tenant> optionalTenant = tenantRepository.findById(tenantId);
-
-        if (optionalTenant.isPresent()) {
-            return optionalTenant.get();
-        } else {
-            Integer currentUserId = userService.getCurrentUserId(); //gets the current user's id
-            return tenantRepository.findByUserId(currentUserId)
-                    .orElseThrow(() -> new NoSuchElementException("Tenant not found with current user id: " + currentUserId));
+        if (tenantId != null) {
+            return tenantRepository.findById(tenantId)
+                    .orElseThrow(() ->
+                            new ResponseStatusException(
+                                    HttpStatus.NOT_FOUND,
+                                    "Tenant not found with id: " + tenantId
+                            )
+                    );
         }
+
+        Integer currentUserId = userService.getCurrentUserId();
+
+        return tenantRepository.findByUserId(currentUserId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Tenant profile not found for current user"
+                        )
+                );
     }
 
-    @Transactional
-    public Tenant createTenantForCurrentUser(String firstName, String lastName, String phoneNumber) {
+    public Tenant createTenantForUser(
+            Integer userId,
+            String firstName,
+            String lastName,
+            String phoneNumber
+    ) {
 
+        User user = userService.getUser(userId); //fetches user by ID
+
+        tenantRepository.findByUserId(userId).ifPresent(t -> {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "User already has a Tenant profile"
+            );
+        });
+
+        Tenant tenant = new Tenant();
+        tenant.setFirstName(firstName);
+        tenant.setLastName(lastName);
+        tenant.setPhoneNumber(phoneNumber);
+        tenant.setRentalStatus(RentalStatus.APPLIED);
+        tenant.setUser(user); //associates tenant with the user
+
+        Tenant savedTenant = tenantRepository.save(tenant);
+
+        assignTenantRole(user); //assigns role 'TENANT'
+
+        return savedTenant;
+    }
+
+    public void createTenantForCurrentUser(
+            String firstName,
+            String lastName,
+            String phoneNumber
+    ) {
         Integer userId = userService.getCurrentUserId();
-        User user = userService.getUser(userId); //fetches current user by ID
-        /* tenant creation */
-        Optional<Tenant> existingTenant = tenantRepository.findByUserId(userId);
-
-        if (existingTenant.isEmpty()) {
-            Tenant tenant = new Tenant();
-            tenant.setFirstName(firstName);
-            tenant.setLastName(lastName);
-            tenant.setEmail(user.getEmail());
-            tenant.setUsername(user.getUsername());
-            tenant.setPhoneNumber(phoneNumber);
-            tenant.setUser(user); //associates tenant with the current user
-            return tenantRepository.save(tenant);
-        } else {
-            System.out.println("User with id: " + userId + " is a tenant");
-            return null;
-        }
+        createTenantForUser(userId, firstName, lastName, phoneNumber);
     }
 
-    @Transactional
-    public void assignRoleToUserForFirstListing(Tenant tenant, HttpSession session) {
-
-        if (isFirstListing(tenant)) {
-            User user = userService.getUser(userService.getCurrentUserId());
-            Optional<Role> optionalRole = roleRepository.findByName("TENANT");
-
-            if (optionalRole.isPresent()) {
-                Role tenantRole = optionalRole.get();
-                System.out.println("User roles before adding: " + user.getRoles());
-                user.getRoles().add(tenantRole);
-                userService.updateUser(user);
-                session.invalidate(); //invalidates session to refresh roles
-            } else {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Role 'TENANT' does not exist in the database");
-            }
-        }
-    }
-
-    @Transactional
     public Integer getTenantIdForCurrentUser() {
 
         Integer userId = userService.getCurrentUserId();
-        System.out.println("Current User id: " + userId);
-        Optional<Tenant> tenantOptional = tenantRepository.findByUserId(userId);
 
-        if (tenantOptional.isPresent()) {
-            System.out.println("Tenant id: " + tenantOptional.get().getId());
-            return tenantOptional.get().getId();
-        }
-        System.out.println("No tenant found for user id: " + userId);
-        return null;
+        return tenantRepository.findByUserId(userId)
+                .map(Tenant::getId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Tenant profile not found for current user"
+                        )
+                );
     }
 
-    @Transactional
-    public boolean isFirstListing(Tenant tenant) {
-
-        /* checks if the tenant already has a listing */
-        return tenant.getListing() == null; //if no listing is linked, it's the first one
-    }
-
-    @Transactional
     public boolean isUserTenant() {
 
-        Integer currentUserId = userService.getCurrentUserId();
-        if (currentUserId == null) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User id must not be null.");
-        }
-        User currentUser = userService.getUser(currentUserId);
+        Integer userId = userService.getCurrentUserId();
+        User user = userService.getUser(userId); //fetches user by ID
 
-        for (Role role : currentUser.getRoles()) {
-            if ("TENANT".equals(role.getName())) {
-                return true;
-            }
-        }
-        return false;
+        return user.getRoles().stream()
+                .anyMatch(role -> "TENANT".equals(role.getName()));
     }
 
-    @Transactional
-    public boolean submitApplication(Integer listingId, Tenant tenant) {
+    public boolean submitApplication(Integer listingId) {
+
+        Integer userId = userService.getCurrentUserId();
+
+        Tenant tenant = tenantRepository.findByUserId(userId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.BAD_REQUEST,
+                                "Current user is not a tenant"
+                        )
+                );
 
         Listing listing = listingRepository.findById(listingId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found"));
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Listing not found"
+                        )
+                );
 
-        if (listing.getApplicants().contains(tenant) || tenant.getAppliedListings().contains(listing)) {
-            return true;
-        }
-
-        tenant.setRentalStatus(RentalStatus.APPLIED);
-        listing.addApplicant(tenant);
-        tenant.applyToListing(listing);
-        tenantRepository.save(tenant);
-        listingRepository.save(listing);
-        return false;
-    }
-
-    @Transactional
-    public void approveApplication(Integer tenantId, Integer listingId) {
-
-        Tenant tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant not found with ID: " + tenantId));
-        Listing listing = listingRepository.findById(listingId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found with ID: " + listingId));
-
-        /* checks if the listing already has an approved tenant */
-        if (listing.getTenant() != null && listing.getTenant().getRentalStatus() == RentalStatus.RENTING) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "This listing is already being rented.");
+        if (listing.getApplicants().contains(tenant)) {
+            return true; //already applied
         }
 
         if (tenant.getListing() != null) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "This tenant is already renting a listing.");
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Tenant is already renting a listing"
+            );
+        }
+
+        tenant.setRentalStatus(RentalStatus.APPLIED);
+
+        listing.addApplicant(tenant);
+        tenant.applyToListing(listing);
+
+        /* Ensures persistence */
+        tenantRepository.save(tenant);
+        listingRepository.save(listing);
+
+        return false;
+    }
+
+    public void approveApplication(Integer tenantId, Integer listingId) {
+
+        Tenant tenant = tenantRepository.findById(tenantId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Tenant not found"
+                        )
+                );
+
+        Listing listing = listingRepository.findById(listingId)
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "Listing not found"
+                        )
+                );
+
+        if (listing.getTenant() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Listing is already rented"
+            );
+        }
+
+        if (tenant.getListing() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Tenant is already renting another listing"
+            );
         }
 
         tenant.setRentalStatus(RentalStatus.RENTING);
         listing.setTenant(tenant);
-        tenantRepository.save(tenant);
         listing.setStatus(ListingStatus.RENTED);
+    }
+
+    /* Assigns role 'TENANT' if renting for the first time */
+    private void assignTenantRole(User user) {
+
+        Role tenantRole = roleRepository.findByName("TENANT")
+                .orElseThrow(() ->
+                        new ResponseStatusException(
+                                HttpStatus.INTERNAL_SERVER_ERROR,
+                                "TENANT role not found"
+                        )
+                );
+
+        if (!user.getRoles().contains(tenantRole)) {
+            user.getRoles().add(tenantRole);
+            userService.updateUser(user);
+        }
+    }
+
+    @Transactional
+    public void assignTenantToListing(Integer listingId, Tenant tenant, String RoleUserIs) {
+
+        Listing listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found"));
+
+        listing.setTenant(tenant);
+        listing.setStatus(ListingStatus.RENTED);
+
+        Integer currentUserId = userService.getCurrentUserId();
+        User currentUser = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        Role tenantRole = roleRepository.findByName("TENANT")
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
+        Role ownerRole = roleRepository.findByName("OWNER")
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
+
+        if (!RoleUserIs.equals("owner")) {
+            currentUser.getRoles().add(tenantRole);
+            userService.updateUser(currentUser); //saves user
+        }
         listingRepository.save(listing);
     }
 
     @Transactional
-    public Tenant getTenantByAdmin(@Valid Integer tenantId, String firstName, String lastName, String phoneNumber) {
+    public void unassignTenantFromListing(Integer listingId, Integer tenantId) {
 
-        User user = userService.getUser(tenantId); //fetches current user by ID
-        /* tenant creation */
-        Optional<Tenant> existingTenant = tenantRepository.findByUserId(tenantId);
+        Listing listing = listingRepository.findById(listingId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Listing not found"
+                ));
+        Tenant tenant = tenantRepository.findById(listingId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Tenant not found"
+                ));
 
-        if (existingTenant.isEmpty()) {
-            Tenant tenant = new Tenant();
-            tenant.setFirstName(firstName);
-            tenant.setLastName(lastName);
-            tenant.setEmail(user.getEmail());
-            tenant.setUsername(user.getUsername());
-            tenant.setPhoneNumber(phoneNumber);
-            tenant.setUser(user); //associates tenant with the current user
-            tenant.setRentalStatus(RentalStatus.APPLIED);
-            user = tenant.getUser();
-            user.setTenant(tenant);
-            Optional<Role> optionalRole = roleRepository.findByName("TENANT");
-
-            if (optionalRole.isPresent()) {
-                Role tenantRole = optionalRole.get();
-                System.out.println("User roles before adding: " + user.getRoles());
-                if (!user.getRoles().contains(tenantRole)) {
-                    user.getRoles().add(tenantRole);
-                }
-                userService.updateUser(user);
-                System.out.println("User roles after adding: " + user.getRoles());
-            }
-            return tenant;
+        if (!tenant.equals(listing.getTenant())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Tenant not assigned to this listing"
+            );
         }
-        return null;
+
+        listing.setTenant(null); //unlinks tenant from listing
+        listingService.makeAvailable(listing);
+
+        tenant.setRentalStatus(RentalStatus.CANCELED);
+
+        tenantRepository.save(tenant);
+        listingRepository.save(listing);
     }
 
 }

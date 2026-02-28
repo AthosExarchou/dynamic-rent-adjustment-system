@@ -3,11 +3,14 @@ package gr.hua.dit.dras.services;
 /* imports */
 import gr.hua.dit.dras.entities.*;
 import gr.hua.dit.dras.model.enums.ListingStatus;
+import gr.hua.dit.dras.model.enums.RentalStatus;
 import gr.hua.dit.dras.repositories.*;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import jakarta.servlet.http.HttpSession;
@@ -16,19 +19,23 @@ import jakarta.servlet.http.HttpSession;
 public class ListingService {
 
     private final RoleRepository roleRepository;
-    private final UserRepository userRepository;
     private final UserService userService;
-    private ListingRepository listingRepository;
-    private TenantRepository tenantRepository;
-    private OwnerRepository ownerRepository;
+    private final ListingRepository listingRepository;
+    private final OwnerService ownerService;
+    private final TenantService tenantService;
 
-    public ListingService(RoleRepository roleRepository, UserRepository userRepository, UserService userService, ListingRepository listingRepository, TenantRepository tenantRepository, OwnerRepository ownerRepository) {
+    public ListingService(
+            RoleRepository roleRepository,
+            UserService userService,
+            ListingRepository listingRepository,
+            OwnerService ownerService,
+            TenantService tenantService
+    ) {
         this.roleRepository = roleRepository;
-        this.userRepository = userRepository;
         this.userService = userService;
         this.listingRepository = listingRepository;
-        this.tenantRepository = tenantRepository;
-        this.ownerRepository = ownerRepository;
+        this.ownerService = ownerService;
+        this.tenantService = tenantService;
     }
 
     @Transactional
@@ -51,6 +58,13 @@ public class ListingService {
 
     @Transactional
     public void saveListing(Listing listing) {
+        if (listing.isExternal() && listing.getDateScraped() == null) {
+            listing.setDateScraped(LocalDateTime.now());
+        }
+
+        if (!listing.isExternal()) {
+            listing.setDateScraped(null);
+        }
         listingRepository.save(listing);
     }
 
@@ -72,83 +86,17 @@ public class ListingService {
         /* unassigns tenant */
         Tenant tenant = listing.getTenant();
         if (tenant != null) {
-            unassignTenantFromListing(listingId, tenant.getId());
+            tenantService.unassignTenantFromListing(listingId, tenant.getId());
         }
 
         /* unassigns owner */
         Owner owner = listing.getOwner();
         if (owner != null) {
-            unassignOwnerFromListing(listingId);
+            ownerService.unassignOwnerFromListing(listingId);
         }
 
         /* deletes listing */
         listingRepository.delete(listing);
-    }
-
-    @Transactional
-    public void assignOwnerToListing(Integer listingId, Owner owner) {
-
-        Listing listing = listingRepository.findById(listingId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found"));
-
-        listing.setOwner(owner);
-
-        Integer currentUserId = userService.getCurrentUserId();
-        User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
-        Role ownerRole = roleRepository.findByName("OWNER")
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
-
-        if (!currentUser.getRoles().contains(ownerRole)) {
-            currentUser.getRoles().add(ownerRole);
-            userService.updateUser(currentUser); //saves the user
-        }
-        listingRepository.save(listing);
-    }
-
-    @Transactional
-    public void unassignOwnerFromListing(Integer listingId) {
-
-        Listing listing = listingRepository.findById(listingId).get();
-        listing.setOwner(null);
-        listingRepository.save(listing);
-    }
-
-    @Transactional
-    public void assignTenantToListing(Integer listingId, Tenant tenant, String RoleUserIs) {
-
-        Listing listing = listingRepository.findById(listingId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found"));
-
-        listing.setTenant(tenant);
-        listing.setStatus(ListingStatus.RENTED);
-
-        Integer currentUserId = userService.getCurrentUserId();
-        User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
-        Role tenantRole = roleRepository.findByName("TENANT")
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
-        Role ownerRole = roleRepository.findByName("OWNER")
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
-
-        if (!RoleUserIs.equals("owner")) {
-            currentUser.getRoles().add(tenantRole);
-            userService.updateUser(currentUser); //saves user
-        }
-        listingRepository.save(listing);
-    }
-
-    @Transactional
-    public void unassignTenantFromListing(Integer listingId, Integer tenantId) {
-
-        Listing listing = listingRepository.findById(listingId).get();
-        Tenant tenant = tenantRepository.findById(tenantId).get();
-        listing.setTenant(null); //unlinks tenant from listing
-        tenant.setAppliedListings(null);
-        tenantRepository.save(tenant);
-        listingRepository.save(listing);
     }
 
     @Transactional
@@ -198,8 +146,17 @@ public class ListingService {
     }
 
     @Transactional
-    public void markAsAvailable(Listing listing) {
+    public void makeAvailable(Listing listing) {
         listing.setStatus(ListingStatus.APPROVED);
+        listingRepository.save(listing);
+    }
+
+    @Transactional
+    public void approveListing(Integer listingId) {
+
+        Listing listing = getListing(listingId);
+        listing.approve();
+
         listingRepository.save(listing);
     }
 
