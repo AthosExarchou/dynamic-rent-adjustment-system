@@ -3,19 +3,18 @@ package gr.hua.dit.dras.services;
 /* imports */
 import gr.hua.dit.dras.entities.*;
 import gr.hua.dit.dras.model.enums.ListingStatus;
-import gr.hua.dit.dras.model.enums.RentalStatus;
 import gr.hua.dit.dras.repositories.*;
 import jakarta.transaction.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Optional;
 import jakarta.servlet.http.HttpSession;
 
 @Service
+@Transactional
 public class ListingService {
 
     private final RoleRepository roleRepository;
@@ -45,27 +44,12 @@ public class ListingService {
 
     @Transactional
     public List<Listing> getLocalListings() {
-        return listingRepository.findAll()
-                .stream()
-                .filter(listing -> !listing.isExternal())
-                .toList();
+        return listingRepository.findByExternalFalse();
     }
 
     @Transactional
     public List<Listing> getListingsByOwner(Owner owner) {
         return listingRepository.findByOwner(owner);
-    }
-
-    @Transactional
-    public void saveListing(Listing listing) {
-        if (listing.isExternal() && listing.getDateScraped() == null) {
-            listing.setDateScraped(LocalDateTime.now());
-        }
-
-        if (!listing.isExternal()) {
-            listing.setDateScraped(null);
-        }
-        listingRepository.save(listing);
     }
 
     @Transactional
@@ -78,24 +62,47 @@ public class ListingService {
     }
 
     @Transactional
-    public void deleteListing(Integer listingId) {
+    public List<Listing> getPendingListings() {
+        return listingRepository.findByStatus(ListingStatus.PENDING);
+    }
 
+    @Transactional
+    public void saveListing(Listing listing) {
+        /* Enforces required fields for external listings */
+        if (listing.isExternal()) {
+            if (listing.getDateScraped() == null) {
+                listing.setDateScraped(Instant.now());
+            }
+        } else {
+            listing.setDateScraped(null); //local listing
+        }
+
+        listingRepository.save(listing);
+    }
+
+    @Transactional
+    public void deleteListing(Integer listingId) {
         Listing listing = listingRepository.findById(listingId)
                 .orElseThrow(() -> new RuntimeException("Listing not found with ID: " + listingId));
 
-        /* unassigns tenant */
+        /* External listings cannot be deleted manually */
+        if (listing.isExternal()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "External listings cannot be deleted manually. Use scheduled cleanup.");
+        }
+
+        /* Unassign tenant */
         Tenant tenant = listing.getTenant();
         if (tenant != null) {
             tenantService.unassignTenantFromListing(listingId, tenant.getId());
         }
 
-        /* unassigns owner */
+        /* Unassign owner */
         Owner owner = listing.getOwner();
         if (owner != null) {
             ownerService.unassignOwnerFromListing(listingId);
         }
 
-        /* deletes listing */
         listingRepository.delete(listing);
     }
 
@@ -112,21 +119,19 @@ public class ListingService {
 
         if (isFirstListing(owner)) {
             User user = owner.getUser();
-            Optional<Role> optionalRole = roleRepository.findByName("OWNER");
+            Role ownerRole = roleRepository.findByName("OWNER")
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND, "Role 'OWNER' does not exist in the database"
+                    ));
 
-            if (optionalRole.isPresent()) {
-                Role ownerRole = optionalRole.get();
-                System.out.println("User roles before adding: " + user.getRoles());
+            System.out.println("User roles before adding: " + user.getRoles());
 
-                if (!user.getRoles().contains(ownerRole)) {
-                    user.getRoles().add(ownerRole);
-                }
-                userService.updateUser(user);
-                session.invalidate();
-                System.out.println("User roles after adding: " + user.getRoles());
-            } else {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Role 'OWNER' does not exist in the database.");
+            if (!user.getRoles().contains(ownerRole)) {
+                user.getRoles().add(ownerRole);
             }
+            userService.updateUser(user);
+            session.invalidate();
+            System.out.println("User roles after adding: " + user.getRoles());
         }
     }
 
@@ -158,6 +163,48 @@ public class ListingService {
         listing.approve();
 
         listingRepository.save(listing);
+    }
+
+    @Transactional
+    public void cleanupExternalListings(int graceDays) {
+        Instant cutoff = Instant.now().minus(graceDays, ChronoUnit.DAYS);
+
+        List<Listing> externalListings = listingRepository.findByExternalTrue();
+
+        for (Listing listing : externalListings) {
+            /* Deletes if last scraped date is older than cutoff */
+            if (listing.getDateScraped() != null && listing.getDateScraped().isBefore(cutoff)) {
+                listingRepository.delete(listing);
+            }
+        }
+    }
+
+    public void validateListingModificationRights(Listing listing, User currentUser) {
+
+        if (currentUser == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+        }
+
+        boolean isAdmin = currentUser.getRoles().stream()
+                .anyMatch(role -> role.getName().equals("ADMIN"));
+
+        if (isAdmin) {
+            return;
+        }
+
+        if (!currentUser.getRoles().stream()
+                .anyMatch(role -> role.getName().equals("OWNER"))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+
+        Owner owner = listing.getOwner();
+
+        if (owner == null ||
+                owner.getUser() == null ||
+                !owner.getUser().getId().equals(currentUser.getId())) {
+
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
     }
 
 }

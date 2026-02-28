@@ -1,5 +1,11 @@
 package gr.hua.dit.dras.dto;
 
+/* imports */
+import java.time.Instant;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Objects;
+
 public class ExternalListingDTO {
 
     private String title;
@@ -13,6 +19,8 @@ public class ExternalListingDTO {
     private String propertyType;
     private String rentalDuration;
     private String sourceUrl;
+    private Instant dateScraped;
+    private List<String> images = new ArrayList<>();
 
     /* getters and setters */
     public String getTitle() {
@@ -44,6 +52,9 @@ public class ExternalListingDTO {
     }
 
     public void setPrice(Integer price) {
+        if (price != null && price < 0) {
+            throw new IllegalArgumentException("Price cannot be negative");
+        }
         this.price = price;
     }
 
@@ -100,6 +111,36 @@ public class ExternalListingDTO {
     }
 
     public void setSourceUrl(String sourceUrl) {
-        this.sourceUrl = sourceUrl;
+        if (sourceUrl == null || sourceUrl.isBlank()) {
+            throw new IllegalArgumentException("Source Url is mandatory for external listings");
+        }
+        this.sourceUrl = sourceUrl.trim();
+    }
+
+    public Instant getDateScraped() {
+        return dateScraped;
+    }
+
+    public void setDateScraped(Instant dateScraped) {
+        if (dateScraped == null) {
+            throw new IllegalArgumentException("dateScraped cannot be null");
+        }
+        this.dateScraped = dateScraped;
+    }
+
+    public List<String> getImages() {
+        return images == null ? List.of() : List.copyOf(images);
+    }
+
+    public void setImages(List<String> images) {
+        if (images == null) {
+            this.images = List.of();
+        } else {
+            this.images = images.stream()
+                    .filter(Objects::nonNull)
+                    .map(String::trim)
+                    .filter(s -> !s.isBlank())
+                    .toList();
+        }
     }
 }

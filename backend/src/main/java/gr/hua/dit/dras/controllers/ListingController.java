@@ -7,14 +7,16 @@ import gr.hua.dit.dras.services.*;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Controller
 @RequestMapping("listing")
@@ -40,6 +42,7 @@ public class ListingController {
         this.emailService = emailService;
     }
 
+    /* Common model attributes */
     @ModelAttribute
     public void addCommonAttributes(Model model) {
         Integer currentUserId = userService.getCurrentUserId();
@@ -53,6 +56,7 @@ public class ListingController {
         model.addAttribute("currentUserId", currentUserId);
     }
 
+    /* Public listings */
     @GetMapping("/listings")
     public String showListings(Model model) {
 
@@ -70,8 +74,10 @@ public class ListingController {
     @GetMapping("/{id}")
     public String showListing(@PathVariable Integer id, Model model) {
 
-        Listing listing = listingService.getListing(id);
-        if (listing == null) {
+        Listing listing;
+        try {
+            listing = listingService.getListing(id);
+        } catch (ResponseStatusException e) {
             model.addAttribute("errorMessage", "This listing could not be found!");
             return "listing/listings";
         }
@@ -79,9 +85,11 @@ public class ListingController {
         return "listing/listings";
     }
 
+    /* Owner listings */
     @Secured("OWNER")
     @GetMapping("/mylisting")
     public String myListings(Model model) {
+
         Integer currentUserId = userService.getCurrentUserId();
         Owner owner = ownerService.getOwner(currentUserId);
 
@@ -92,21 +100,20 @@ public class ListingController {
         return "listing/mylisting";
     }
 
+    /* Add new listing form */
     @Secured("USER")
     @GetMapping("/new")
     public String addListing(Model model) {
 
         Listing listing = new Listing();
         model.addAttribute("listing", listing);
-        Integer ownerId = ownerService.getOwnerIdForCurrentUser();
 
+        Integer ownerId = ownerService.getOwnerIdForCurrentUser();
         if (ownerId == null) {
             ownerId = userService.getCurrentUserId();
         }
+        model.addAttribute("ownerId", ownerId);
 
-        if (ownerId != null) {
-            model.addAttribute("ownerId", ownerId);
-        }
         boolean isUserOwner = userService.isUserOwner();
         model.addAttribute("isUserOwner", isUserOwner);
 
@@ -114,55 +121,53 @@ public class ListingController {
         if (tenantId == null) {
             tenantId = userService.getCurrentUserId();
         }
-
-        if (tenantId != null) {
-            model.addAttribute("tenantId", tenantId);
-        }
+        model.addAttribute("tenantId", tenantId);
 
         boolean isUserTenant = tenantService.isUserTenant();
         model.addAttribute("isUserTenant", isUserTenant);
         return "listing/listing";
     }
 
+    /* Save new listing */
     @Secured("USER")
     @PostMapping("/new")
     public String saveListing(@Valid @ModelAttribute("listing") Listing listing,
-                                BindingResult theBindingResult,
-                                @RequestParam(value = "owner_id", required = false) Integer ownerId,
-                                @RequestParam(value = "firstName", required = false) String firstName,
-                                @RequestParam(value = "lastName", required = false) String lastName,
-                                @RequestParam(value = "phoneNumber", required = false) String phoneNumber,
-                                Model model, HttpSession session) {
-
-        if (theBindingResult.hasErrors()) {
-            boolean isUserOwner = userService.isUserOwner();
-
-            Integer ownerIdValidation = ownerId;
-            if (ownerIdValidation == null && isUserOwner) {
-                ownerIdValidation = userService.getCurrentUserId();
+                              BindingResult bindingResult,
+                              @RequestParam(value = "owner_id", required = false) Integer ownerId,
+                              @RequestParam(value = "firstName", required = false) String firstName,
+                              @RequestParam(value = "lastName", required = false) String lastName,
+                              @RequestParam(value = "phoneNumber", required = false) String phoneNumber,
+                              Model model,
+                              HttpSession session
+    ) {
+        if (bindingResult.hasErrors()) {
+            if (ownerId == null && userService.isUserOwner()) {
+                ownerId = userService.getCurrentUserId();
             }
-
-            model.addAttribute("isUserOwner", isUserOwner);
-            model.addAttribute("ownerId", ownerIdValidation);
-            model.addAttribute("listing", listing);
+            model.addAttribute("ownerId", ownerId);
+            model.addAttribute("isUserOwner", userService.isUserOwner());
             return "listing/listing";
         }
 
         Owner owner;
         /* if the user is not already an owner, creates an owner and assigns the role 'OWNER' */
         if (!userService.isUserOwner()) {
-            if (firstName == null || lastName == null || phoneNumber == null) {
+            if (Stream.of(firstName, lastName, phoneNumber)
+                    .anyMatch(s -> s == null || s.isBlank())) {
+
                 model.addAttribute("errorMessage",
                         "First name, last name, and phone number are required for new owner.");
                 return "listing/listing";
             }
             if (!phoneNumber.matches("^\\+?[0-9. ()-]{7,25}$")) {
-                model.addAttribute("errorMessage", "Invalid phone number format. Use only digits, 7-25 digits.");
+                model.addAttribute("errorMessage",
+                        "Invalid phone number format. Use 7-25 digits.");
                 return "listing/listing";
             }
 
-            owner = ownerService.createOwnerForCurrentUser(firstName, lastName, phoneNumber);
-
+            owner = ownerService.createOwnerForCurrentUser(
+                    firstName.trim(), lastName.trim(), phoneNumber.trim()
+            );
             if (owner == null) {
                 model.addAttribute("errorMessage",
                         "Your role as 'OWNER' has been revoked by the Administrator." +
@@ -183,10 +188,11 @@ public class ListingController {
 
         listing.setStatus(ListingStatus.PENDING);
         listing.setTenant(null); //newly added listings start without a tenant
+        listing.setExternal(false);
         listingService.saveListing(listing);
         ownerService.assignOwnerToListing(listing.getId(), owner);
 
-        /* sends email notification to the owner of said listing */
+        /* Sends email notification to the owner of said listing */
         try {
             emailService.sendEmailNotification(
                     owner.getUser().getEmail(),
@@ -195,7 +201,9 @@ public class ListingController {
                     "ownerCreated"
             );
         } catch (Exception e) {
-            model.addAttribute("emailError", "Listing submitted but confirmation email could not be sent.");
+            model.addAttribute("emailError",
+                    "Listing submitted but confirmation email could not be sent.");
+            e.printStackTrace();
         }
 
         model.addAttribute("listings", listingService.getListings());
@@ -204,6 +212,110 @@ public class ListingController {
         return "listing/listings";
     }
 
+    /* Delete listing */
+    @Secured({"OWNER", "ADMIN"})
+    @PostMapping("/delete/{id}")
+    public String deleteListing(@PathVariable Integer id, Model model) {
+
+        Listing listing;
+        try {
+            listing = listingService.getListing(id);
+        } catch (ResponseStatusException e) {
+            model.addAttribute("errorMessage", "Listing not found.");
+            return "listing/mylisting";
+        }
+
+        /* Cannot delete external listings manually */
+        if (listing.isExternal()) {
+            model.addAttribute("errorMessage",
+                    "External listings cannot be deleted manually.");
+            return "listing/mylisting";
+        }
+
+        /* Checks if the listing is rented (cannot be deleted) */
+        if (listing.getTenant() != null) {
+            model.addAttribute("errorMessage",
+                    "This listing has an active rental and cannot be deleted at this time.");
+            return "listing/mylisting";
+        }
+
+        Integer currentUserId = userService.getCurrentUserId();
+        /* Checks if the logged-in user is the owner of this listing */
+        Owner listingOwner = listing.getOwner();
+        if (listingOwner == null || listingOwner.getUser() == null
+                || !Objects.equals(listingOwner.getUser().getId(), currentUserId)) {
+
+            model.addAttribute("errorMessage", "You are not authorized to delete this listing!");
+            return "listing/mylisting"; //back with error
+        }
+
+        String ownerEmail = listingOwner.getUser().getEmail();
+        /* Sends email before deleting listing */
+        try {
+            emailService.sendListingDeletionEmail(ownerEmail, listing);
+        } catch (Exception e) {
+            model.addAttribute("emailError", "Notification email could not be sent.");
+            System.out.println("Error during email sending!");
+            e.printStackTrace();
+        }
+        listingService.validateListingModificationRights(listing, userService.getUser(currentUserId));
+
+        /* Proceeds with the listing deletion */
+        System.out.println("Deleting listing with ID: " + id);
+        listingService.deleteListing(id);
+        System.out.println("Listing deleted successfully.");
+
+        model.addAttribute("listings", listingService.getListings()); //list of remaining listings
+        model.addAttribute("successMessage", "Listing deleted successfully!");
+        return "listing/mylisting"; //back to the listings list page
+    }
+
+    /* Approve listings (admin) */
+    @Secured("ADMIN")
+    @GetMapping("/listingsforapproval")
+    public String showListingsForApproval(Model model) {
+
+        model.addAttribute("listings", listingService.getPendingListings());
+        return "listing/listingsforapproval";
+    }
+
+    @Secured("ADMIN")
+    @PostMapping("/approve/{id}")
+    public String approveListing(@PathVariable Integer id, Model model) {
+
+        Listing listing;
+        try {
+            listing = listingService.getListing(id);
+        } catch (ResponseStatusException e) {
+            model.addAttribute("errorMessage", "Listing not found.");
+            return "listing/listings";
+        } catch (IllegalStateException e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            return "listing/listings";
+        }
+        listingService.approveListing(id);
+
+        /* Sends email notification to the owner of said listing */
+        try {
+            Owner owner = listing.getOwner();
+            if (owner != null && owner.getUser() != null) {
+                emailService.sendEmailNotification(
+                        owner.getUser().getEmail(),
+                        owner.getFirstName() + " " + owner.getLastName(),
+                        listing,
+                        "adminApproved"
+                );
+            }
+        } catch (Exception e) {
+            model.addAttribute("emailError",
+                    "Listing approved but email could not be sent to the owner.");
+        }
+
+        model.addAttribute("successMessage", "Listing approved successfully!");
+        return "listing/listings";
+    }
+
+    /* Assign tenant/owner */
     @GetMapping("/assign/{id}")
     public String showAssignOwnerToListing(@PathVariable Integer id, Model model) {
 
@@ -214,18 +326,36 @@ public class ListingController {
         return "listing/assignowner";
     }
 
-    @GetMapping("/unassign/owner/{id}")
-    public String unassignOwnerToListing(@PathVariable Integer id, Model model) {
+    @Secured("ADMIN")
+    @PostMapping("/assign/{id}")
+    public String assignOwnerToListing(
+            @PathVariable Integer id,
+            @RequestParam(value = "owner_id") Integer ownerId,
+            Authentication authentication,
+            Model model
+    ) {
+        User currentUser = userService.getUserByEmail(authentication.getName());
+        Listing listing = listingService.getListing(id);
+        listingService.validateListingModificationRights(listing, currentUser);
 
-        ownerService.unassignOwnerFromListing(id);
+        Owner owner = ownerService.getOwner(ownerId);
+        ownerService.assignOwnerToListing(id, owner);
+
         model.addAttribute("listings", listingService.getListings());
+        model.addAttribute("successMessage", "Form submitted successfully!");
         return "listing/listings";
     }
 
-    @GetMapping("/unassign/tenant/{id}")
-    public String unassignTenantToListing(@PathVariable Integer id, Model model) {
+    @Secured("ADMIN")
+    @GetMapping("/unassign/owner/{id}")
+    public String unassignOwnerFromListing(@PathVariable Integer id, Authentication authentication, Model model) {
 
-        tenantService.unassignTenantFromListing(id, tenantService.getTenantIdForCurrentUser());
+        User currentUser = userService.getUserByEmail(authentication.getName());
+        Listing listing = listingService.getListing(id);
+
+        listingService.validateListingModificationRights(listing, currentUser);
+
+        ownerService.unassignOwnerFromListing(id);
         model.addAttribute("listings", listingService.getListings());
         return "listing/listings";
     }
@@ -240,139 +370,64 @@ public class ListingController {
         return "listing/assigntenant";
     }
 
-    @PostMapping("/assign/{id}")
-    public String assignOwnerToListing(@PathVariable Integer id,
-                                       @RequestParam(value = "owner_id", required = true) Integer ownerId,
-                                       Model model) {
-
-        System.out.println(ownerId);
-        Owner owner = ownerService.getOwner(ownerId);
-        Listing listing = listingService.getListing(id);
-        System.out.println(listing);
-        ownerService.assignOwnerToListing(id, owner);
-        model.addAttribute("listings", listingService.getListings());
-        model.addAttribute("successMessage", "Form submitted successfully!");
-        return "listing/listings";
-    }
-
+    @Secured({"ADMIN", "OWNER"})
     @PostMapping("/tenantassign/{id}")
-    public String assignTenantToListing(@PathVariable Integer id,
-                                        @RequestParam(value = "tenant", required = true) Integer tenantId,
-                                        Model model) {
-
-        System.out.println(tenantId);
-        Tenant tenant = tenantService.getTenant(tenantId);
+    public String assignTenantToListing(
+            @PathVariable Integer id,
+            @RequestParam(value = "tenant") Integer tenantId,
+            Authentication authentication,
+            Model model
+    ) {
+        User currentUser = userService.getUserByEmail(authentication.getName());
         Listing listing = listingService.getListing(id);
-        System.out.println(listing);
-        String roleUserIs = "tenant";
-        tenantService.assignTenantToListing(id, tenant, roleUserIs);
+        listingService.validateListingModificationRights(listing, currentUser);
+
+        if (listing.getTenant() != null) {
+            model.addAttribute("errorMessage", "Listing already has a tenant assigned.");
+            return "listing/listings";
+        }
+        Tenant tenant = tenantService.getTenant(tenantId);
+        tenantService.assignTenantToListing(id, tenant, "TENANT");
+
         model.addAttribute("listings", listingService.getListings());
         return "listing/listings";
     }
 
-    @Secured("OWNER")
-    @PostMapping("/delete/{id}")
-    public String deleteListing(@PathVariable Integer id, Model model) {
+    @Secured({"ADMIN", "USER", "OWNER"})
+    @GetMapping("/unassign/tenant/{id}")
+    public String unassignTenantFromListing(@PathVariable Integer id, Authentication authentication, Model model) {
 
+        User currentUser = userService.getUserByEmail(authentication.getName());
         Listing listing = listingService.getListing(id);
+        listingService.validateListingModificationRights(listing, currentUser);
 
-        /* checks if the listing is rented (cannot be deleted) */
-        if (listing.getTenant() != null) {
-            model.addAttribute("errorMessage", "This listing has an active rental and cannot be deleted at this time.");
-            return "listing/listings";
-        }
-
-        /* if listing is not found */
-        if (listing == null) {
-            model.addAttribute("errorMessage", "This listing could not be found!");
-            return "listing/mylisting"; //back to the listings page
-        }
-
-        Integer currentUserId = userService.getCurrentUserId();
-        /* check if the logged-in user is the owner of this listing */
-        Owner listingOwner = listing.getOwner();
-        if (listingOwner == null || listingOwner.getUser() == null || !Objects.equals(listingOwner.getUser().getId(), currentUserId)) {
-            model.addAttribute("errorMessage", "You are not authorized to delete this listing!");
-            return "listing/mylisting"; //back with error
-        }
-
-        /* stores email and any needed data before deletion */
-        String ownerEmail = listingOwner.getUser().getEmail();
-
-        /* sends email BEFORE deleting listing */
-        try {
-            emailService.sendListingDeletionEmail(ownerEmail, listing);
-        } catch (Exception e) {
-            model.addAttribute("emailError", "Notification email could not be sent.");
-            System.out.println("Error during email sending!");
-            e.printStackTrace();
-        }
-
-        /* proceeds with the listing deletion */
-        System.out.println("Deleting listing with ID: " + id);
-        listingService.deleteListing(id);
-        System.out.println("Listing deleted successfully.");
-
-        model.addAttribute("listings", listingService.getListings()); //list of remaining listings
-        model.addAttribute("successMessage", "Listing deleted successfully!");
-        return "listing/mylisting"; //back to the listings list page
-    }
-
-    @Secured("ADMIN")
-    @GetMapping("/listingsforapproval")
-    public String showListingsForApproval(Model model) {
-
-        List<Listing> listings = listingService.getListings();
-
-        /* filters listings where approved == false */
-        List<Listing> unapprovedListings = listings.stream()
-                .filter(listing -> listing.getStatus() == ListingStatus.PENDING)
-                .collect(Collectors.toList());
-
-        model.addAttribute("listings", unapprovedListings);
-        return "listing/listingsforapproval";
-    }
-
-    @Secured("ADMIN")
-    @PostMapping("/approve/{id}")
-    public String changeApprovedStatus(@PathVariable Integer id, Model model) {
-
-        Listing listing = listingService.getListing(id);
-
-        if (listing == null) {
-            model.addAttribute("errorMessage", "This listing could not be found!");
-            return "listing/listings";
-        }
-        listing.setStatus(ListingStatus.APPROVED);
-        listingService.saveListing(listing);
-
-        /* sends email notification to the owner of said listing */
-        try {
-            Owner owner = listing.getOwner();
-            if (owner != null && owner.getUser() != null) {
-                emailService.sendEmailNotification(
-                        owner.getUser().getEmail(),
-                        owner.getFirstName() + " " + owner.getLastName(),
-                        listing,
-                        "adminApproved"
-                );
-            }
-        } catch (Exception e) {
-            model.addAttribute("emailError", "Listing approved but email could not be sent to the owner.");
-        }
-
-        model.addAttribute("successMessage", "Listing approved successfully!");
+        tenantService.unassignTenantFromListing(id, tenantService.getTenantIdForCurrentUser());
+        model.addAttribute("listings", listingService.getListings());
         return "listing/listings";
     }
 
     @Secured("OWNER")
     @GetMapping("/{id}/applications")
-    public String viewApplications(@PathVariable("id") Integer listingId, Model model) {
+    public String viewApplications(
+            @PathVariable("id") Integer listingId,
+            Authentication authentication,
+            Model model
+    ) {
+        Listing listing;
+        try {
+            listing = listingService.getListing(listingId);
+        } catch (ResponseStatusException e) {
+            model.addAttribute("errorMessage", "Listing not found.");
+            return "listing/applications";
+        }
 
-        Listing listing = listingService.getListing(listingId);
+        User currentUser = userService.getUserByEmail(authentication.getName());
+        listingService.validateListingModificationRights(listing, currentUser);
 
-        if (listing == null || !listing.getOwner().getUser().getId().equals(userService.getCurrentUserId())) {
-            model.addAttribute("errorMessage", "You do not have access to this listing or it does not exist.");
+        if (!listing.getOwner().getUser().getId().equals(userService.getCurrentUserId())) {
+
+            model.addAttribute("errorMessage",
+                    "You do not have access to this listing or it does not exist.");
             return "listing/applications";
         }
         model.addAttribute("listing", listing);
@@ -380,7 +435,7 @@ public class ListingController {
         return "listing/applications";
     }
 
-    /* every role is allowed to, at the very least, filter listings */
+    /* Every role is allowed to, at the very least, filter listings */
     @GetMapping("/filter")
     public String filterListings(@RequestParam(required = false) String title,
                                    @RequestParam(required = false) Integer minPrice,

@@ -4,8 +4,7 @@ package gr.hua.dit.dras.entities;
 import gr.hua.dit.dras.model.enums.ListingStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -20,8 +19,8 @@ public class Listing {
     @Column(name = "id")
     private Integer id;
 
-    @Column(name = "date_scraped")
-    private LocalDateTime dateScraped;
+    @Column(name = "date_scraped", nullable = false)
+    private Instant dateScraped;
 
     @NotBlank
     @Size(max = 150)
@@ -76,7 +75,7 @@ public class Listing {
     private String rentalDuration;
 
     @Size(max = 500)
-    @Column(length = 500)
+    @Column(name = "source_url",unique = true, length = 500)
     private String sourceUrl;
 
     @Enumerated(EnumType.STRING)
@@ -120,7 +119,7 @@ public class Listing {
 
     public Listing(
             Integer id,
-            LocalDateTime dateScraped,
+            Instant dateScraped,
             String title,
             String subtitle,
             String description,
@@ -167,11 +166,11 @@ public class Listing {
         this.id = id;
     }
 
-    public LocalDateTime getDateScraped() {
+    public Instant getDateScraped() {
         return dateScraped;
     }
 
-    public void setDateScraped(LocalDateTime dateScraped) {
+    public void setDateScraped(Instant dateScraped) {
         this.dateScraped = dateScraped;
     }
 
@@ -386,6 +385,25 @@ public class Listing {
                 ", tenant=" + tenant +
                 ", applicants=" + applicants +
                 '}';
+    }
+
+    /* Automatic Sanitization */
+    @PrePersist
+    @PreUpdate
+    private void sanitize() {
+        this.title = safeTrim(this.title);
+        this.subtitle = safeTrim(this.subtitle);
+        this.description = safeTrim(this.description);
+        this.address = safeTrim(this.address);
+        this.propertyType = safeTrim(this.propertyType);
+        this.rentalDuration = safeTrim(this.rentalDuration);
+        this.sourceUrl = safeTrim(this.sourceUrl);
+    }
+
+    private String safeTrim(String s) {
+        if (s == null) return null;
+        String trimmed = s.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
 }

@@ -7,6 +7,7 @@ import gr.hua.dit.dras.entities.Owner;
 import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.repositories.ListingRepository;
 import gr.hua.dit.dras.repositories.OwnerRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import java.util.List;
 
@@ -21,12 +22,19 @@ public class ExternalListingImportService {
         this.ownerRepository = ownerRepository;
     }
 
+    @Transactional
     public void importExternalListings(List<ExternalListingDTO> dtos) {
         Owner systemOwner = ownerRepository.findBySystemOwnerTrue()
                 .orElseThrow(() -> new IllegalStateException("System owner not found!"));
 
         for (ExternalListingDTO dto : dtos) {
-            Listing listing = new Listing();
+
+            validateDto(dto);
+
+            Listing listing = listingRepository
+                    .findBySourceUrl(dto.getSourceUrl())
+                    .orElseGet(Listing::new);
+
             listing.setTitle(dto.getTitle());
             listing.setSubtitle(dto.getSubtitle());
             listing.setDescription(dto.getDescription());
@@ -42,8 +50,32 @@ public class ExternalListingImportService {
             listing.setExternal(true);
             listing.setOwner(systemOwner);
             listing.setStatus(ListingStatus.APPROVED);
+            listing.setDateScraped(dto.getDateScraped());
+
+            if (dto.getImages() != null && !dto.getImages().isEmpty()) {
+                listing.setImages(
+                        dto.getImages().stream()
+                                .filter(img -> img != null && !img.isBlank())
+                                .toList()
+                );
+            }
 
             listingRepository.save(listing);
         }
     }
+
+    private void validateDto(ExternalListingDTO dto) {
+        if (dto.getSourceUrl() == null) {
+            throw new IllegalArgumentException("Missing sourceUrl");
+        }
+
+        if (dto.getDateScraped() == null) {
+            throw new IllegalArgumentException("Missing scrape timestamp for: " + dto.getSourceUrl());
+        }
+
+        if (dto.getTitle() == null || dto.getTitle().isBlank()) {
+            throw new IllegalArgumentException("Missing title for: " + dto.getSourceUrl());
+        }
+    }
+
 }

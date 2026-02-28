@@ -70,7 +70,7 @@ public class UserService implements UserDetailsService {
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Optional<User> opt = userRepository.findByUsername(username);
+        Optional<User> opt = userRepository.findByEmail(username);
 
         if(opt.isEmpty())
             throw new UsernameNotFoundException("User with name: " +username +" not found !");
