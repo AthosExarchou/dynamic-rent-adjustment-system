@@ -2,7 +2,6 @@ package gr.hua.dit.dras.entities;
 
 /* imports */
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -28,11 +27,6 @@ public class Owner {
     @Size(max = 20)
     private String lastName;
 
-    @Column(name = "email")
-    @Size(max = 50)
-    @Email
-    private String email;
-
     @Column(nullable = false, unique = true)
     @NotBlank(message = "Phone number is required")
     @Pattern(regexp = "^\\+?[0-9. ()-]{7,25}$", message = "Invalid phone number format") //accepts phone numbers worldwide
@@ -41,6 +35,9 @@ public class Owner {
     @Column(nullable = false)
     private boolean systemOwner = false;
 
+    @Column(nullable = false)
+    private boolean active = true;
+
     /* Owner-Listing relationship */
     @OneToMany(mappedBy = "owner", cascade= {CascadeType.PERSIST, CascadeType.MERGE,
             CascadeType.DETACH, CascadeType.REFRESH, CascadeType.REMOVE, CascadeType.DETACH})
@@ -48,13 +45,12 @@ public class Owner {
 
     /* Owner-User relationship */
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH, CascadeType.REMOVE})
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    public Owner(String firstName, String lastName, String email, String phoneNumber,  boolean systemOwner) {
+    public Owner(String firstName, String lastName, String phoneNumber,  boolean systemOwner) {
         this.firstName = firstName;
         this.lastName = lastName;
-        this.email = email;
         this.phoneNumber = phoneNumber;
         this.systemOwner = systemOwner;
     }
@@ -76,16 +72,6 @@ public class Owner {
 
     public void setListings(List<Listing> listings) {
         this.listings = listings;
-    }
-
-    private String username;
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
     }
 
     public Integer getId() {
@@ -112,14 +98,6 @@ public class Owner {
         this.lastName = lastName;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
     public String getPhoneNumber() {
         return phoneNumber;
     }
@@ -136,16 +114,26 @@ public class Owner {
         this.systemOwner = systemOwner;
     }
 
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public void deactivate() {
+        this.active = false;
+    }
+
     @Override
     public String toString() {
         return "Owner{" +
                 "id=" + id +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
-                ", email='" + email + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
                 ", systemOwner=" + systemOwner +
-                ", username='" + username + '\'' +
                 ", listings=" + listings +
                 '}';
     }

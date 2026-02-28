@@ -4,7 +4,11 @@ package gr.hua.dit.dras.entities;
 import gr.hua.dit.dras.model.enums.ListingStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -15,6 +19,9 @@ public class Listing {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Integer id;
+
+    @Column(name = "date_scraped")
+    private LocalDateTime dateScraped;
 
     @NotBlank
     @Size(max = 150)
@@ -76,6 +83,14 @@ public class Listing {
     @Column(nullable = false, length = 20)
     private ListingStatus status = ListingStatus.PENDING;
 
+    @ElementCollection
+    @CollectionTable(
+            name = "listing_images",
+            joinColumns = @JoinColumn(name = "listing_id")
+    )
+    @Column(name = "image_url", length = 1000)
+    private List<String> images = new ArrayList<>();
+
     @Column(nullable = false)
     private boolean external = false;
 
@@ -103,10 +118,27 @@ public class Listing {
         this.applicants = applicants;
     }
 
-    public Listing(Integer id, String title, String subtitle, String description, Integer price, Integer pricePerM2,
-                   String address, Integer sizeM2, Integer rooms, String propertyType, String rentalDuration,
-                   String sourceUrl, ListingStatus status, boolean external, Owner owner, Tenant tenant) {
+    public Listing(
+            Integer id,
+            LocalDateTime dateScraped,
+            String title,
+            String subtitle,
+            String description,
+            Integer price,
+            Integer pricePerM2,
+            String address,
+            Integer sizeM2,
+            Integer rooms,
+            String propertyType,
+            String rentalDuration,
+            String sourceUrl,
+            ListingStatus status,
+            boolean external,
+            Owner owner,
+            Tenant tenant
+    ) {
         this.id = id;
+        this.dateScraped=dateScraped;
         this.title = title;
         this.subtitle = subtitle;
         this.description = description;
@@ -133,6 +165,14 @@ public class Listing {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public LocalDateTime getDateScraped() {
+        return dateScraped;
+    }
+
+    public void setDateScraped(LocalDateTime dateScraped) {
+        this.dateScraped = dateScraped;
     }
 
     public String getTitle() {
@@ -223,6 +263,14 @@ public class Listing {
         this.sourceUrl = sourceUrl;
     }
 
+    public List<String> getImages() {
+        return images;
+    }
+
+    public void setImages(List<String> images) {
+        this.images = images;
+    }
+
     public Owner getOwner() {
         return owner;
     }
@@ -282,10 +330,44 @@ public class Listing {
         }
     }
 
+    public void disable() {
+        if (this.status == ListingStatus.RENTED) {
+            throw new IllegalStateException("Cannot disable rented listing");
+        }
+        this.status = ListingStatus.DISABLED;
+    }
+
+    public void approve() {
+        if (!isPending()) {
+            throw new IllegalStateException("Only pending listings can be approved");
+        }
+        this.status = ListingStatus.APPROVED;
+    }
+
+    public void reject() {
+        if (!isPending()) {
+            throw new IllegalStateException("Only pending listings can be rejected");
+        }
+        this.status = ListingStatus.REJECTED;
+    }
+
+    public void markAsRented(Tenant tenant) {
+        if (!isApproved()) {
+            throw new IllegalStateException("Only approved listings can be rented");
+        }
+        if (tenant == null) {
+            throw new IllegalArgumentException("Tenant cannot be null");
+        }
+
+        this.tenant = tenant;
+        this.status = ListingStatus.RENTED;
+    }
+
     @Override
     public String toString() {
         return "Listing{" +
                 "id=" + id +
+                ", dateScraped=" + dateScraped +
                 ", title='" + title + '\'' +
                 ", subtitle='" + subtitle + '\'' +
                 ", description='" + description + '\'' +
@@ -298,9 +380,11 @@ public class Listing {
                 ", rentalDuration='" + rentalDuration + '\'' +
                 ", sourceUrl='" + sourceUrl + '\'' +
                 ", status=" + status +
+                ", images=" + images +
                 ", external=" + external +
                 ", owner=" + owner +
                 ", tenant=" + tenant +
+                ", applicants=" + applicants +
                 '}';
     }
 

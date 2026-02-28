@@ -3,7 +3,6 @@ package gr.hua.dit.dras.entities;
 /* imports */
 import gr.hua.dit.dras.model.enums.RentalStatus;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -27,11 +26,6 @@ public class Tenant {
     @NotBlank
     @Size(max = 20)
     private String lastName;
-
-    @Column
-    @Size(max = 50)
-    @Email
-    private String email;
 
     @Column(nullable = false, unique = true)
     @NotBlank(message = "Phone number is required")
@@ -65,27 +59,16 @@ public class Tenant {
 
     /* Tenant-User relationship */
     @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH, CascadeType.REMOVE})
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
-    public Tenant(String firstName, String lastName, String email, String phoneNumber) {
+    public Tenant(String firstName, String lastName, String phoneNumber) {
         this.firstName = firstName;
         this.lastName = lastName;
-        this.email = email;
         this.phoneNumber = phoneNumber;
     }
 
     public Tenant() {
-    }
-
-    private String username;
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
     }
 
     public User getUser() {
@@ -108,8 +91,6 @@ public class Tenant {
         return lastName;
     }
 
-    public String getEmail() {return email;}
-
     public String getPhoneNumber() {
         return phoneNumber;
     }
@@ -125,8 +106,6 @@ public class Tenant {
     public void setLastName(String lastName) {
         this.lastName = lastName;
     }
-
-    public void setEmail(String email) {this.email = email;}
 
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
@@ -162,7 +141,6 @@ public class Tenant {
                 "id=" + id +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
-                ", email='" + email + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
                 '}';
     }
