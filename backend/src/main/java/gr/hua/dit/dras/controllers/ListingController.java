@@ -1,6 +1,7 @@
 package gr.hua.dit.dras.controllers;
 
 /* imports */
+import gr.hua.dit.dras.dto.ListingFilterDTO;
 import gr.hua.dit.dras.entities.*;
 import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.services.*;
@@ -45,12 +46,20 @@ public class ListingController {
     /* Common model attributes */
     @ModelAttribute
     public void addCommonAttributes(Model model) {
-        Integer currentUserId = userService.getCurrentUserId();
-        Tenant tenant = null;
+        Integer currentUserId = null;
+
         try {
-            tenant = tenantService.getTenant(currentUserId);
-        } catch (NoSuchElementException e) {
-            /* user is not a tenant, ignore */
+            currentUserId = userService.getCurrentUserId();
+        } catch (Exception e) {
+            /* unauthenticated user, ignore */
+        }
+
+        Tenant tenant = null;
+
+        if (currentUserId != null) {
+            tenant = tenantService
+                    .findTenantByUserId(currentUserId)
+                    .orElse(null);
         }
         model.addAttribute("tenant", tenant);
         model.addAttribute("currentUserId", currentUserId);
@@ -241,24 +250,20 @@ public class ListingController {
 
         Integer currentUserId = userService.getCurrentUserId();
         /* Checks if the logged-in user is the owner of this listing */
-        Owner listingOwner = listing.getOwner();
-        if (listingOwner == null || listingOwner.getUser() == null
-                || !Objects.equals(listingOwner.getUser().getId(), currentUserId)) {
-
+        try {
+            listingService.validateListingModificationRights(listing, userService.getUser(currentUserId));
+        } catch (ResponseStatusException e) {
             model.addAttribute("errorMessage", "You are not authorized to delete this listing!");
-            return "listing/mylisting"; //back with error
+            return "listing/mylisting";
         }
 
-        String ownerEmail = listingOwner.getUser().getEmail();
+        String ownerEmail = listing.getOwner().getUser().getEmail();
         /* Sends email before deleting listing */
         try {
             emailService.sendListingDeletionEmail(ownerEmail, listing);
         } catch (Exception e) {
             model.addAttribute("emailError", "Notification email could not be sent.");
-            System.out.println("Error during email sending!");
-            e.printStackTrace();
         }
-        listingService.validateListingModificationRights(listing, userService.getUser(currentUserId));
 
         /* Proceeds with the listing deletion */
         System.out.println("Deleting listing with ID: " + id);
@@ -336,7 +341,13 @@ public class ListingController {
     ) {
         User currentUser = userService.getUserByEmail(authentication.getName());
         Listing listing = listingService.getListing(id);
-        listingService.validateListingModificationRights(listing, currentUser);
+        try {
+            listingService.validateListingModificationRights(listing, currentUser);
+        } catch (ResponseStatusException e) {
+            model.addAttribute("errorMessage",
+                    "You are not authorized to modify this listing!");
+            return "listing/listings";
+        }
 
         Owner owner = ownerService.getOwner(ownerId);
         ownerService.assignOwnerToListing(id, owner);
@@ -348,12 +359,20 @@ public class ListingController {
 
     @Secured("ADMIN")
     @GetMapping("/unassign/owner/{id}")
-    public String unassignOwnerFromListing(@PathVariable Integer id, Authentication authentication, Model model) {
+    public String unassignOwnerFromListing(@PathVariable Integer id,
+                                           Authentication authentication,
+                                           Model model) {
 
         User currentUser = userService.getUserByEmail(authentication.getName());
         Listing listing = listingService.getListing(id);
 
-        listingService.validateListingModificationRights(listing, currentUser);
+        try {
+            listingService.validateListingModificationRights(listing, currentUser);
+        } catch (ResponseStatusException e) {
+            model.addAttribute("errorMessage",
+                    "You are not authorized to modify this listing!");
+            return "listing/listings";
+        }
 
         ownerService.unassignOwnerFromListing(id);
         model.addAttribute("listings", listingService.getListings());
@@ -380,12 +399,20 @@ public class ListingController {
     ) {
         User currentUser = userService.getUserByEmail(authentication.getName());
         Listing listing = listingService.getListing(id);
-        listingService.validateListingModificationRights(listing, currentUser);
-
-        if (listing.getTenant() != null) {
-            model.addAttribute("errorMessage", "Listing already has a tenant assigned.");
+        try {
+            listingService.validateListingModificationRights(listing, currentUser);
+        } catch (ResponseStatusException e) {
+            model.addAttribute("errorMessage",
+                    "You are not authorized to assign tenants to this listing!");
             return "listing/listings";
         }
+
+        if (listing.getTenant() != null) {
+            model.addAttribute("errorMessage",
+                    "Listing already has a tenant assigned.");
+            return "listing/listings";
+        }
+
         Tenant tenant = tenantService.getTenant(tenantId);
         tenantService.assignTenantToListing(id, tenant, "TENANT");
 
@@ -395,18 +422,27 @@ public class ListingController {
 
     @Secured({"ADMIN", "USER", "OWNER"})
     @GetMapping("/unassign/tenant/{id}")
-    public String unassignTenantFromListing(@PathVariable Integer id, Authentication authentication, Model model) {
+    public String unassignTenantFromListing(@PathVariable Integer id,
+                                            Authentication authentication,
+                                            Model model) {
 
         User currentUser = userService.getUserByEmail(authentication.getName());
         Listing listing = listingService.getListing(id);
-        listingService.validateListingModificationRights(listing, currentUser);
+        try {
+            listingService.validateListingModificationRights(listing, currentUser);
+        } catch (ResponseStatusException e) {
+            model.addAttribute("errorMessage",
+                    "You are not authorized to modify this listing!");
+            return "listing/listings";
+        }
 
         tenantService.unassignTenantFromListing(id, tenantService.getTenantIdForCurrentUser());
+
         model.addAttribute("listings", listingService.getListings());
         return "listing/listings";
     }
 
-    @Secured("OWNER")
+    @Secured({"OWNER", "ADMIN"})
     @GetMapping("/{id}/applications")
     public String viewApplications(
             @PathVariable("id") Integer listingId,
@@ -418,18 +454,18 @@ public class ListingController {
             listing = listingService.getListing(listingId);
         } catch (ResponseStatusException e) {
             model.addAttribute("errorMessage", "Listing not found.");
-            return "listing/applications";
+            return "listing/listings";
         }
 
         User currentUser = userService.getUserByEmail(authentication.getName());
-        listingService.validateListingModificationRights(listing, currentUser);
-
-        if (!listing.getOwner().getUser().getId().equals(userService.getCurrentUserId())) {
-
+        try {
+            listingService.validateListingModificationRights(listing, currentUser);
+        } catch (ResponseStatusException e) {
             model.addAttribute("errorMessage",
-                    "You do not have access to this listing or it does not exist.");
-            return "listing/applications";
+                    "You are not authorized to view applications for this listing!");
+            return "listing/listings";
         }
+
         model.addAttribute("listing", listing);
         model.addAttribute("applications", listing.getApplicants());
         return "listing/applications";
@@ -437,16 +473,12 @@ public class ListingController {
 
     /* Every role is allowed to, at the very least, filter listings */
     @GetMapping("/filter")
-    public String filterListings(@RequestParam(required = false) String title,
-                                   @RequestParam(required = false) Integer minPrice,
-                                   @RequestParam(required = false) Integer maxPrice,
-                                   Model model) {
+    public String filterListings(ListingFilterDTO filter, Model model) {
 
-        int min = (minPrice != null) ? minPrice : 0;
-        int max = (maxPrice != null) ? maxPrice : 20000;
+        List<Listing> listings = listingService.filterListings(filter);
 
-        List<Listing> filteredListings = listingService.filterListings(title, min, max);
-        model.addAttribute("listings", filteredListings);
+        model.addAttribute("listings", listings);
+        model.addAttribute("filter", filter);
         return "listing/listings";
     }
 
