@@ -15,8 +15,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.stream.Stream;
 
 @Controller
@@ -298,10 +296,11 @@ public class ListingController {
             model.addAttribute("errorMessage", e.getMessage());
             return "listing/listings";
         }
-        listingService.approveListing(id);
 
-        /* Sends email notification to the owner of said listing */
         try {
+            listingService.approveListing(id);
+
+            /* Sends email notification to the owner of said listing */
             Owner owner = listing.getOwner();
             if (owner != null && owner.getUser() != null) {
                 emailService.sendEmailNotification(
@@ -311,12 +310,58 @@ public class ListingController {
                         "adminApproved"
                 );
             }
+
+            model.addAttribute("successMessage", "Listing approved successfully!");
+
+        } catch (IllegalStateException e) {
+            model.addAttribute("errorMessage", e.getMessage());
         } catch (Exception e) {
             model.addAttribute("emailError",
                     "Listing approved but email could not be sent to the owner.");
         }
 
-        model.addAttribute("successMessage", "Listing approved successfully!");
+        return "listing/listings";
+    }
+
+    /* Reject listings (admin) */
+    @Secured("ADMIN")
+    @PostMapping("/reject/{id}")
+    public String rejectListing(@PathVariable Integer id, Model model) {
+
+        Listing listing;
+        try {
+            listing = listingService.getListing(id);
+        } catch (ResponseStatusException e) {
+            model.addAttribute("errorMessage", "Listing not found.");
+            return "listing/listings";
+        } catch (IllegalStateException e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            return "listing/listings";
+        }
+
+        try {
+            listingService.rejectListing(id);
+
+            /* Sends email notification to the owner of said listing */
+            Owner owner = listing.getOwner();
+            if (owner != null && owner.getUser() != null) {
+                emailService.sendEmailNotification(
+                        owner.getUser().getEmail(),
+                        owner.getFirstName() + " " + owner.getLastName(),
+                        listing,
+                        "adminRejected"
+                );
+            }
+
+            model.addAttribute("successMessage", "Listing rejected successfully!");
+
+        } catch (IllegalStateException e) {
+            model.addAttribute("errorMessage", e.getMessage());
+        } catch (Exception e) {
+            model.addAttribute("emailError",
+                    "Listing rejected but email could not be sent to the owner.");
+        }
+
         return "listing/listings";
     }
 

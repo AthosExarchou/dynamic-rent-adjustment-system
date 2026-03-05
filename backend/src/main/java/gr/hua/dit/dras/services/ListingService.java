@@ -255,6 +255,15 @@ public class ListingService {
     }
 
     @Transactional
+    public void rejectListing(Integer listingId) {
+
+        Listing listing = getListing(listingId);
+        listing.reject();
+
+        listingRepository.save(listing);
+    }
+
+    @Transactional
     public void cleanupExternalListings(int graceDays) {
         /* Deletes if last scraped date is older than cutoff */
         Instant cutoff = Instant.now().minus(graceDays, ChronoUnit.DAYS);
