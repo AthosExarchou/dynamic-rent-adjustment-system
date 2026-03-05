@@ -4,14 +4,16 @@ package gr.hua.dit.dras.controllers;
 import gr.hua.dit.dras.dto.OwnerCreateRequest;
 import gr.hua.dit.dras.entities.Listing;
 import gr.hua.dit.dras.entities.Owner;
+import gr.hua.dit.dras.entities.Tenant;
 import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.model.enums.ListingStatus;
-import gr.hua.dit.dras.services.OwnerService;
-import gr.hua.dit.dras.services.UserService;
+import gr.hua.dit.dras.services.*;
 import gr.hua.dit.dras.repositories.RoleRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -27,15 +29,24 @@ public class OwnerController {
     private final OwnerService ownerService;
     private final UserService userService;
     private final RoleRepository roleRepository;
+    private final EmailService emailService;
+    private final ListingService listingService;
+    private final TenantService tenantService;
 
     public OwnerController(
             OwnerService ownerService,
             UserService userService,
-            RoleRepository roleRepository
+            RoleRepository roleRepository,
+            EmailService emailService,
+            ListingService listingService,
+            TenantService tenantService
     ) {
         this.ownerService = ownerService;
         this.userService = userService;
         this.roleRepository = roleRepository;
+        this.emailService = emailService;
+        this.listingService = listingService;
+        this.tenantService = tenantService;
     }
 
     @PostMapping("/new")
@@ -98,6 +109,57 @@ public class OwnerController {
 
         model.addAttribute("listings", visibleListings);
         return "listing/listings";
+    }
+
+    @Secured("OWNER")
+    @PostMapping("/listings/{listingId}/rejectApplicant/{tenantId}")
+    public String rejectTenantApplication(
+            @PathVariable Integer listingId,
+            @PathVariable Integer tenantId,
+            Authentication authentication,
+            Model model
+    ) {
+        User currentUser = userService.getUserByEmail(authentication.getName());
+        Listing listing = listingService.getListing(listingId);
+
+        try {
+            listingService.validateListingModificationRights(listing, currentUser);
+        } catch (ResponseStatusException e) {
+            model.addAttribute("errorMessage",
+                    "You are not authorized to modify this listing!");
+            return "listing/listings";
+        }
+
+        Tenant tenant = tenantService.getTenant(tenantId);
+
+        if (!listing.getApplicants().contains(tenant)) {
+            model.addAttribute("errorMessage",
+                    "Tenant did not apply for this listing.");
+            return "listing/mylisting";
+        }
+
+        try {
+            listingService.rejectApplicant(listing, tenant);
+
+            /* Sends email notification to the tenant of said listing */
+            if (tenant.getUser() != null) {
+                emailService.sendEmailNotification(
+                        tenant.getUser().getEmail(),
+                        tenant.getFirstName() + " " + tenant.getLastName(),
+                        listing,
+                        "ownerRejectedApplication"
+                );
+            }
+
+            model.addAttribute("successMessage",
+                    "Tenant application rejected successfully");
+
+        } catch (Exception e) {
+            model.addAttribute("emailError",
+                    "Tenant rejected but email could not be sent.");
+        }
+
+        return "listing/mylisting";
     }
 
 }

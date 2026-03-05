@@ -304,4 +304,22 @@ public class ListingService {
         }
     }
 
+    @Transactional
+    public void rejectApplicant(Listing listing, Tenant tenant) {
+        if (!listing.getApplicants().contains(tenant)) {
+            throw new IllegalStateException("Tenant did not apply for this listing");
+        }
+
+        listing.getApplicants().remove(tenant); //removes tenant from listing's applicant list
+        tenant.getAppliedListings().remove(listing); //removes listing from tenant's applied listings
+
+        /* Makes sure this tenant was not assigned as the renter */
+        if (listing.getTenant() != null && listing.getTenant().equals(tenant)) {
+            listing.setTenant(null);
+            listing.makeAvailable(); //listing becomes available again
+        }
+
+        listingRepository.save(listing);
+    }
+
 }
