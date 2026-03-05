@@ -1,16 +1,21 @@
 package gr.hua.dit.dras.services;
 
 /* imports */
+import gr.hua.dit.dras.dto.ListingFilterDTO;
 import gr.hua.dit.dras.entities.*;
 import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.repositories.*;
 import jakarta.transaction.Transactional;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import jakarta.servlet.http.HttpSession;
 
 @Service
@@ -135,13 +140,108 @@ public class ListingService {
         }
     }
 
-    @Transactional
-    public List<Listing> filterListings(String title, int minPrice, int maxPrice) {
+    /**
+     * Builds a dynamic JPA Specification based on the provided filter
+     * and returns all matching listings.
+     */
+    public List<Listing> filterListings(ListingFilterDTO filter) {
 
-        if (title == null || title.isBlank()) {
-            return listingRepository.findByPriceBetween(minPrice, maxPrice);
+        /* Validates numeric and date ranges before building the query */
+        validateRanges(filter);
+
+        Specification<Listing> spec = Specification.where(null); //start with an empty specification
+
+        /* Case-insensitive partial match on title */
+        if (hasText(filter.getTitle())) {
+            spec = spec.and((root, query, cb) ->
+                    cb.like(cb.lower(root.get("title")),
+                            "%" + filter.getTitle().trim().toLowerCase() + "%"));
         }
-        return listingRepository.findByTitleContainingIgnoreCaseAndPriceBetween(title, minPrice, maxPrice);
+
+        /* Price range filters */
+        if (filter.getMinPrice() != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.greaterThanOrEqualTo(root.get("price"),
+                            filter.getMinPrice()));
+        }
+
+        if (filter.getMaxPrice() != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.lessThanOrEqualTo(root.get("price"),
+                            filter.getMaxPrice()));
+        }
+
+        /* Exact match filters */
+        if (filter.getType() != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("type"), filter.getType()));
+        }
+
+        /* Case-insensitive exact match on municipality */
+        if (hasText(filter.getMunicipality())) {
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(cb.lower(root.get("municipality")),
+                            filter.getMunicipality().trim().toLowerCase()));
+        }
+
+        /* Bedroom range filters */
+        if (filter.getMinBedrooms() != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.greaterThanOrEqualTo(root.get("bedrooms"),
+                            filter.getMinBedrooms()));
+        }
+
+        if (filter.getMaxBedrooms() != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.lessThanOrEqualTo(root.get("bedrooms"),
+                            filter.getMaxBedrooms()));
+        }
+
+        /* Last updated date range filters */
+        if (filter.getUpdatedAfter() != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.greaterThanOrEqualTo(root.get("updatedAt"),
+                            filter.getUpdatedAfter()));
+        }
+
+        if (filter.getUpdatedBefore() != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.lessThanOrEqualTo(root.get("updatedAt"),
+                            filter.getUpdatedBefore()));
+        }
+
+        /* Includes only externally sourced listings */
+        if (Boolean.TRUE.equals(filter.getExternalOnly())) {
+            spec = spec.and((root, query, cb) ->
+                    cb.isTrue(root.get("external")));
+        }
+
+        return listingRepository.findAll(spec);
+    }
+
+    /**
+     * Returns true if the string is non-null and contains non-whitespace text.
+     */
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
+    }
+
+    /**
+     * Validates that provided numeric and date ranges are logically correct.
+     * Throws IllegalArgumentException if a range is invalid.
+     */
+    private void validateRanges(ListingFilterDTO filter) {
+        if (filter.getMinPrice() != null &&
+                filter.getMaxPrice() != null &&
+                filter.getMinPrice() > filter.getMaxPrice()) {
+            throw new IllegalArgumentException("Invalid price range.");
+        }
+
+        if (filter.getUpdatedAfter() != null &&
+                filter.getUpdatedBefore() != null &&
+                filter.getUpdatedAfter().isAfter(filter.getUpdatedBefore())) {
+            throw new IllegalArgumentException("Invalid date range.");
+        }
     }
 
     @Transactional
@@ -182,28 +282,33 @@ public class ListingService {
     public void validateListingModificationRights(Listing listing, User currentUser) {
 
         if (currentUser == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
+            throw new AccessDeniedException("Unauthenticated");
         }
 
-        boolean isAdmin = currentUser.getRoles().stream()
-                .anyMatch(role -> role.getName().equals("ADMIN"));
+        Set<String> roleNames = currentUser.getRoles().stream()
+                .map(Role::getName)
+                .collect(Collectors.toSet());
+
+        boolean isAdmin = roleNames.contains("ADMIN");
+        boolean isOwner = roleNames.contains("OWNER");
 
         if (isAdmin) {
-            return;
+            return; //admins bypass all checks
         }
 
-        if (!currentUser.getRoles().stream()
-                .anyMatch(role -> role.getName().equals("OWNER"))) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        if (!isOwner) {
+            throw new AccessDeniedException("Not an owner");
         }
 
         Owner owner = listing.getOwner();
-
-        if (owner == null ||
-                owner.getUser() == null ||
+        if (owner == null || owner.getUser() == null ||
                 !owner.getUser().getId().equals(currentUser.getId())) {
+            throw new AccessDeniedException("Not owner of this listing");
+        }
 
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        /* Prevents modification if listing is rented */
+        if (listing.isRented()) {
+            throw new IllegalStateException("Cannot modify a rented listing");
         }
     }
 
