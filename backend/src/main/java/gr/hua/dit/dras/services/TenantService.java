@@ -8,7 +8,7 @@ import gr.hua.dit.dras.repositories.TenantRepository;
 import gr.hua.dit.dras.repositories.ListingRepository;
 import gr.hua.dit.dras.repositories.RoleRepository;
 import gr.hua.dit.dras.repositories.UserRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,28 +24,27 @@ public class TenantService {
     private final UserService userService;
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
-    private final ListingService listingService;
 
     public TenantService(
             TenantRepository tenantRepository,
             ListingRepository listingRepository,
             UserService userService,
             RoleRepository roleRepository,
-            UserRepository userRepository,
-            ListingService listingService
+            UserRepository userRepository
     ) {
         this.tenantRepository = tenantRepository;
         this.listingRepository = listingRepository;
         this.userService = userService;
         this.roleRepository = roleRepository;
         this.userRepository = userRepository;
-        this.listingService = listingService;
     }
 
+    @Transactional(readOnly = true)
     public List<Tenant> getTenants() {
         return tenantRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Optional<Tenant> findTenantByUserId(Integer userId) {
         return tenantRepository.findByUserId(userId);
     }
@@ -119,6 +118,7 @@ public class TenantService {
         createTenantForUser(userId, firstName, lastName, phoneNumber);
     }
 
+    @Transactional(readOnly = true)
     public Integer getTenantIdForCurrentUser() {
 
         Integer userId = userService.getCurrentUserId();
@@ -133,6 +133,7 @@ public class TenantService {
                 );
     }
 
+    @Transactional(readOnly = true)
     public boolean isUserTenant() {
 
         Integer userId = userService.getCurrentUserId();
@@ -285,7 +286,7 @@ public class TenantService {
         }
 
         listing.setTenant(null); //unlinks tenant from listing
-        listingService.makeAvailable(listing);
+        listing.makeAvailable();
 
         tenant.setRentalStatus(RentalStatus.CANCELED);
 

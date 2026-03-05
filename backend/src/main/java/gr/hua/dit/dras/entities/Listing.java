@@ -388,6 +388,13 @@ public class Listing {
         this.status = ListingStatus.RENTED;
     }
 
+    public void makeAvailable() {
+        if (status == ListingStatus.RENTED) {
+            throw new IllegalStateException("Cannot make rented listing available");
+        }
+        this.status = ListingStatus.APPROVED;
+    }
+
     @Override
     public String toString() {
         return "Listing{" +

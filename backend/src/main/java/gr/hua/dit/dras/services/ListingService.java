@@ -5,11 +5,11 @@ import gr.hua.dit.dras.dto.ListingFilterDTO;
 import gr.hua.dit.dras.entities.*;
 import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.repositories.*;
-import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -42,22 +42,22 @@ public class ListingService {
         this.tenantService = tenantService;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<Listing> getListings() {
         return listingRepository.findAll();
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<Listing> getLocalListings() {
         return listingRepository.findByExternalFalse();
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<Listing> getListingsByOwner(Owner owner) {
         return listingRepository.findByOwner(owner);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Listing getListing(Integer listingId) {
 
         return listingRepository.findById(listingId)
@@ -66,7 +66,7 @@ public class ListingService {
                 ));
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<Listing> getPendingListings() {
         return listingRepository.findByStatus(ListingStatus.PENDING);
     }
@@ -88,7 +88,10 @@ public class ListingService {
     @Transactional
     public void deleteListing(Integer listingId) {
         Listing listing = listingRepository.findById(listingId)
-                .orElseThrow(() -> new RuntimeException("Listing not found with ID: " + listingId));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Listing with id " + listingId + " not found"
+                ));
 
         /* External listings cannot be deleted manually */
         if (listing.isExternal()) {
@@ -111,7 +114,7 @@ public class ListingService {
         listingRepository.delete(listing);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public boolean isFirstListing(Owner owner) {
 
         /* checks if the owner already has listings */
@@ -129,14 +132,11 @@ public class ListingService {
                             HttpStatus.NOT_FOUND, "Role 'OWNER' does not exist in the database"
                     ));
 
-            System.out.println("User roles before adding: " + user.getRoles());
-
             if (!user.getRoles().contains(ownerRole)) {
                 user.getRoles().add(ownerRole);
             }
             userService.updateUser(user);
             session.invalidate();
-            System.out.println("User roles after adding: " + user.getRoles());
         }
     }
 
@@ -144,6 +144,7 @@ public class ListingService {
      * Builds a dynamic JPA Specification based on the provided filter
      * and returns all matching listings.
      */
+    @Transactional(readOnly = true)
     public List<Listing> filterListings(ListingFilterDTO filter) {
 
         /* Validates numeric and date ranges before building the query */
@@ -174,7 +175,7 @@ public class ListingService {
         /* Exact match filters */
         if (filter.getType() != null) {
             spec = spec.and((root, query, cb) ->
-                    cb.equal(root.get("type"), filter.getType()));
+                    cb.equal(root.get("propertyType"), filter.getType()));
         }
 
         /* Case-insensitive exact match on municipality */
@@ -245,18 +246,6 @@ public class ListingService {
     }
 
     @Transactional
-    public void markAsRented(Listing listing) {
-        listing.setStatus(ListingStatus.RENTED);
-        listingRepository.save(listing);
-    }
-
-    @Transactional
-    public void makeAvailable(Listing listing) {
-        listing.setStatus(ListingStatus.APPROVED);
-        listingRepository.save(listing);
-    }
-
-    @Transactional
     public void approveListing(Integer listingId) {
 
         Listing listing = getListing(listingId);
@@ -267,16 +256,10 @@ public class ListingService {
 
     @Transactional
     public void cleanupExternalListings(int graceDays) {
+        /* Deletes if last scraped date is older than cutoff */
         Instant cutoff = Instant.now().minus(graceDays, ChronoUnit.DAYS);
+        listingRepository.deleteByExternalTrueAndDateScrapedBefore(cutoff);
 
-        List<Listing> externalListings = listingRepository.findByExternalTrue();
-
-        for (Listing listing : externalListings) {
-            /* Deletes if last scraped date is older than cutoff */
-            if (listing.getDateScraped() != null && listing.getDateScraped().isBefore(cutoff)) {
-                listingRepository.delete(listing);
-            }
-        }
     }
 
     public void validateListingModificationRights(Listing listing, User currentUser) {

@@ -87,7 +87,7 @@ public class UserService implements UserDetailsService {
         }
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Integer getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
@@ -98,7 +98,7 @@ public class UserService implements UserDetailsService {
         return user.getId();
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public boolean isUserOwner() {
         Integer currentUserId = getCurrentUserId();
         if (currentUserId == null) {
@@ -155,23 +155,24 @@ public class UserService implements UserDetailsService {
     }
 
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<User> getUsers() {
         return userRepository.findAll();
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public User getUser(Integer userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " not found"));
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found: " + email));
     }
 
+    @Transactional(readOnly = true)
     public boolean currentUserHasRole(String roleName) {
         Integer currentUserId = getCurrentUserId();
         if (currentUserId == null) {

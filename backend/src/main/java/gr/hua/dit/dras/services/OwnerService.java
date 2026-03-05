@@ -10,7 +10,7 @@ import gr.hua.dit.dras.repositories.ListingRepository;
 import gr.hua.dit.dras.repositories.OwnerRepository;
 import gr.hua.dit.dras.repositories.RoleRepository;
 import gr.hua.dit.dras.repositories.UserRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -40,10 +40,12 @@ public class OwnerService {
         this.userRepository = userRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<Owner> getOwners() {
         return ownerRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Owner getOwner(Integer ownerId) {
         if (ownerId != null) {
             return ownerRepository.findById(ownerId)
@@ -65,6 +67,7 @@ public class OwnerService {
                 );
     }
 
+    @Transactional
     public Owner createOwnerForUser(
             Integer userId,
             String firstName,
@@ -94,6 +97,7 @@ public class OwnerService {
         return savedOwner;
     }
 
+    @Transactional
     public Owner createOwnerForCurrentUser(
             String firstName,
             String lastName,
@@ -103,6 +107,7 @@ public class OwnerService {
         return createOwnerForUser(userId, firstName, lastName, phoneNumber);
     }
 
+    @Transactional(readOnly = true)
     public Integer getOwnerIdForCurrentUser() {
         Integer userId = userService.getCurrentUserId();
 
