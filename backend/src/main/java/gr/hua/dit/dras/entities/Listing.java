@@ -2,6 +2,8 @@ package gr.hua.dit.dras.entities;
 
 /* imports */
 import gr.hua.dit.dras.model.enums.ListingStatus;
+import gr.hua.dit.dras.model.enums.PropertyType;
+import gr.hua.dit.dras.model.enums.RentalDuration;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.Instant;
@@ -11,7 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
-@Table
+@Table(name = "listings")
 public class Listing {
 
     @Id
@@ -64,15 +66,13 @@ public class Listing {
     @Max(20)
     private Integer rooms;
 
-    @NotBlank
-    @Size(max = 50)
-    @Column(nullable = false, length = 50)
-    private String propertyType;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private PropertyType propertyType;
 
-    @NotBlank
-    @Size(max = 50)
-    @Column(nullable = false, length = 50)
-    private String rentalDuration;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private RentalDuration rentalDuration;
 
     @Size(max = 500)
     @Column(name = "source_url",unique = true, length = 500)
@@ -92,6 +92,12 @@ public class Listing {
 
     @Column(nullable = false)
     private boolean external = false;
+
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(nullable = false)
+    private Instant updatedAt;
 
     /* Listing-Owner relationship */
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE,
@@ -128,11 +134,13 @@ public class Listing {
             String address,
             Integer sizeM2,
             Integer rooms,
-            String propertyType,
-            String rentalDuration,
+            PropertyType propertyType,
+            RentalDuration rentalDuration,
             String sourceUrl,
             ListingStatus status,
             boolean external,
+            Instant createdAt,
+            Instant updatedAt,
             Owner owner,
             Tenant tenant
     ) {
@@ -151,6 +159,8 @@ public class Listing {
         this.sourceUrl = sourceUrl;
         this.status = status;
         this.external = external;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
         this.owner = owner;
         this.tenant = tenant;
     }
@@ -238,19 +248,19 @@ public class Listing {
         this.rooms = rooms;
     }
 
-    public String getPropertyType() {
+    public PropertyType getPropertyType() {
         return propertyType;
     }
 
-    public void setPropertyType(String propertyType) {
+    public void setPropertyType(PropertyType propertyType) {
         this.propertyType = propertyType;
     }
 
-    public String getRentalDuration() {
+    public RentalDuration getRentalDuration() {
         return rentalDuration;
     }
 
-    public void setRentalDuration(String rentalDuration) {
+    public void setRentalDuration(RentalDuration rentalDuration) {
         this.rentalDuration = rentalDuration;
     }
 
@@ -320,6 +330,22 @@ public class Listing {
 
     public Tenant getTenant() {
         return tenant;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Instant createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     public void addApplicant(Tenant tenant) {
@@ -395,8 +421,6 @@ public class Listing {
         this.subtitle = safeTrim(this.subtitle);
         this.description = safeTrim(this.description);
         this.address = safeTrim(this.address);
-        this.propertyType = safeTrim(this.propertyType);
-        this.rentalDuration = safeTrim(this.rentalDuration);
         this.sourceUrl = safeTrim(this.sourceUrl);
     }
 

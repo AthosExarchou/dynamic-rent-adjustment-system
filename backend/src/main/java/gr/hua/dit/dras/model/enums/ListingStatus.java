@@ -5,5 +5,6 @@ public enum ListingStatus {
     APPROVED,
     REJECTED,
     DISABLED,
-    RENTED
+    RENTED,
+    DELETED
 }
