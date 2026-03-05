@@ -8,7 +8,6 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -20,7 +19,6 @@ public class EmailService {
 
     @Autowired
     private JavaMailSender mailSender;
-
     @Autowired
     private SpringTemplateEngine templateEngine;
 
@@ -29,11 +27,11 @@ public class EmailService {
         try {
             System.out.println("Sending email to: " + to);
 
-            /* email creation */
+            /* Email creation */
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
-            /* content preparation */
+            /* Content preparation */
             Context context = new Context();
             context.setVariable("name", name);
             context.setVariable("listing", listing);
@@ -53,6 +51,14 @@ public class EmailService {
                 case "adminApproved":
                     subject = "Your listing has been approved by the administrator";
                     template = "email/listing-approved-admin.html";
+                    break;
+                case "adminRejected":
+                    subject = "Your listing has been rejected by the administrator";
+                    template = "email/listing-rejected-admin.html";
+                    break;
+                case "ownerRejectedApplication":
+                    subject = "Your application has been rejected by the listing owner";
+                    template = "email/application-rejected-owner.html";
                     break;
                 default:
                     throw new IllegalArgumentException("Unsupported email type: " + emailType);
@@ -85,7 +91,7 @@ public class EmailService {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
-            /* content preparation */
+            /* Content preparation */
             Context context = new Context();
             context.setVariable("newUsername", newUsername);
             context.setVariable("oldUsername", oldUsername);
@@ -117,7 +123,7 @@ public class EmailService {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
-            /* content preparation */
+            /* Content preparation */
             Context context = new Context();
             context.setVariable("listing", listing);
             context.setVariable("ownerName", listing.getOwner().getUser().getUsername());
@@ -144,7 +150,7 @@ public class EmailService {
             System.out.println("Sending email to: " + recipientEmail);
             String subject = "Your Account Has Been Deleted";
 
-            /* content preparation */
+            /* Content preparation */
             Context context = new Context();
             context.setVariable("username", user.getUsername());
             String body = templateEngine.process("email/user-account-deleted.html", context);
@@ -169,7 +175,7 @@ public class EmailService {
             System.out.println("Sending welcome email to: " + recipientEmail);
             String subject = "Welcome to Our Platform!";
 
-            /* content preparation */
+            /* Content preparation */
             Context context = new Context();
             context.setVariable("username", user.getUsername());
 
@@ -213,7 +219,7 @@ public class EmailService {
             helper.setSubject(subject);
             helper.setText(htmlContent, true); //HTML content
 
-            /* reply directly to sender */
+            /* Reply directly to sender */
             helper.setReplyTo(contactForm.getEmail());
             System.out.println("Sending contact-us email to: " + to);
             mailSender.send(mimeMessage);
