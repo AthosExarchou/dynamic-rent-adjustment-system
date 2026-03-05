@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -41,9 +42,12 @@ public class TenantService {
         this.listingService = listingService;
     }
 
-    @Transactional
     public List<Tenant> getTenants() {
         return tenantRepository.findAll();
+    }
+
+    public Optional<Tenant> findTenantByUserId(Integer userId) {
+        return tenantRepository.findByUserId(userId);
     }
 
     @Transactional
@@ -74,6 +78,7 @@ public class TenantService {
                 );
     }
 
+    @Transactional
     public Tenant createTenantForUser(
             Integer userId,
             String firstName,
@@ -104,6 +109,7 @@ public class TenantService {
         return savedTenant;
     }
 
+    @Transactional
     public void createTenantForCurrentUser(
             String firstName,
             String lastName,
@@ -136,6 +142,7 @@ public class TenantService {
                 .anyMatch(role -> "TENANT".equals(role.getName()));
     }
 
+    @Transactional
     public boolean submitApplication(Integer listingId) {
 
         Integer userId = userService.getCurrentUserId();
@@ -179,6 +186,7 @@ public class TenantService {
         return false;
     }
 
+    @Transactional
     public void approveApplication(Integer tenantId, Integer listingId) {
 
         Tenant tenant = tenantRepository.findById(tenantId)
