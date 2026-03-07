@@ -112,7 +112,9 @@ public class Listing {
     private Tenant tenant;
 
     /* Tenant applications relationship */
-    @ManyToMany(mappedBy = "appliedListings", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+    @ManyToMany(mappedBy = "appliedListings", cascade = {
+            CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH
+    })
     private Set<Tenant> applicants = new HashSet<>();
 
     public Set<Tenant> getApplicants() {
@@ -408,12 +410,14 @@ public class Listing {
                 ", address='" + address + '\'' +
                 ", sizeM2=" + sizeM2 +
                 ", rooms=" + rooms +
-                ", propertyType='" + propertyType + '\'' +
-                ", rentalDuration='" + rentalDuration + '\'' +
+                ", propertyType=" + propertyType +
+                ", rentalDuration=" + rentalDuration +
                 ", sourceUrl='" + sourceUrl + '\'' +
                 ", status=" + status +
                 ", images=" + images +
                 ", external=" + external +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
                 ", owner=" + owner +
                 ", tenant=" + tenant +
                 ", applicants=" + applicants +

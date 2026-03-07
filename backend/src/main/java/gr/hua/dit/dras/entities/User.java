@@ -29,7 +29,8 @@ public class User {
     @Size(max = 20)
     private String username;
 
-    @Column
+    @Column(nullable = false, unique = true)
+    @NotBlank
     @Size(max = 50)
     @Email
     private String email;
@@ -51,14 +52,16 @@ public class User {
     private LocalDateTime lastLogin;
 
     /* Use-Roles relationship */
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(	name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<Role> roles = new HashSet<>();
 
     /* User-Owner relationship */
-    @OneToOne(mappedBy = "user", cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToOne(mappedBy = "user", cascade = {
+            CascadeType.PERSIST, CascadeType.DETACH, CascadeType.REMOVE
+    }, orphanRemoval = true)
     private Owner owner;
 
     /* User-Tenant relationship */
@@ -148,7 +151,9 @@ public class User {
 
     @Override
     public String toString() {
-        return username;
+        return "User{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                '}';
     }
 }
-
