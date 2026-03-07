@@ -35,9 +35,6 @@ public class Owner {
     @Column(nullable = false)
     private boolean systemOwner = false;
 
-    @Column(nullable = false)
-    private boolean active = true;
-
     /* Owner-Listing relationship */
     @OneToMany(mappedBy = "owner", cascade= {CascadeType.PERSIST, CascadeType.MERGE,
             CascadeType.DETACH, CascadeType.REFRESH, CascadeType.REMOVE, CascadeType.DETACH})
@@ -112,18 +109,6 @@ public class Owner {
 
     public void setSystemOwner(boolean systemOwner) {
         this.systemOwner = systemOwner;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
-    public void deactivate() {
-        this.active = false;
     }
 
     @Override

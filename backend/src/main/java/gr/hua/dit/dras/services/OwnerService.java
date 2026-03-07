@@ -165,35 +165,6 @@ public class OwnerService {
     }
 
     @Transactional
-    public void deactivateOwner(Integer ownerId) {
-
-        Owner owner = getOwner(ownerId);
-
-        if (!owner.isActive()) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "Owner already deactivated"
-            );
-        }
-
-        List<Listing> listings = listingRepository.findByOwner(owner);
-
-        for (Listing listing : listings) {
-
-            if (listing.isRented()) {
-                throw new ResponseStatusException(
-                        HttpStatus.CONFLICT,
-                        "Owner has active rented listings. Cannot deactivate."
-                );
-            }
-
-            listing.disable();
-        }
-
-        owner.deactivate();
-    }
-
-    @Transactional
     public void unassignOwnerFromListing(Integer listingId) {
 
         Listing listing = listingRepository.findById(listingId)
