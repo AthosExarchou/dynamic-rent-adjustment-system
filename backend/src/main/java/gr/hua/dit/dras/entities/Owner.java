@@ -29,8 +29,8 @@ public class Owner {
 
     @Column(nullable = false, unique = true)
     @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "^\\+?[0-9. ()-]{7,25}$", message = "Invalid phone number format") //accepts phone numbers worldwide
-    private String phoneNumber;
+    @Pattern(regexp = "^\\+?[0-9. ()-]{7,25}$", message = "Invalid phone number format")
+    private String phoneNumber; //accepts phone numbers worldwide
 
     @Column(nullable = false)
     private boolean systemOwner = false;
@@ -41,7 +41,9 @@ public class Owner {
     private List<Listing> listings = new ArrayList<>();
 
     /* Owner-User relationship */
-    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH, CascadeType.REMOVE})
+    @OneToOne(cascade = {
+            CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH, CascadeType.REMOVE
+    })
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
@@ -119,7 +121,6 @@ public class Owner {
                 ", lastName='" + lastName + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
                 ", systemOwner=" + systemOwner +
-                ", listings=" + listings +
                 '}';
     }
 }

@@ -33,7 +33,9 @@ public class Tenant {
     private String phoneNumber;
 
     /* Tenant-Listing relationship */
-    @OneToOne(mappedBy = "tenant", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+    @OneToOne(mappedBy = "tenant", cascade = {
+            CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH
+    })
     private Listing listing;
 
     /* Tenant applications relationship */
@@ -58,7 +60,9 @@ public class Tenant {
     private RentalStatus rentalStatus;
 
     /* Tenant-User relationship */
-    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH, CascadeType.REMOVE})
+    @OneToOne(cascade = {
+            CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH, CascadeType.REMOVE
+    })
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 

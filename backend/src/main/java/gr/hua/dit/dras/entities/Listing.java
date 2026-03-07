@@ -403,8 +403,6 @@ public class Listing {
                 "id=" + id +
                 ", dateScraped=" + dateScraped +
                 ", title='" + title + '\'' +
-                ", subtitle='" + subtitle + '\'' +
-                ", description='" + description + '\'' +
                 ", price=" + price +
                 ", pricePerM2=" + pricePerM2 +
                 ", address='" + address + '\'' +
@@ -414,13 +412,8 @@ public class Listing {
                 ", rentalDuration=" + rentalDuration +
                 ", sourceUrl='" + sourceUrl + '\'' +
                 ", status=" + status +
-                ", images=" + images +
                 ", external=" + external +
                 ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                ", owner=" + owner +
-                ", tenant=" + tenant +
-                ", applicants=" + applicants +
                 '}';
     }
 
