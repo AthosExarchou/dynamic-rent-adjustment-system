@@ -116,10 +116,10 @@ public class OwnerController {
     public String rejectTenantApplication(
             @PathVariable Integer listingId,
             @PathVariable Integer tenantId,
-            Authentication authentication,
             Model model
     ) {
-        User currentUser = userService.getUserByEmail(authentication.getName());
+        Integer currentUserId = userService.getCurrentUserId();
+        User currentUser = userService.getUser(currentUserId);
         Listing listing = listingService.getListing(listingId);
 
         try {
