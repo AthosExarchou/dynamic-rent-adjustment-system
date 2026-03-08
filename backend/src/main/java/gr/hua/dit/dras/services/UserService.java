@@ -184,4 +184,15 @@ public class UserService implements UserDetailsService {
                 .anyMatch(r -> r.getName().equals(roleName));
     }
 
+    @Transactional(readOnly = true)
+    public Optional<User> getCurrentUserOptional() {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
+            return Optional.empty(); //unauthenticated
+        }
+        return userRepository.findByEmail(auth.getName());
+    }
+
 }
