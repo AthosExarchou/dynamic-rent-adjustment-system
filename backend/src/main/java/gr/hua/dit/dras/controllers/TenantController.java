@@ -4,6 +4,7 @@ package gr.hua.dit.dras.controllers;
 import gr.hua.dit.dras.dto.TenantCreateRequest;
 import gr.hua.dit.dras.entities.Listing;
 import gr.hua.dit.dras.entities.Tenant;
+import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.services.ListingService;
 import gr.hua.dit.dras.services.EmailService;
 import gr.hua.dit.dras.services.TenantService;
@@ -44,36 +45,44 @@ public class TenantController {
         this.emailService = emailService;
     }
 
+    /* Apply to rent listing (form) */
     @Secured("USER")
     @GetMapping("/rent/{id}")
     public String showTenantForm(@PathVariable("id") Integer listingId, Model model) {
 
-        model.addAttribute("listingId", listingId);
-        Tenant tenant;
+        Integer currentUserId = userService.getCurrentUserId();
+        User currentUser = userService.getUser(currentUserId);
+        Listing listing = listingService.getListing(listingId);
+
+        try {
+            tenantService.validateRentalApplicationRights(currentUser, listing);
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            return "listing/listings";
+        }
+
         if (tenantService.isUserTenant()) {
-            tenant = tenantService.getTenant(userService.getCurrentUserId());
-            if (tenant == null) {
-                model.addAttribute("errorMessage", "Tenant not found.");
-                return "listing/listings";
-            }
+            Tenant tenant = tenantService.getTenant(currentUser.getId());
 
             if (tenant.getListing() != null) {
                 model.addAttribute("errorMessage",
-                        "You are already renting a listing. You can't rent or apply for another listing!");
+                        "You already rent a listing.");
                 return "listing/listings";
             }
 
             if (tenantService.submitApplication(listingId)) {
                 model.addAttribute("errorMessage",
-                        "You have already applied for this listing!");
+                        "You have already applied for this listing.");
                 return "listing/listings";
             }
+
             model.addAttribute("successMessage",
-                    "Application for rental submitted successfully!");
+                    "Application submitted successfully.");
             return "listing/listings";
         }
-        tenant = new Tenant();
-        model.addAttribute("tenant", tenant);
+
+        model.addAttribute("tenant", new Tenant());
+        model.addAttribute("listingId", listingId);
         return "tenant/tenantform";
     }
 
@@ -84,54 +93,50 @@ public class TenantController {
             @PathVariable Integer listingId,
             @Valid @ModelAttribute("tenant") Tenant tenant,
             BindingResult bindingResult,
-            @RequestParam(value = "firstName", required = false) String firstName,
-            @RequestParam(value = "lastName", required = false) String lastName,
-            @RequestParam(value = "phoneNumber", required = false) String phoneNumber,
-            Model model,
-            HttpSession session
+            @RequestParam String firstName,
+            @RequestParam String lastName,
+            @RequestParam String phoneNumber,
+            Model model
     ) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("errorMessage", "Form validation failed.");
+            model.addAttribute("errorMessage", "Invalid form data.");
             return "tenant/tenantform";
         }
 
+        Integer currentUserId = userService.getCurrentUserId();
+        User currentUser = userService.getUser(currentUserId);
+
         Listing listing = listingService.getListing(listingId);
 
-        if (listing == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found");
-        }
-
-        if (listing.isRented()) {
-            model.addAttribute("errorMessage",
-                    "This listing is currently rented.");
+        try {
+            tenantService.validateRentalApplicationRights(currentUser, listing);
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", e.getMessage());
             return "listing/listings";
         }
 
-        /* If user is not yet tenant, create profile */
         if (!tenantService.isUserTenant()) {
-
-            if (firstName == null || lastName == null || phoneNumber == null) {
-                model.addAttribute("errorMessage", "All fields are required.");
-                return "tenant/tenantform";
-            }
-
-            tenantService.createTenantForCurrentUser(firstName, lastName, phoneNumber);
+            tenantService.createTenantForCurrentUser(
+                    firstName.trim(),
+                    lastName.trim(),
+                    phoneNumber.trim()
+            );
         }
 
-        /* Submit application */
         if (tenantService.submitApplication(listingId)) {
             model.addAttribute("errorMessage",
-                    "You have already applied for this listing!");
+                    "You have already applied for this listing.");
             return "listing/listings";
         }
+
         model.addAttribute("successMessage",
-                "Application submitted successfully!");
+                "Application submitted successfully.");
         return "listing/listings";
     }
 
     /* Admin creates a tenant for a user */
-    @PostMapping("/new")
     @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/new")
     public String createTenant(
             @Valid @ModelAttribute TenantCreateRequest request,
             BindingResult bindingResult,
@@ -159,38 +164,44 @@ public class TenantController {
         return "auth/users";
     }
 
-    @PostMapping("/{listingId}/approveApplication/{tenantId}")
     @PreAuthorize("hasRole('OWNER')")
+    @PostMapping("/{listingId}/approveApplication/{tenantId}")
     public String approveApplication(
             @PathVariable Integer tenantId,
             @PathVariable Integer listingId,
             Model model
     ) {
+        Integer currentUserId = userService.getCurrentUserId();
+        User currentUser = userService.getUser(currentUserId);
+
         Listing listing = listingService.getListing(listingId);
-        if (listing == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found");
-        }
-
         Tenant tenant = tenantService.getTenant(tenantId);
-        if (tenant == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant not found");
+
+        /* Only owner of this listing or admin can approve */
+        try {
+            listingService.validateListingModificationRights(listing, currentUser);
+        } catch (Exception e) {
+            model.addAttribute("errorMessage", e.getMessage());
+            return "listing/mylisting";
         }
 
+        /* Checks that the tenant is not already renting another listing */
         if (tenant.getListing() != null) {
-            model.addAttribute("errorMessage", "This tenant is already renting a listing.");
+            model.addAttribute("errorMessage",
+                    "Tenant already rents a listing.");
             return "listing/mylisting";
         }
 
+        /* Checks listing availability */
         if (listing.isRented()) {
-            model.addAttribute("errorMessage", "This listing is being rented.");
+            model.addAttribute("errorMessage", "Listing already rented.");
             return "listing/mylisting";
         }
 
-        String roleUserIs = "owner";
-        tenantService.assignTenantToListing(listingId, tenant, roleUserIs);
+        /* Assigns tenant and approves application */
+        tenantService.assignTenantToListing(listingId, tenant, "OWNER");
         tenantService.approveApplication(tenantId, listingId);
 
-        /* sends email notification to the specified applicant of said listing */
         try {
             emailService.sendEmailNotification(
                     tenant.getUser().getEmail(),
@@ -198,9 +209,9 @@ public class TenantController {
                     listing,
                     "tenantApproval"
             );
-        } catch (Exception e) {
+        } catch (Exception ignored) {
             model.addAttribute("emailError",
-                    "Approval succeeded but email could not be sent.");
+                    "Approved but email could not be sent.");
         }
 
         model.addAttribute("successMessage", "Application approved.");

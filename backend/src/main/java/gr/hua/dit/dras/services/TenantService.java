@@ -8,6 +8,7 @@ import gr.hua.dit.dras.repositories.TenantRepository;
 import gr.hua.dit.dras.repositories.ListingRepository;
 import gr.hua.dit.dras.repositories.RoleRepository;
 import gr.hua.dit.dras.repositories.UserRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -54,6 +55,7 @@ public class TenantService {
         tenantRepository.save(tenant);
     }
 
+    @Transactional(readOnly = true)
     public Tenant getTenant(Integer tenantId) {
 
         if (tenantId != null) {
@@ -274,7 +276,7 @@ public class TenantService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Listing not found"
                 ));
-        Tenant tenant = tenantRepository.findById(listingId)
+        Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Tenant not found"
                 ));
@@ -292,6 +294,24 @@ public class TenantService {
 
         tenantRepository.save(tenant);
         listingRepository.save(listing);
+    }
+
+    public void validateRentalApplicationRights(User user, Listing listing) {
+        if (user == null)
+            throw new AccessDeniedException("Unauthenticated");
+
+        if (userService.currentUserHasRole("ADMIN"))
+            throw new AccessDeniedException("Admins cannot rent listings");
+
+        if (!listing.isApproved())
+            throw new IllegalStateException("Listing not available for rental");
+
+        if (listing.isRented())
+            throw new IllegalStateException("Listing already rented");
+
+        if (listing.getOwner() != null &&
+                listing.getOwner().getUser().getId().equals(user.getId()))
+            throw new AccessDeniedException("Owners cannot rent their own listings");
     }
 
 }
