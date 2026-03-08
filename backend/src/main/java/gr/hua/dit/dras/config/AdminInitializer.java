@@ -26,18 +26,27 @@ public class AdminInitializer {
 
     @EventListener(ApplicationReadyEvent.class)
     public void createDefaultAdminUser() {
-
         Optional<User> defaultAdmin = userRepository.findByUsername("admin");
 
         /* creates default admin user if not exists */
         if (defaultAdmin.isEmpty()) {
-            User admin = new User("admin", "admin@gmail.com", passwordEncoder.encode("admin"));
+            User admin = new User(
+                    "admin",
+                    "admin@gmail.com",
+                    passwordEncoder.encode("admin")
+            );
+
             Role adminRole = roleRepository.findByName("ADMIN")
-                    .orElseThrow(() -> new IllegalStateException("ADMIN not found in database"));
+                    .orElseThrow(() -> new IllegalStateException("ADMIN not found"));
+
+            Role userRole = roleRepository.findByName("USER")
+                    .orElseThrow(() -> new IllegalStateException("USER not found"));
 
             admin.getRoles().add(adminRole);
+            admin.getRoles().add(userRole);
+
             userRepository.save(admin);
-            System.out.println("Default ADMIN user created.");
+            System.out.println("Default admin user created.");
         }
     }
 }
