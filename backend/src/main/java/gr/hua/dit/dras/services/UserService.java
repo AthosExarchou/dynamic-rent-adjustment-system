@@ -195,4 +195,14 @@ public class UserService implements UserDetailsService {
         return userRepository.findByEmail(auth.getName());
     }
 
+    @Transactional(readOnly = true)
+    public void assertNotAdmin(User user) {
+        boolean isAdmin = user.getRoles().stream()
+                .anyMatch(r -> r.getName().equals("ADMIN"));
+
+        if (isAdmin) {
+            throw new IllegalStateException("Administrator account cannot be modified.");
+        }
+    }
+
 }

@@ -80,8 +80,6 @@ public class UserController {
     public String saveUser(@Valid @ModelAttribute User user,
                            BindingResult bindingResult, Model model) {
 
-        System.out.println("Roles: "+user.getRoles());
-
         /* Check if username already exists */
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             bindingResult.rejectValue(
@@ -133,7 +131,8 @@ public class UserController {
     public String showUser(@PathVariable Integer user_id, Model model) {
 
         User user = userService.getUser(user_id);
-        System.out.println(user);
+        userService.assertNotAdmin(user);
+
         model.addAttribute("user", user);
         return "auth/user";
     }
@@ -144,6 +143,7 @@ public class UserController {
                            Model model, HttpSession session) {
 
         User the_user = userService.getUser(user_id);
+        userService.assertNotAdmin(the_user);
 
         if (user.getUsername() == null || user.getUsername().isBlank()) {
             model.addAttribute("errorMessage", "Username cannot be empty or just spaces.");
@@ -166,7 +166,7 @@ public class UserController {
         boolean isAdmin = auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ADMIN"));
 
-        /* checks for changes */
+        /* Checks for changes */
         boolean usernameChanged = !the_user.getUsername().equals(user.getUsername());
         boolean emailChanged = !the_user.getEmail().equals(user.getEmail());
 
@@ -182,13 +182,12 @@ public class UserController {
             }
         }
 
-        /* updates the user's information */
+        /* Updates the user's information */
         the_user.setEmail(user.getEmail());
         the_user.setUsername(user.getUsername());
         userService.updateUser(the_user);
-        System.out.println("Edited: "+ the_user);
 
-        /* sends email notification to user */
+        /* Sends email notification to user */
         try {
             if (emailChanged) {
                 /* Notify the old email address that details have changed */
@@ -197,7 +196,7 @@ public class UserController {
                         oldUsername, oldEmail, usernameChanged, emailChanged
                 );
 
-                /* Also notify the new email address */
+                /* Notify the new email address */
                 emailService.sendUserDetailsChangedEmail(
                         user.getEmail(), the_user.getUsername(), user.getEmail(),
                         oldUsername, oldEmail, usernameChanged, emailChanged
@@ -225,10 +224,12 @@ public class UserController {
     public String deleteRolefromUser(@PathVariable Integer user_id, @PathVariable Integer role_id, Model model) {
 
         User user = userService.getUser(user_id);
+        userService.assertNotAdmin(user);
+
         Role role = roleRepository.findById(role_id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid role ID: " + role_id));
+
         user.getRoles().remove(role);
-        System.out.println("Roles: "+user.getRoles());
         userService.updateUser(user);
 
         model.addAttribute("users", userService.getUsers());
@@ -241,19 +242,20 @@ public class UserController {
     public String addRoletoUser(@PathVariable Integer user_id, @PathVariable Integer role_id, Model model) {
 
         User user = userService.getUser(user_id);
+        userService.assertNotAdmin(user);
+
         if (role_id.equals(4)) {
             if (user.getOwner() != null) {
                 Optional<Role> optionalRole = roleRepository.findByName("OWNER");
 
                 if (optionalRole.isPresent()) {
                     Role ownerRole = optionalRole.get();
-                    System.out.println("User roles before adding: " + user.getRoles());
 
                     if (!user.getRoles().contains(ownerRole)) {
                         user.getRoles().add(ownerRole);
                     }
                     userService.updateUser(user);
-                    System.out.println("User roles after adding: " + user.getRoles());
+
                     model.addAttribute("users", userService.getUsers());
                     model.addAttribute("roles", roleRepository.findAll());
                 }
@@ -270,12 +272,12 @@ public class UserController {
 
                 if (optionalRole.isPresent()) {
                     Role tenantRole = optionalRole.get();
-                    System.out.println("User roles before adding: " + user.getRoles());
+
                     if (!user.getRoles().contains(tenantRole)) {
                         user.getRoles().add(tenantRole);
                     }
                     userService.updateUser(user);
-                    System.out.println("User roles after adding: " + user.getRoles());
+
                     model.addAttribute("users", userService.getUsers());
                     model.addAttribute("roles", roleRepository.findAll());
                 }
@@ -293,13 +295,12 @@ public class UserController {
 
                 if (optionalRole.isPresent()) {
                     Role tenantRole = optionalRole.get();
-                    System.out.println("User roles before adding: " + user.getRoles());
 
                     if (!user.getRoles().contains(tenantRole)) {
                         user.getRoles().add(tenantRole);
                     }
                     userService.updateUser(user);
-                    System.out.println("User roles after adding: " + user.getRoles());
+
                     model.addAttribute("users", userService.getUsers());
                     model.addAttribute("roles", roleRepository.findAll());
                 }
@@ -317,6 +318,8 @@ public class UserController {
     public String deleteUser(@PathVariable Integer user_id, Model model) {
 
         User user = userService.getUser(user_id);
+        userService.assertNotAdmin(user);
+
         Optional<Role> adminRole = roleRepository.findByName("ADMIN");
 
         if (adminRole.isPresent() && user.getRoles().contains(adminRole.get())) {
@@ -327,10 +330,8 @@ public class UserController {
         /* Sends email before deleting the user */
         try {
             emailService.sendAccountDeletionEmail(user.getEmail(), user);
-            System.out.println("Account deletion email sent to user.");
         } catch (Exception e) {
             model.addAttribute("emailError", "User deleted, but email could not be sent.");
-            System.out.println("Failed to send account deletion email.");
             e.printStackTrace();
         }
 
@@ -345,12 +346,7 @@ public class UserController {
 
         String email = authentication.getName();
         User currentUser = userService.getUserByEmail(email);
-
-        Optional<Role> adminRole = roleRepository.findByName("ADMIN");
-        if (adminRole.isPresent() && currentUser.getRoles().contains(adminRole.get())) {
-            model.addAttribute("errorMessage", "You do not have the permission to delete this user!.");
-            return "index";
-        }
+        userService.assertNotAdmin(currentUser);
 
         try {
             emailService.sendAccountDeletionEmail(currentUser.getEmail(), currentUser);
