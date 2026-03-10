@@ -1,4 +1,4 @@
-package gr.hua.dit.dras.services;
+package gr.hua.dit.dras.services.domain;
 
 /* imports */
 import gr.hua.dit.dras.dto.ListingFilterDTO;
@@ -6,37 +6,28 @@ import gr.hua.dit.dras.entities.*;
 import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.repositories.*;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import jakarta.servlet.http.HttpSession;
 
 @Service
 @Transactional
 public class ListingService {
 
-    private final RoleRepository roleRepository;
-    private final UserService userService;
     private final ListingRepository listingRepository;
     private final OwnerService ownerService;
     private final TenantService tenantService;
 
     public ListingService(
-            RoleRepository roleRepository,
-            UserService userService,
             ListingRepository listingRepository,
             OwnerService ownerService,
             TenantService tenantService
     ) {
-        this.roleRepository = roleRepository;
-        this.userService = userService;
         this.listingRepository = listingRepository;
         this.ownerService = ownerService;
         this.tenantService = tenantService;
@@ -61,8 +52,8 @@ public class ListingService {
     public Listing getListing(Integer listingId) {
 
         return listingRepository.findById(listingId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Listing with id " + listingId + " not found"
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Listing with id " + listingId + " not found"
                 ));
     }
 
@@ -74,12 +65,10 @@ public class ListingService {
     @Transactional
     public void saveListing(Listing listing) {
         /* Enforces required fields for external listings */
-        if (listing.isExternal()) {
-            if (listing.getDateScraped() == null) {
-                listing.setDateScraped(Instant.now());
-            }
-        } else {
-            listing.setDateScraped(null); //local listing
+        if (listing.isExternal() && listing.getDateScraped() == null) {
+            listing.setDateScraped(Instant.now());
+        } else if (!listing.isExternal()) {
+            listing.setDateScraped(null); // local listing
         }
 
         listingRepository.save(listing);
@@ -87,15 +76,12 @@ public class ListingService {
 
     @Transactional
     public void deleteListing(Integer listingId) {
-        Listing listing = listingRepository.findById(listingId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Listing with id " + listingId + " not found"
-                ));
+
+        Listing listing = getListing(listingId);
 
         /* External listings cannot be deleted manually */
         if (listing.isExternal()) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+            throw new IllegalStateException(
                     "External listings cannot be deleted manually. Use scheduled cleanup.");
         }
 
@@ -117,27 +103,9 @@ public class ListingService {
     @Transactional(readOnly = true)
     public boolean isFirstListing(Owner owner) {
 
-        /* checks if the owner already has listings */
+        /* Checks if the owner already has listings */
         List<Listing> listings = getListingsByOwner(owner);
-        return listings.isEmpty(); //if no listings found, it's the first one
-    }
-
-    @Transactional
-    public void assignRoleToUserForFirstListing(Owner owner, HttpSession session) {
-
-        if (isFirstListing(owner)) {
-            User user = owner.getUser();
-            Role ownerRole = roleRepository.findByName("OWNER")
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND, "Role 'OWNER' does not exist in the database"
-                    ));
-
-            if (!user.getRoles().contains(ownerRole)) {
-                user.getRoles().add(ownerRole);
-            }
-            userService.updateUser(user);
-            session.invalidate();
-        }
+        return listings.isEmpty(); // if no listings found, it's the first one
     }
 
     /**
@@ -150,7 +118,7 @@ public class ListingService {
         /* Validates numeric and date ranges before building the query */
         validateRanges(filter);
 
-        Specification<Listing> spec = Specification.where(null); //start with an empty specification
+        Specification<Listing> spec = Specification.where(null); // starts with an empty specification
 
         /* Case-insensitive partial match on title */
         if (hasText(filter.getTitle())) {
@@ -281,14 +249,11 @@ public class ListingService {
                 .map(Role::getName)
                 .collect(Collectors.toSet());
 
-        boolean isAdmin = roleNames.contains("ADMIN");
-        boolean isOwner = roleNames.contains("OWNER");
-
-        if (isAdmin) {
-            return; //admins bypass all checks
+        if (roleNames.contains("ADMIN")) {
+            return; // admins bypass all checks
         }
 
-        if (!isOwner) {
+        if (!roleNames.contains("OWNER")) {
             throw new AccessDeniedException("Not an owner");
         }
 
@@ -310,13 +275,13 @@ public class ListingService {
             throw new IllegalStateException("Tenant did not apply for this listing");
         }
 
-        listing.getApplicants().remove(tenant); //removes tenant from listing's applicant list
-        tenant.getAppliedListings().remove(listing); //removes listing from tenant's applied listings
+        listing.getApplicants().remove(tenant); // removes tenant from listing's applicant list
+        tenant.getAppliedListings().remove(listing); // removes listing from tenant's applied listings
 
         /* Makes sure this tenant was not assigned as the renter */
         if (listing.getTenant() != null && listing.getTenant().equals(tenant)) {
             listing.setTenant(null);
-            listing.makeAvailable(); //listing becomes available again
+            listing.makeAvailable(); // listing becomes available again
         }
 
         listingRepository.save(listing);

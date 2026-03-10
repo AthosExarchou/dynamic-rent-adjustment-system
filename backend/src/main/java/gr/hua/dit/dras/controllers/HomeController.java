@@ -2,14 +2,14 @@ package gr.hua.dit.dras.controllers;
 
 /* imports */
 import gr.hua.dit.dras.dto.ContactForm;
-import gr.hua.dit.dras.services.ListingService;
+import gr.hua.dit.dras.services.domain.ListingService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import gr.hua.dit.dras.services.EmailService;
+import gr.hua.dit.dras.services.infrastructure.EmailService;
 
 @Controller
 @RequestMapping("/")

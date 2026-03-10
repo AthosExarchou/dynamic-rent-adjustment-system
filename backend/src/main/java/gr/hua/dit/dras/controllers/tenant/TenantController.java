@@ -1,25 +1,22 @@
-package gr.hua.dit.dras.controllers;
+package gr.hua.dit.dras.controllers.tenant;
 
 /* imports */
 import gr.hua.dit.dras.dto.TenantCreateRequest;
 import gr.hua.dit.dras.entities.Listing;
 import gr.hua.dit.dras.entities.Tenant;
 import gr.hua.dit.dras.entities.User;
-import gr.hua.dit.dras.services.ListingService;
-import gr.hua.dit.dras.services.EmailService;
-import gr.hua.dit.dras.services.TenantService;
-import gr.hua.dit.dras.services.UserService;
+import gr.hua.dit.dras.services.domain.ListingService;
+import gr.hua.dit.dras.services.infrastructure.EmailService;
+import gr.hua.dit.dras.services.domain.TenantService;
+import gr.hua.dit.dras.services.domain.UserService;
 import gr.hua.dit.dras.repositories.RoleRepository;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 @Controller
 @RequestMapping("tenant")

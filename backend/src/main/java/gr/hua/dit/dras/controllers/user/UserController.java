@@ -1,4 +1,4 @@
-package gr.hua.dit.dras.controllers;
+package gr.hua.dit.dras.controllers.user;
 
 /* imports */
 import gr.hua.dit.dras.entities.Owner;
@@ -9,9 +9,9 @@ import gr.hua.dit.dras.repositories.UserRepository;
 import gr.hua.dit.dras.repositories.OwnerRepository;
 import gr.hua.dit.dras.repositories.RoleRepository;
 import gr.hua.dit.dras.repositories.TenantRepository;
-import gr.hua.dit.dras.services.EmailService;
-import gr.hua.dit.dras.services.OwnerService;
-import gr.hua.dit.dras.services.UserService;
+import gr.hua.dit.dras.services.infrastructure.EmailService;
+import gr.hua.dit.dras.services.domain.OwnerService;
+import gr.hua.dit.dras.services.domain.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.security.access.annotation.Secured;

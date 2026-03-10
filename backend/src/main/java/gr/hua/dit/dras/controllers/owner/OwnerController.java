@@ -1,4 +1,4 @@
-package gr.hua.dit.dras.controllers;
+package gr.hua.dit.dras.controllers.owner;
 
 /* imports */
 import gr.hua.dit.dras.dto.OwnerCreateRequest;
@@ -7,13 +7,13 @@ import gr.hua.dit.dras.entities.Owner;
 import gr.hua.dit.dras.entities.Tenant;
 import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.model.enums.ListingStatus;
-import gr.hua.dit.dras.services.*;
 import gr.hua.dit.dras.repositories.RoleRepository;
+import gr.hua.dit.dras.services.domain.*;
+import gr.hua.dit.dras.services.infrastructure.EmailService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;

@@ -1,4 +1,4 @@
-package gr.hua.dit.dras.controllers;
+package gr.hua.dit.dras.controllers.auth;
 
 /* imports */
 import gr.hua.dit.dras.entities.Role;

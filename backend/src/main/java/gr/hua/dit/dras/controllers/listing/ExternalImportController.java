@@ -1,8 +1,8 @@
-package gr.hua.dit.dras.controllers;
+package gr.hua.dit.dras.controllers.listing;
 
 /* imports */
 import gr.hua.dit.dras.dto.ExternalListingDTO;
-import gr.hua.dit.dras.services.ExternalListingImportService;
+import gr.hua.dit.dras.services.integration.ExternalListingImportService;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 

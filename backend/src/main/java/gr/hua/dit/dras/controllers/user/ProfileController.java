@@ -1,8 +1,8 @@
-package gr.hua.dit.dras.controllers;
+package gr.hua.dit.dras.controllers.user;
 
 /* imports */
 import gr.hua.dit.dras.entities.User;
-import gr.hua.dit.dras.services.UserService;
+import gr.hua.dit.dras.services.domain.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.annotation.Secured;

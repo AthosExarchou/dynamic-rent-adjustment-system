@@ -1,11 +1,10 @@
-package gr.hua.dit.dras.services;
+package gr.hua.dit.dras.services.domain;
 
 /* imports */
 import gr.hua.dit.dras.entities.Listing;
 import gr.hua.dit.dras.entities.Owner;
 import gr.hua.dit.dras.entities.Role;
 import gr.hua.dit.dras.entities.User;
-import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.repositories.ListingRepository;
 import gr.hua.dit.dras.repositories.OwnerRepository;
 import gr.hua.dit.dras.repositories.RoleRepository;

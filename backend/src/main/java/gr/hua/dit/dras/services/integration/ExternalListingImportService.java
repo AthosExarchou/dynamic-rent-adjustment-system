@@ -1,4 +1,4 @@
-package gr.hua.dit.dras.services;
+package gr.hua.dit.dras.services.integration;
 
 /* imports */
 import gr.hua.dit.dras.dto.ExternalListingDTO;

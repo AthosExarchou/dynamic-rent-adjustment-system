@@ -1,7 +1,7 @@
 package gr.hua.dit.dras.config;
 
 /* imports */
-import gr.hua.dit.dras.services.UserService;
+import gr.hua.dit.dras.services.domain.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
