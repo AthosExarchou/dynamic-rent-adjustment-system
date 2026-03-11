@@ -1,6 +1,8 @@
 package gr.hua.dit.dras.web.exception;
 
 /* imports */
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -14,13 +16,16 @@ import java.net.URISyntaxException;
 @ControllerAdvice(annotations = Controller.class)
 public class MvcExceptionHandler {
 
+    private static final Logger log = LoggerFactory.getLogger(MvcExceptionHandler.class);
+
     /**
      * Handles standard business logic violations (e.g. trying to delete a rented listing).
      */
     @ExceptionHandler({IllegalStateException.class, IllegalArgumentException.class})
-    public String handleBusinessExceptions(RuntimeException ex,
-                                           HttpServletRequest request,
-                                           RedirectAttributes redirectAttributes
+    public String handleBusinessExceptions(
+            RuntimeException ex,
+            HttpServletRequest request,
+            RedirectAttributes redirectAttributes
     ) {
         /* Attaches the message so it survives the redirect */
         redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
@@ -33,8 +38,9 @@ public class MvcExceptionHandler {
      * Handles unauthorized access attempts.
      */
     @ExceptionHandler(AccessDeniedException.class)
-    public String handleAccessDeniedException(HttpServletRequest request,
-                                              RedirectAttributes redirectAttributes
+    public String handleAccessDeniedException(
+            HttpServletRequest request,
+            RedirectAttributes redirectAttributes
     ) {
         redirectAttributes.addFlashAttribute("errorMessage",
                 "You do not have permission to perform this action.");
@@ -46,9 +52,10 @@ public class MvcExceptionHandler {
      * Handles HTTP errors like 404.
      */
     @ExceptionHandler(ResponseStatusException.class)
-    public String handleResponseStatusException(ResponseStatusException ex,
-                                                HttpServletRequest request,
-                                                RedirectAttributes redirectAttributes
+    public String handleResponseStatusException(
+            ResponseStatusException ex,
+            HttpServletRequest request,
+            RedirectAttributes redirectAttributes
     ) {
         redirectAttributes.addFlashAttribute("errorMessage", ex.getReason());
 
@@ -59,12 +66,13 @@ public class MvcExceptionHandler {
      * Generic fallback for unexpected server errors.
      */
     @ExceptionHandler(Exception.class)
-    public String handleGeneralException(Exception ex,
-                                         HttpServletRequest request,
-                                         RedirectAttributes redirectAttributes
+    public String handleGeneralException(
+            Exception ex,
+            HttpServletRequest request,
+            RedirectAttributes redirectAttributes
     ) {
-        /* Logs the actual exception */
-        ex.printStackTrace();
+        /* Logs the exception */
+        log.error("Unhandled MVC exception at URI: {}", request.getRequestURI(), ex);
 
         redirectAttributes.addFlashAttribute("errorMessage",
                 "An unexpected error occurred. Please try again later.");

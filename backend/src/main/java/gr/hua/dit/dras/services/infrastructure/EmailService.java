@@ -6,6 +6,8 @@ import gr.hua.dit.dras.entities.Listing;
 import gr.hua.dit.dras.entities.User;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -17,217 +19,193 @@ import org.thymeleaf.context.Context;
 @Service
 public class EmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
-    @Autowired
-    private SpringTemplateEngine templateEngine;
+    private final JavaMailSender mailSender;
+    private final SpringTemplateEngine templateEngine;
 
-    public void sendEmailNotification(String to, String name, Listing listing, String emailType) {
+    public EmailService(
+            JavaMailSender mailSender,
+            SpringTemplateEngine templateEngine
+    ) {
+        this.mailSender = mailSender;
+        this.templateEngine = templateEngine;
+    }
 
+    private static final Logger log = LoggerFactory.getLogger(EmailService.class);
+
+    private void sendHtmlEmail(
+            String to,
+            String subject,
+            String template,
+            Context context,
+            String emailType
+    ) {
         try {
-            System.out.println("Sending email to: " + to);
+            log.debug("Attempting to send email [type={}] to [{}]", emailType, to);
 
-            /* Email creation */
             MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-
-            /* Content preparation */
-            Context context = new Context();
-            context.setVariable("name", name);
-            context.setVariable("listing", listing);
-
-            String subject;
-            String template;
-
-            switch (emailType) {
-                case "tenantApproval":
-                    subject = "Your listing application has been approved";
-                    template = "email/application-approved.html";
-                    break;
-                case "ownerCreated":
-                    subject = "Your listing has been submitted for approval";
-                    template = "email/listing-created.html";
-                    break;
-                case "adminApproved":
-                    subject = "Your listing has been approved by the administrator";
-                    template = "email/listing-approved-admin.html";
-                    break;
-                case "adminRejected":
-                    subject = "Your listing has been rejected by the administrator";
-                    template = "email/listing-rejected-admin.html";
-                    break;
-                case "ownerRejectedApplication":
-                    subject = "Your application has been rejected by the listing owner";
-                    template = "email/application-rejected-owner.html";
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unsupported email type: " + emailType);
-            }
+            MimeMessageHelper helper =
+                    new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
             String htmlContent = templateEngine.process(template, context);
 
             helper.setTo(to);
             helper.setSubject(subject);
-            helper.setText(htmlContent, true); //HTML content
+            helper.setText(htmlContent, true);
 
             mailSender.send(mimeMessage);
 
-            System.out.println("Email sent successfully to: " + to);
+            log.info("Email sent successfully [type={}] to [{}]", emailType, to);
 
         } catch (MailException | MessagingException e) {
-            System.err.println("Failed to send email to: " + to);
-            e.printStackTrace();
-        }
-    }
-
-    public void sendUserDetailsChangedEmail(String to, String newUsername, String newEmail,
-                                            String oldUsername, String oldEmail,
-                                            boolean usernameChanged, boolean emailChanged) {
-
-        try {
-            System.out.println("Sending email to: " + to);
-
-            /* MIME email creation */
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-
-            /* Content preparation */
-            Context context = new Context();
-            context.setVariable("newUsername", newUsername);
-            context.setVariable("oldUsername", oldUsername);
-            context.setVariable("newEmail", newEmail);
-            context.setVariable("oldEmail", oldEmail);
-            context.setVariable("usernameChanged", usernameChanged);
-            context.setVariable("emailChanged", emailChanged);
-
-            String htmlContent = templateEngine.process("email/user-details-edited.html", context);
-
-            helper.setTo(to);
-            helper.setSubject("Your account details have been updated");
-            helper.setText(htmlContent, true); //HTML content
-
-            mailSender.send(mimeMessage);
-
-            System.out.println("Email sent to: " + to);
-        } catch (MailException | MessagingException e) {
-            System.err.println("Failed to send email to: " + to);
-            e.printStackTrace();
-        }
-    }
-
-    public void sendListingDeletionEmail(String to, Listing listing) {
-
-        try {
-            System.out.println("Sending email to: " + to);
-
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-
-            /* Content preparation */
-            Context context = new Context();
-            context.setVariable("listing", listing);
-            context.setVariable("ownerName", listing.getOwner().getUser().getUsername());
-
-            String htmlContent = templateEngine.process("email/listing-deleted.html", context);
-
-            helper.setTo(to);
-            helper.setSubject("Your Listing Has Been Deleted");
-            helper.setText(htmlContent, true); //HTML content
-
-            mailSender.send(mimeMessage);
-
-            System.out.println("Email sent to: " + to);
-
-        } catch (MailException | MessagingException e) {
-            System.err.println("Failed to send email to: " + to);
-            e.printStackTrace();
-        }
-    }
-
-    public void sendAccountDeletionEmail(String recipientEmail, User user) {
-
-        try {
-            System.out.println("Sending email to: " + recipientEmail);
-            String subject = "Your Account Has Been Deleted";
-
-            /* Content preparation */
-            Context context = new Context();
-            context.setVariable("username", user.getUsername());
-            String body = templateEngine.process("email/user-account-deleted.html", context);
-
-            /* MIME email creation */
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setTo(recipientEmail);
-            helper.setSubject(subject);
-            helper.setText(body, true); //HTML content
-
-            mailSender.send(message);
-        } catch (MailException | MessagingException e) {
-            System.err.println("Failed to send email to: " + recipientEmail);
-            e.printStackTrace();
+            log.warn("Failed to send email [type={}] to [{}]: {}",
+                    emailType, to, e.getMessage(), e);
         }
     }
 
     public void sendWelcomeEmail(String recipientEmail, User user) {
 
-        try {
-            System.out.println("Sending welcome email to: " + recipientEmail);
-            String subject = "Welcome to Our Platform!";
+        Context context = new Context();
+        context.setVariable("username", user.getUsername());
 
-            /* Content preparation */
-            Context context = new Context();
-            context.setVariable("username", user.getUsername());
+        sendHtmlEmail(
+                recipientEmail,
+                "Welcome to Our Platform!",
+                "email/new-user-welcome.html",
+                context,
+                "welcome"
+        );
+    }
 
-            String body = templateEngine.process("email/new-user-welcome.html", context);
+    public void sendEmailNotification(
+            String to, String name, Listing listing, String emailType) {
 
-            /* MIME email creation */
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
-            helper.setTo(recipientEmail);
-            helper.setSubject(subject);
-            helper.setText(body, true); //HTML content
+        Context context = new Context();
+        context.setVariable("name", name);
+        context.setVariable("listing", listing);
 
-            mailSender.send(message);
+        String subject;
+        String template;
 
-            System.out.println("Email sent to: " + recipientEmail);
-        } catch (MailException | MessagingException e) {
-            System.err.println("Failed to send welcome email to: " + recipientEmail);
-            e.printStackTrace();
+        switch (emailType) {
+            case "tenantApproval":
+                subject = "Your listing application has been approved";
+                template = "email/application-approved.html";
+                break;
+            case "ownerCreated":
+                subject = "Your listing has been submitted for approval";
+                template = "email/listing-created.html";
+                break;
+            case "adminApproved":
+                subject = "Your listing has been approved by the administrator";
+                template = "email/listing-approved-admin.html";
+                break;
+            case "adminRejected":
+                subject = "Your listing has been rejected by the administrator";
+                template = "email/listing-rejected-admin.html";
+                break;
+            case "ownerRejectedApplication":
+                subject = "Your application has been rejected by the listing owner";
+                template = "email/application-rejected-owner.html";
+                break;
+            default:
+                log.error("Unsupported email type requested: {}", emailType);
+                throw new IllegalArgumentException("Unsupported email type: " + emailType);
         }
+
+        sendHtmlEmail(to, subject, template, context, emailType);
+    }
+
+    public void sendUserDetailsChangedEmail(
+            String to,
+            String newUsername,
+            String newEmail,
+            String oldUsername,
+            String oldEmail,
+            boolean usernameChanged,
+            boolean emailChanged
+    ) {
+
+        Context context = new Context();
+        context.setVariable("newUsername", newUsername);
+        context.setVariable("oldUsername", oldUsername);
+        context.setVariable("newEmail", newEmail);
+        context.setVariable("oldEmail", oldEmail);
+        context.setVariable("usernameChanged", usernameChanged);
+        context.setVariable("emailChanged", emailChanged);
+
+        sendHtmlEmail(
+                to,
+                "Your account details have been updated",
+                "email/user-details-edited.html",
+                context,
+                "userDetailsChanged"
+        );
+    }
+
+    public void sendListingDeletionEmail(String to, Listing listing) {
+
+        Context context = new Context();
+        context.setVariable("listing", listing);
+        context.setVariable("ownerName",
+                listing.getOwner().getUser().getUsername());
+
+        sendHtmlEmail(
+                to,
+                "Your Listing Has Been Deleted",
+                "email/listing-deleted.html",
+                context,
+                "listingDeleted"
+        );
+    }
+
+    public void sendAccountDeletionEmail(String recipientEmail, User user) {
+
+        Context context = new Context();
+        context.setVariable("username", user.getUsername());
+
+        sendHtmlEmail(
+                recipientEmail,
+                "Your Account Has Been Deleted",
+                "email/user-account-deleted.html",
+                context,
+                "accountDeleted"
+        );
     }
 
     public void sendContactUsEmail(ContactForm contactForm) {
-        try {
-            String to = "realestate2025project@gmail.com";
-            String subject = "Contact Form: " + contactForm.getSubject();
 
-            /* Prepare Thymeleaf context */
-            Context context = new Context();
-            context.setVariable("name", contactForm.getName());
-            context.setVariable("email", contactForm.getEmail());
-            context.setVariable("subject", contactForm.getSubject());
-            context.setVariable("message", contactForm.getMessage());
+        String to = "realestate2025project@gmail.com";
+
+        /* Prepare Thymeleaf context */
+        Context context = new Context();
+        context.setVariable("name", contactForm.getName());
+        context.setVariable("email", contactForm.getEmail());
+        context.setVariable("subject", contactForm.getSubject());
+        context.setVariable("message", contactForm.getMessage());
+
+        try {
+            log.debug("Attempting to send email [type={}] to [{}]", "contactForm", to);
+
+            /* Create MIME email */
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper =
+                    new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
             /* Process HTML template */
-            String htmlContent = templateEngine.process("email/contact-us.html", context);
+            String htmlContent = templateEngine.process(
+                    "email/contact-us.html", context);
 
-            /* Create and send MIME email */
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
             helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(htmlContent, true); //HTML content
+            helper.setSubject("Contact Form: " + contactForm.getSubject());
+            helper.setText(htmlContent, true); // HTML content
+            helper.setReplyTo(contactForm.getEmail()); // reply directly to sender
 
-            /* Reply directly to sender */
-            helper.setReplyTo(contactForm.getEmail());
-            System.out.println("Sending contact-us email to: " + to);
             mailSender.send(mimeMessage);
 
-            System.out.println("Contact-us email sent to: " + to);
+            log.info("Email sent successfully [type={}] to [{}]", "contactForm", to);
         } catch (MessagingException | MailException e) {
-            System.err.println("Failed to send contact-us email.");
-            e.printStackTrace();
+            log.warn("Failed to send email [type={}] to [{}]: {}",
+                    "contactForm", to, e.getMessage(), e);
         }
     }
 
