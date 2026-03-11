@@ -6,14 +6,12 @@ import gr.hua.dit.dras.entities.Role;
 import gr.hua.dit.dras.entities.Tenant;
 import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.repositories.UserRepository;
-import gr.hua.dit.dras.repositories.OwnerRepository;
 import gr.hua.dit.dras.repositories.RoleRepository;
-import gr.hua.dit.dras.repositories.TenantRepository;
 import gr.hua.dit.dras.services.infrastructure.EmailService;
-import gr.hua.dit.dras.services.domain.OwnerService;
 import gr.hua.dit.dras.services.domain.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -22,37 +20,33 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.Optional;
 
 @Controller
 public class UserController {
 
     private final UserRepository userRepository;
-    private final OwnerService ownerService;
-    private final OwnerRepository ownerRepository;
-    private final TenantRepository tenantRepository;
     private final UserService userService;
     private final RoleRepository roleRepository;
     private final EmailService emailService;
 
-    public UserController(UserRepository userRepository, UserService userService,
-                          RoleRepository roleRepository, OwnerService ownerService,
-                          OwnerRepository ownerRepository, TenantRepository tenantRepository,
-                          EmailService emailService) {
-
+    public UserController(
+            UserRepository userRepository,
+            UserService userService,
+            RoleRepository roleRepository,
+            EmailService emailService
+    ) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.roleRepository = roleRepository;
-        this.ownerService = ownerService;
-        this.ownerRepository = ownerRepository;
-        this.tenantRepository = tenantRepository;
         this.emailService = emailService;
     }
 
     @ModelAttribute
     public void addCommonAttributes(Model model) {
 
-        /* Get current user info */
+        /* Gets current user info */
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
@@ -71,15 +65,18 @@ public class UserController {
 
     @GetMapping("/register")
     public String register(Model model) {
-        User user = new User();
-        model.addAttribute("user", user);
+        if (!model.containsAttribute("user")) {
+            model.addAttribute("user", new User());
+        }
         return "auth/register";
     }
 
     @PostMapping("/saveUser")
-    public String saveUser(@Valid @ModelAttribute User user,
-                           BindingResult bindingResult, Model model) {
-
+    public String saveUser(
+            @Valid @ModelAttribute User user,
+            BindingResult bindingResult,
+            RedirectAttributes redirectAttributes
+    ) {
         /* Check if username already exists */
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             bindingResult.rejectValue(
@@ -100,7 +97,11 @@ public class UserController {
 
         /* If there are errors, show the form again */
         if (bindingResult.hasErrors()) {
-            return "auth/register";
+            redirectAttributes.addFlashAttribute(
+                    "org.springframework.validation.BindingResult.user", bindingResult);
+            redirectAttributes.addFlashAttribute("user", user);
+
+            return "redirect:/auth/register";
         }
 
         Integer id = userService.saveUser(user);
@@ -108,12 +109,14 @@ public class UserController {
         try {
             emailService.sendWelcomeEmail(user.getEmail(), user);
         } catch (Exception e) {
-            model.addAttribute("emailError", "User saved, but notification email could not be sent.");
+            redirectAttributes.addFlashAttribute("emailError",
+                    "User saved, but notification email could not be sent.");
         }
 
         String message = "User '"+id+"' saved successfully !";
-        model.addAttribute("msg", message);
-        return "auth/login";
+        redirectAttributes.addFlashAttribute("successMessage", message);
+
+        return "redirect:/auth/login";
     }
 
     @Secured("ADMIN")
@@ -122,8 +125,8 @@ public class UserController {
 
         model.addAttribute("users", userService.getUsers());
         model.addAttribute("roles", roleRepository.findAll());
-        Integer currentUserId = userService.getCurrentUserId();
-        model.addAttribute("currentUserId", currentUserId);
+        model.addAttribute("currentUserId", userService.getCurrentUserId());
+
         return "auth/users";
     }
 
@@ -138,23 +141,21 @@ public class UserController {
     }
 
     @PostMapping("/user/{user_id}")
-    public String editUser(@PathVariable Integer user_id,
-                           @ModelAttribute("user") User user,
-                           Model model, HttpSession session) {
-
+    public String editUser(
+            @PathVariable Integer user_id,
+            @ModelAttribute("user") User user,
+            RedirectAttributes redirectAttributes,
+            HttpSession session
+    ) {
         User the_user = userService.getUser(user_id);
         userService.assertNotAdmin(the_user);
 
         if (user.getUsername() == null || user.getUsername().isBlank()) {
-            model.addAttribute("errorMessage", "Username cannot be empty or just spaces.");
-            model.addAttribute("user", the_user);
-            return "profile/edit-profile"; //return to form
+            throw new IllegalArgumentException("Username cannot be empty or just spaces.");
         }
 
         if (user.getEmail() == null || user.getEmail().isBlank()) {
-            model.addAttribute("errorMessage", "Email cannot be empty or just spaces.");
-            model.addAttribute("user", the_user);
-            return "profile/edit-profile"; //return to form
+            throw new IllegalArgumentException("Email cannot be empty or just spaces.");
         }
 
         String oldUsername = the_user.getUsername();
@@ -172,14 +173,9 @@ public class UserController {
 
         /* If nothing changed, add an info message and return early */
         if (!usernameChanged && !emailChanged) {
-            model.addAttribute("infoMessage", "No changes were detected for user '" + the_user.getUsername() + "'.");
-            model.addAttribute("users", userService.getUsers());
-            if (isAdmin) {
-                return "auth/users"; //admin stays on user management page
-            } else {
-                session.invalidate(); //force logout if user changed own credentials
-                return "auth/login";
-            }
+            redirectAttributes.addFlashAttribute("infoMessage",
+                    "No changes were detected for user '" + the_user.getUsername() + "'.");
+            return isAdmin ? "redirect:/auth/users" : "redirect:/auth/login";
         }
 
         /* Updates the user's information */
@@ -208,21 +204,32 @@ public class UserController {
                         oldUsername, oldEmail, usernameChanged, emailChanged
                 );
             }
-            if (!isAdmin && currentUsername.equals(oldUsername)) {
-                session.invalidate(); //only invalidate if user changed own credentials
-            }
         } catch (Exception e) {
-            model.addAttribute("emailError", "User edited, but notification email could not be sent.");
+            redirectAttributes.addFlashAttribute("emailError",
+                    "User edited, but notification email could not be sent.");
         }
 
-        model.addAttribute("users", userService.getUsers());
-        return isAdmin ? "auth/users" : "auth/login";
+        if (!isAdmin && currentUsername.equals(oldUsername)) {
+            session.invalidate();
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Profile updated. Please log in again.");
+
+            return "redirect:/auth/login";
+        }
+
+        redirectAttributes.addFlashAttribute("successMessage",
+                "User updated successfully.");
+
+        return "redirect:/auth/users";
     }
 
     @Secured("ADMIN")
-    @GetMapping("/user/role/delete/{user_id}/{role_id}")
-    public String deleteRolefromUser(@PathVariable Integer user_id, @PathVariable Integer role_id, Model model) {
-
+    @PostMapping("/user/role/delete/{user_id}/{role_id}")
+    public String deleteRolefromUser(
+            @PathVariable Integer user_id,
+            @PathVariable Integer role_id,
+            RedirectAttributes redirectAttributes
+    ) {
         User user = userService.getUser(user_id);
         userService.assertNotAdmin(user);
 
@@ -232,90 +239,84 @@ public class UserController {
         user.getRoles().remove(role);
         userService.updateUser(user);
 
-        model.addAttribute("users", userService.getUsers());
-        model.addAttribute("roles", roleRepository.findAll());
-        return "auth/users";
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Role removed successfully.");
+
+        return "redirect:/auth/users";
     }
 
     @Secured("ADMIN")
-    @GetMapping("/user/role/add/{user_id}/{role_id}")
-    public String addRoletoUser(@PathVariable Integer user_id, @PathVariable Integer role_id, Model model) {
-
+    @PostMapping("/user/role/add/{user_id}/{role_id}")
+    public String addRoletoUser(
+            @PathVariable Integer user_id,
+            @PathVariable Integer role_id,
+            Model model,
+            RedirectAttributes redirectAttributes
+    ) {
+        /* Fetch user and assert they’re not admin */
         User user = userService.getUser(user_id);
         userService.assertNotAdmin(user);
 
-        if (role_id.equals(4)) {
-            if (user.getOwner() != null) {
-                Optional<Role> optionalRole = roleRepository.findByName("OWNER");
+        Role role = roleRepository.findById(role_id)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Role not configured in the system: ID " + role_id)
+                );
 
-                if (optionalRole.isPresent()) {
-                    Role ownerRole = optionalRole.get();
+        switch (role.getName()) {
+            case "OWNER":
+                if (user.getOwner() != null) {
+                    assignRole(user, "OWNER");
+                    redirectAttributes.addFlashAttribute("successMessage",
+                            "Owner role added successfully.");
 
-                    if (!user.getRoles().contains(ownerRole)) {
-                        user.getRoles().add(ownerRole);
-                    }
-                    userService.updateUser(user);
-
-                    model.addAttribute("users", userService.getUsers());
-                    model.addAttribute("roles", roleRepository.findAll());
+                    return "redirect:/auth/users";
                 }
-                return "auth/users";
-            }
+                model.addAttribute("owner", new Owner());
+                model.addAttribute("userId", user_id);
+                return "owner/ownerform";
 
-            Owner owner = new Owner();
-            model.addAttribute("owner", owner);
-            model.addAttribute("userId", user_id);
-            return "owner/ownerform";
-        } else if (role_id.equals(3)) {
-            if (user.getTenant() != null) {
-                Optional<Role> optionalRole = roleRepository.findByName("TENANT");
+            case "TENANT":
+                if (user.getTenant() != null) {
+                    assignRole(user, "TENANT");
+                    redirectAttributes.addFlashAttribute("successMessage",
+                            "Tenant role added successfully.");
 
-                if (optionalRole.isPresent()) {
-                    Role tenantRole = optionalRole.get();
-
-                    if (!user.getRoles().contains(tenantRole)) {
-                        user.getRoles().add(tenantRole);
-                    }
-                    userService.updateUser(user);
-
-                    model.addAttribute("users", userService.getUsers());
-                    model.addAttribute("roles", roleRepository.findAll());
+                    return "redirect:/auth/users";
                 }
-                return "auth/users";
-            }
+                Tenant tenant = new Tenant();
+                tenant.setId(user.getId());
+                model.addAttribute("tenant", tenant);
+                model.addAttribute("userId", user_id);
+                return "tenant/tenantformforadmin";
 
-            Tenant tenant = new Tenant();
-            tenant.setId(user.getId());
-            model.addAttribute("tenant", tenant);
-            model.addAttribute("userId", user_id);
-            return "tenant/tenantformforadmin";
-        } else if (role_id.equals(1)) {
-            if (user != null) {
-                Optional<Role> optionalRole = roleRepository.findByName("USER");
+            case "USER":
+                assignRole(user, "USER");
+                redirectAttributes.addFlashAttribute("successMessage",
+                        "User role added successfully.");
 
-                if (optionalRole.isPresent()) {
-                    Role tenantRole = optionalRole.get();
+                return "redirect:/auth/users";
 
-                    if (!user.getRoles().contains(tenantRole)) {
-                        user.getRoles().add(tenantRole);
-                    }
-                    userService.updateUser(user);
-
-                    model.addAttribute("users", userService.getUsers());
-                    model.addAttribute("roles", roleRepository.findAll());
-                }
-                return "auth/users";
-            }
+            default:
+                throw new IllegalStateException("Unhandled role type: " + role.getName());
         }
-        model.addAttribute("users", userService.getUsers());
-        model.addAttribute("roles", roleRepository.findAll());
-        return "auth/users";
+    }
+
+    /**
+     * Safely assigns a role to a user if not already present, then persists the user.
+     */
+    private void assignRole(User user, String roleName) {
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new IllegalStateException("Role not configured: " + roleName));
+        if (!user.getRoles().contains(role)) {
+            user.getRoles().add(role);
+            userService.updateUser(user);
+        }
     }
 
     /* Admin deletes a user's account */
     @Secured("ADMIN")
-    @GetMapping("/user/delete/{user_id}")
-    public String deleteUser(@PathVariable Integer user_id, Model model) {
+    @PostMapping("/user/delete/{user_id}")
+    public String deleteUser(@PathVariable Integer user_id, RedirectAttributes redirectAttributes) {
 
         User user = userService.getUser(user_id);
         userService.assertNotAdmin(user);
@@ -323,27 +324,30 @@ public class UserController {
         Optional<Role> adminRole = roleRepository.findByName("ADMIN");
 
         if (adminRole.isPresent() && user.getRoles().contains(adminRole.get())) {
-            model.addAttribute("errorMessage", "You do not have the permission to delete this user!.");
-            return "index";
+            throw new AccessDeniedException("You do not have the permission to delete this user!");
         }
 
         /* Sends email before deleting the user */
         try {
             emailService.sendAccountDeletionEmail(user.getEmail(), user);
         } catch (Exception e) {
-            model.addAttribute("emailError", "User deleted, but email could not be sent.");
-            e.printStackTrace();
+            redirectAttributes.addFlashAttribute("emailError",
+                    "User deleted, but email could not be sent.");
         }
 
         userService.deleteUser(user_id);
-        return "index";
+        redirectAttributes.addFlashAttribute("successMessage", "User deleted successfully.");
+        return "redirect:/auth/users";
     }
 
     /* Allows users to delete their own account */
     @Secured("USER")
     @PostMapping("/user/delete/self")
-    public String deleteOwnAccount(Authentication authentication, Model model, HttpSession session) {
-
+    public String deleteOwnAccount(
+            Authentication authentication,
+            RedirectAttributes redirectAttributes,
+            HttpSession session
+    ) {
         String email = authentication.getName();
         User currentUser = userService.getUserByEmail(email);
         userService.assertNotAdmin(currentUser);
@@ -351,13 +355,12 @@ public class UserController {
         try {
             emailService.sendAccountDeletionEmail(currentUser.getEmail(), currentUser);
         } catch (Exception e) {
-            model.addAttribute("emailError", "Account deleted, but email could not be sent.");
-            e.printStackTrace();
+            // Ignores email error on self-delete since session will be invalidated anyway
         }
-        session.invalidate(); //force logout
+        session.invalidate(); // force logout
         userService.deleteUser(currentUser.getId());
 
-        return "index";
+        return "redirect:/";
     }
 
 }
