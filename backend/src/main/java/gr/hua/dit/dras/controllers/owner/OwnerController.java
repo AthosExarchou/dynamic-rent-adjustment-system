@@ -11,14 +11,14 @@ import gr.hua.dit.dras.repositories.RoleRepository;
 import gr.hua.dit.dras.services.domain.*;
 import gr.hua.dit.dras.services.infrastructure.EmailService;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,25 +49,10 @@ public class OwnerController {
         this.tenantService = tenantService;
     }
 
-    @PostMapping("/new")
+    @GetMapping("/auth/users")
     @PreAuthorize("hasRole('ADMIN')")
-    public String createOwner(
-            @Valid @ModelAttribute OwnerCreateRequest request,
-            BindingResult bindingResult,
-            Model model
-    ) {
-        if (bindingResult.hasErrors()) {
-            return "owner/ownerform";
-        }
+    public String usersPage(Model model) {
 
-        ownerService.createOwnerForUser(
-                request.getUserId(),
-                request.getFirstName(),
-                request.getLastName(),
-                request.getPhoneNumber()
-        );
-
-        /* Filters out system user from the user list */
         List<User> users = userService.getUsers()
                 .stream()
                 .filter(u -> !"external-system".equals(u.getUsername()))
@@ -77,6 +62,36 @@ public class OwnerController {
         model.addAttribute("roles", roleRepository.findAll());
 
         return "auth/users";
+    }
+
+    @PostMapping("/new")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String createOwner(
+            @Valid @ModelAttribute("ownerCreateRequest") OwnerCreateRequest request,
+            BindingResult bindingResult,
+            RedirectAttributes redirectAttributes
+    ) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute(
+                    "org.springframework.validation.BindingResult.ownerCreateRequest", bindingResult);
+            redirectAttributes.addFlashAttribute("ownerCreateRequest", request);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Please correct the highlighted errors.");
+
+            return "redirect:/owner/new";
+        }
+
+        ownerService.createOwnerForUser(
+                request.getUserId(),
+                request.getFirstName(),
+                request.getLastName(),
+                request.getPhoneNumber()
+        );
+
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Owner created successfully.");
+
+        return "redirect:/auth/users";
     }
 
     @GetMapping("/{id}/listings")
@@ -89,16 +104,12 @@ public class OwnerController {
         boolean isAdmin = userService.currentUserHasRole("ADMIN");
 
         if (!isAdmin && !owner.getUser().getId().equals(currentUserId)) {
-
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            throw new AccessDeniedException("You are not authorized to view these listings.");
         }
 
         /* Protects system owner from direct UI access */
         if (owner.isSystemOwner()) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "System owner listings cannot be viewed"
-            );
+            throw new AccessDeniedException("System owner listings cannot be viewed.");
         }
 
         /* Filters external listings */
@@ -116,31 +127,22 @@ public class OwnerController {
     public String rejectTenantApplication(
             @PathVariable Integer listingId,
             @PathVariable Integer tenantId,
-            Model model
+            RedirectAttributes redirectAttributes
     ) {
         Integer currentUserId = userService.getCurrentUserId();
         User currentUser = userService.getUser(currentUserId);
         Listing listing = listingService.getListing(listingId);
-
-        try {
-            listingService.validateListingModificationRights(listing, currentUser);
-        } catch (ResponseStatusException e) {
-            model.addAttribute("errorMessage",
-                    "You are not authorized to modify this listing!");
-            return "listing/listings";
-        }
-
         Tenant tenant = tenantService.getTenant(tenantId);
 
+        listingService.validateListingModificationRights(listing, currentUser);
+
         if (!listing.getApplicants().contains(tenant)) {
-            model.addAttribute("errorMessage",
-                    "Tenant did not apply for this listing.");
-            return "listing/mylisting";
+            throw new IllegalStateException("Tenant did not apply for this listing.");
         }
 
-        try {
-            listingService.rejectApplicant(listing, tenant);
+        listingService.rejectApplicant(listing, tenant);
 
+        try {
             /* Sends email notification to the tenant of said listing */
             if (tenant.getUser() != null) {
                 emailService.sendEmailNotification(
@@ -151,15 +153,15 @@ public class OwnerController {
                 );
             }
 
-            model.addAttribute("successMessage",
+            redirectAttributes.addFlashAttribute("successMessage",
                     "Tenant application rejected successfully");
 
         } catch (Exception e) {
-            model.addAttribute("emailError",
+            redirectAttributes.addFlashAttribute("emailError",
                     "Tenant rejected but email could not be sent.");
         }
 
-        return "listing/mylisting";
+        return "redirect:/listing/mylisting";
     }
 
 }
