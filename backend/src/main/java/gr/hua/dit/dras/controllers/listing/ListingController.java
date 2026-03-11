@@ -7,15 +7,13 @@ import gr.hua.dit.dras.services.domain.*;
 import gr.hua.dit.dras.services.application.ListingApplicationService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-import java.util.List;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("listings")
@@ -78,14 +76,16 @@ public class ListingController {
     @GetMapping("/{id}")
     public String showListing(@PathVariable Integer id, Model model) {
 
-        try {
-            Listing listing = listingService.getListing(id);
-            model.addAttribute("listing", listing);
-            return "listing/listings";
-        } catch (ResponseStatusException e) {
-            model.addAttribute("errorMessage", "This listing could not be found!");
-            return "listing/listings";
-        }
+        model.addAttribute("listing", listingService.getListing(id));
+        return "listing/listings";
+    }
+
+    @GetMapping("/filter")
+    public String filterListings(ListingFilterDTO filter, Model model) {
+
+        model.addAttribute("listings", listingService.filterListings(filter));
+        model.addAttribute("filter", filter);
+        return "listing/listings";
     }
 
     /* Owner listings */
@@ -93,17 +93,7 @@ public class ListingController {
     @GetMapping("/mylisting")
     public String myListings(Model model) {
 
-        User currentUser = userService.getCurrentUserOptional().orElse(null);
-        if (currentUser == null) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
-        }
-
-        Owner owner = ownerService.getOwner(currentUser.getId());
-
-        /* Fetches listings owned by the current owner */
-        List<Listing> ownerListings = listingService.getListingsByOwner(owner);
-
-        model.addAttribute("listings", ownerListings);
+        model.addAttribute("listings", listingApplicationService.getOwnerListingsForCurrentUser());
         return "listing/mylisting";
     }
 
@@ -112,21 +102,19 @@ public class ListingController {
     @GetMapping("/new")
     public String addListing(Model model) {
 
-        model.addAttribute("listing", new Listing());
+        if (!model.containsAttribute("listing")) {
+            model.addAttribute("listing", new Listing());
+        }
 
         User currentUser = userService.getCurrentUserOptional().orElse(null);
         Integer ownerId = ownerService.getOwnerIdForCurrentUser();
         if (ownerId == null && currentUser != null) {
             ownerId = currentUser.getId();
         }
+
         model.addAttribute("ownerId", ownerId);
         model.addAttribute("isUserOwner", userService.isUserOwner());
-
-        Integer tenantId = tenantService.getTenantIdForCurrentUser();
-        if (tenantId == null && currentUser != null) {
-            tenantId = currentUser.getId();
-        }
-        model.addAttribute("tenantId", tenantId);
+        model.addAttribute("tenantId", tenantService.getTenantIdForCurrentUser());
         model.addAttribute("isUserTenant", tenantService.isUserTenant());
 
         return "listing/listing";
@@ -141,60 +129,38 @@ public class ListingController {
                               @RequestParam(value = "firstName", required = false) String firstName,
                               @RequestParam(value = "lastName", required = false) String lastName,
                               @RequestParam(value = "phoneNumber", required = false) String phoneNumber,
-                              Model model,
+                              RedirectAttributes redirectAttributes,
                               HttpSession session
     ) {
-        User currentUser = userService.getCurrentUserOptional().orElse(null);
-        if (currentUser == null) {
-            model.addAttribute("errorMessage", "You must be logged in to add a listing.");
-            return "listing/listing";
-        }
-
+        /* Validation Check, redirects back to form with data */
         if (bindingResult.hasErrors()) {
-            if (ownerId == null && userService.isUserOwner()) {
-                ownerId = userService.getCurrentUserId();
-            }
-            model.addAttribute("ownerId", ownerId);
-            model.addAttribute("isUserOwner", userService.isUserOwner());
-            return "listing/listing";
+            redirectAttributes.addFlashAttribute(
+                    "org.springframework.validation.BindingResult.listing", bindingResult);
+            redirectAttributes.addFlashAttribute("listing", listing);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Please correct the highlighted errors.");
+
+            return "redirect:/listings/new";
         }
 
-        try {
-            listingApplicationService.createListing(
-                    listing, ownerId, firstName, lastName, phoneNumber, session
-            );
-            model.addAttribute("successMessage",
-                    "Your listing was submitted successfully! Awaiting approval.");
+        listingApplicationService.createListing(
+                listing, ownerId, firstName, lastName, phoneNumber, session
+        );
 
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            model.addAttribute("errorMessage", e.getMessage());
-            return "listing/listing";
-        } catch (RuntimeException e) {
-            model.addAttribute("emailError", e.getMessage());
-        }
-
-        model.addAttribute("listings", listingService.getListings());
-        return "listing/listings";
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Your listing was submitted successfully! Awaiting approval.");
+        return "redirect:/listings";
     }
 
     /* Delete listing */
     @Secured("OWNER")
     @PostMapping("/delete/{id}")
-    public String deleteListing(@PathVariable Integer id, Model model) {
+    public String deleteListing(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
 
-        try {
-            listingApplicationService.deleteListing(id);
-            model.addAttribute("successMessage", "Listing deleted successfully!");
-        } catch (IllegalStateException e) {
-            model.addAttribute("errorMessage", e.getMessage());
-        } catch (ResponseStatusException e) {
-            model.addAttribute("errorMessage", "Listing not found or access denied.");
-        } catch (RuntimeException e) {
-            model.addAttribute("emailError", e.getMessage());
-        }
-
-        model.addAttribute("listings", listingService.getListings());
-        return "listing/mylisting";
+        listingApplicationService.deleteListing(id);
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Listing deleted successfully!");
+        return "redirect:/listings/mylisting";
     }
 
     /* Approve listings (admin) */
@@ -208,33 +174,25 @@ public class ListingController {
 
     @Secured("ADMIN")
     @PostMapping("/approve/{id}")
-    public String approveListing(@PathVariable Integer id, Model model) {
+    public String approveListing(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
 
-        try {
-            listingApplicationService.approveListing(id);
-            model.addAttribute("successMessage", "Listing approved successfully!");
-        } catch (ResponseStatusException | IllegalStateException e) {
-            model.addAttribute("errorMessage", e.getMessage());
-        } catch (RuntimeException e) {
-            model.addAttribute("emailError", e.getMessage());
-        }
-        return "listing/listings";
+        listingApplicationService.approveListing(id);
+
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Listing approved successfully!");
+        return "redirect:/listings";
     }
 
     /* Reject listings (admin) */
     @Secured("ADMIN")
     @PostMapping("/reject/{id}")
-    public String rejectListing(@PathVariable Integer id, Model model) {
+    public String rejectListing(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
 
-        try {
-            listingApplicationService.rejectListing(id);
-            model.addAttribute("successMessage", "Listing rejected successfully!");
-        } catch (ResponseStatusException | IllegalStateException e) {
-            model.addAttribute("errorMessage", e.getMessage());
-        } catch (RuntimeException e) {
-            model.addAttribute("emailError", e.getMessage());
-        }
-        return "listing/listings";
+        listingApplicationService.rejectListing(id);
+
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Listing rejected successfully!");
+        return "redirect:/listings";
     }
 
     /* Assign tenant/owner */
@@ -242,9 +200,7 @@ public class ListingController {
     @GetMapping("/assign/{id}")
     public String showAssignOwnerToListing(@PathVariable Integer id, Model model) {
 
-        Listing listing = listingService.getListing(id);
-
-        model.addAttribute("listing", listing);
+        model.addAttribute("listing", listingService.getListing(id));
         model.addAttribute("owners", ownerService.getOwners());
         return "listing/assignowner";
     }
@@ -254,43 +210,31 @@ public class ListingController {
     public String assignOwnerToListing(
             @PathVariable Integer id,
             @RequestParam(value = "owner_id") Integer ownerId,
-            Model model
+            RedirectAttributes redirectAttributes
     ) {
-        try {
-            listingApplicationService.assignOwner(id, ownerId);
-            model.addAttribute("successMessage", "Owner assigned successfully!");
-        } catch (IllegalStateException | ResponseStatusException e) {
-            model.addAttribute("errorMessage", e.getMessage());
-        }
+        listingApplicationService.assignOwner(id, ownerId);
 
-        model.addAttribute("listings", listingService.getListings());
-        model.addAttribute("successMessage", "Form submitted successfully!");
-        return "listing/listings";
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Owner assigned successfully!");
+        return "redirect:/listings";
     }
 
     @Secured("ADMIN")
     @GetMapping("/unassign/owner/{id}")
-    public String unassignOwnerFromListing(@PathVariable Integer id, Model model) {
+    public String unassignOwnerFromListing(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
 
-        try {
-            listingApplicationService.unassignOwner(id);
-            model.addAttribute("successMessage", "Owner unassigned successfully!");
-        } catch (IllegalStateException | ResponseStatusException e) {
-            model.addAttribute("errorMessage", e.getMessage());
-        }
+        listingApplicationService.unassignOwner(id);
 
-        ownerService.unassignOwnerFromListing(id);
-        model.addAttribute("listings", listingService.getListings());
-        return "listing/listings";
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Owner unassigned successfully!");
+        return "redirect:/listings";
     }
 
     @GetMapping("/tenantassign/{id}")
     public String showAssignTenantToListing(@PathVariable Integer id, Model model) {
 
-        Listing listing = listingService.getListing(id);
-        List<Tenant> tenants = tenantService.getTenants();
-        model.addAttribute("listing", listing);
-        model.addAttribute("tenants", tenants);
+        model.addAttribute("listing", listingService.getListing(id));
+        model.addAttribute("tenants", tenantService.getTenants());
         return "listing/assigntenant";
     }
 
@@ -299,59 +243,38 @@ public class ListingController {
     public String assignTenantToListing(
             @PathVariable Integer id,
             @RequestParam(value = "tenant") Integer tenantId,
-            Model model
+            RedirectAttributes redirectAttributes
     ) {
-        try {
-            listingApplicationService.assignTenant(id, tenantId);
-            model.addAttribute("successMessage", "Tenant assigned successfully!");
-        } catch (IllegalStateException | ResponseStatusException e) {
-            model.addAttribute("errorMessage", e.getMessage());
-        }
+        listingApplicationService.assignTenant(id, tenantId);
 
-        model.addAttribute("listings", listingService.getListings());
-        return "listing/listings";
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Tenant assigned successfully!");
+        return "redirect:/listings";
     }
 
     @Secured("OWNER")
     @GetMapping("/unassign/tenant/{id}")
-    public String unassignTenantFromListing(@PathVariable Integer id, Model model) {
+    public String unassignTenantFromListing(
+            @PathVariable Integer id,
+            RedirectAttributes redirectAttributes
+    ) {
+        listingApplicationService.unassignTenant(id);
 
-        try {
-            listingApplicationService.unassignTenant(id);
-            model.addAttribute("successMessage", "Tenant unassigned successfully!");
-        } catch (IllegalStateException | ResponseStatusException e) {
-            model.addAttribute("errorMessage", e.getMessage());
-        }
-
-        model.addAttribute("listings", listingService.getListings());
-        return "listing/listings";
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Tenant unassigned successfully!");
+        return "redirect:/listings";
     }
 
+    /* Applications View */
     @Secured("OWNER")
     @GetMapping("/{id}/applications")
     public String viewApplications(@PathVariable Integer id, Model model) {
 
-        try {
-            Listing listing = listingApplicationService.viewApplications(id);
-            model.addAttribute("listing", listing);
-            model.addAttribute("applications", listing.getApplicants());
-            return "listing/applications";
-        } catch (IllegalStateException | ResponseStatusException e) {
-            model.addAttribute("errorMessage", e.getMessage());
-            model.addAttribute("listings", listingService.getListings());
-            return "listing/listings";
-        }
-    }
+        Listing listing = listingApplicationService.viewApplications(id);
 
-    /* Every role is allowed to, at the very least, filter listings */
-    @GetMapping("/filter")
-    public String filterListings(ListingFilterDTO filter, Model model) {
-
-        List<Listing> listings = listingService.filterListings(filter);
-
-        model.addAttribute("listings", listings);
-        model.addAttribute("filter", filter);
-        return "listing/listings";
+        model.addAttribute("listing", listing);
+        model.addAttribute("applications", listing.getApplicants());
+        return "listing/applications";
     }
 
 }
