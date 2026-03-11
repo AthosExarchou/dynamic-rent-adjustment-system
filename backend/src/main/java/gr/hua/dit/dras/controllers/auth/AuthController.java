@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class AuthController {
 
-    RoleRepository roleRepository;
+    private final RoleRepository roleRepository;
 
     public AuthController(RoleRepository roleRepository) {
         this.roleRepository = roleRepository;

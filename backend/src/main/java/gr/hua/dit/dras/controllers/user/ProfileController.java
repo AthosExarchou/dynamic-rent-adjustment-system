@@ -4,7 +4,7 @@ package gr.hua.dit.dras.controllers.user;
 import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.services.domain.UserService;
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class ProfileController {
@@ -27,13 +27,14 @@ public class ProfileController {
         this.passwordEncoder = passwordEncoder;
     }
 
+    /* View Profile */
     @GetMapping("/profile")
     public String viewProfile(Model model) {
 
         /* Get the currently authenticated user entity */
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User is not authenticated.");
+            throw new AccessDeniedException("User is not authenticated.");
         }
 
         User currentUser = userService.getUserByEmail(authentication.getName());
@@ -51,6 +52,8 @@ public class ProfileController {
     @Secured("USER")
     public String showChangePasswordForm(@PathVariable Integer id, Model model) {
 
+        validateProfileOwnership(id);
+
         model.addAttribute("userId", id);
         return "profile/change-password";
     }
@@ -58,50 +61,39 @@ public class ProfileController {
     /* Process password change */
     @PostMapping("/user/change-password/{id}")
     @Secured("USER")
-    public String changePassword(@PathVariable Integer id,
-                                 @RequestParam String oldPassword,
-                                 @RequestParam String newPassword,
-                                 @RequestParam String confirmPassword,
-                                 Model model) {
-
+    public String changePassword(
+            @PathVariable Integer id,
+            @RequestParam String oldPassword,
+            @RequestParam String newPassword,
+            @RequestParam String confirmPassword,
+            RedirectAttributes redirectAttributes
+    ) {
+        validateProfileOwnership(id);
         User user = userService.getUser(id);
 
         /* Check old password */
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            model.addAttribute("errorMessage", "Old password is incorrect.");
-            model.addAttribute("user", user);
-            model.addAttribute("userId", id);
-            return "profile/change-password";
+            throw new IllegalArgumentException("Old password is incorrect.");
         }
 
         /* Confirm new password */
         if (passwordEncoder.matches(newPassword, user.getPassword())) {
-            model.addAttribute("errorMessage", "New password cannot be the same as the old one.");
-            model.addAttribute("user", user);
-            model.addAttribute("userId", id);
-            return "profile/change-password";
+            throw new IllegalArgumentException("New password cannot be the same as the old one.");
         }
 
         /* Check new password != old password */
         if (!newPassword.equals(confirmPassword)) {
-            model.addAttribute("errorMessage", "New password and confirmation do not match.");
-            model.addAttribute("user", user);
-            model.addAttribute("userId", id);
-            return "profile/change-password";
+            throw new IllegalArgumentException("New password and confirmation do not match.");
         }
 
         /* Save new password */
         user.setPassword(passwordEncoder.encode(newPassword));
         userService.updateUser(user);
 
-        boolean isAdmin = user.getRoles().stream()
-                .anyMatch(r -> r.getName().equals("ADMIN"));
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Password changed successfully!");
 
-        model.addAttribute("successMessage", "Password changed successfully!");
-        model.addAttribute("user", user);
-        model.addAttribute("isAdmin", isAdmin);
-
-        return "profile/profile";
+        return "redirect:/profile";
     }
 
     /* Show edit profile form */
@@ -109,19 +101,31 @@ public class ProfileController {
     @Secured("USER")
     public String showEditProfileForm(@PathVariable Integer id, Model model) {
 
-        User user = userService.getUser(id);
-        model.addAttribute("user", user);
-        return "profile/edit-profile"; //new template
+        validateProfileOwnership(id);
+
+        if (!model.containsAttribute("user")) {
+            model.addAttribute("user", userService.getUser(id));
+        }
+        return "profile/edit-profile";
     }
 
+    /* Update Profile */
     @PostMapping("/user/edit/{id}")
     @Secured("USER")
-    public String updateProfile(@Valid @PathVariable Integer id, @Valid @ModelAttribute("user") User updatedUser,
-                                BindingResult bindingResult, Model model) {
-
+    public String updateProfile(
+            @Valid @PathVariable Integer id,
+            @Valid @ModelAttribute("user") User updatedUser,
+            BindingResult bindingResult,
+            RedirectAttributes redirectAttributes
+    ) {
         if (bindingResult.hasErrors()) {
-            model.addAttribute("userId", id);
-            return "profile/edit-profile";
+            redirectAttributes.addFlashAttribute(
+                    "org.springframework.validation.BindingResult.user", bindingResult);
+            redirectAttributes.addFlashAttribute("user", updatedUser);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Please correct the highlighted errors.");
+
+            return "redirect:/user/edit/" + id;
         }
 
         User user = userService.getUser(id);
@@ -129,14 +133,28 @@ public class ProfileController {
         user.setEmail(updatedUser.getEmail());
         userService.updateUser(user);
 
-        boolean isAdmin = user.getRoles().stream()
-                .anyMatch(r -> r.getName().equals("ADMIN"));
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Profile updated successfully!");
 
-        model.addAttribute("successMessage", "Profile updated successfully!");
-        model.addAttribute("user", user);
-        model.addAttribute("isAdmin", isAdmin);
+        return "redirect:/profile";
+    }
 
-        return "profile/profile"; //back to profile page
+    /* Helper Methods */
+
+    /**
+     * Prevents Insecure Direct Object Reference (IDOR) by ensuring
+     * the logged-in user can only modify their own profile, unless they are an Admin.
+     */
+    private void validateProfileOwnership(Integer requestedId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User currentUser = userService.getUserByEmail(authentication.getName());
+
+        boolean isAdmin = currentUser.getRoles().stream()
+                .anyMatch(role -> role.getName().equals("ADMIN"));
+
+        if (!isAdmin && !currentUser.getId().equals(requestedId)) {
+            throw new AccessDeniedException("You do not have permission to modify this profile.");
+        }
     }
 
 }
