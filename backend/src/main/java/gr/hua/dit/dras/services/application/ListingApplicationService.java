@@ -3,6 +3,7 @@ package gr.hua.dit.dras.services.application;
 /* imports */
 import gr.hua.dit.dras.entities.*;
 import gr.hua.dit.dras.model.enums.ListingStatus;
+import gr.hua.dit.dras.model.enums.RentalStatus;
 import gr.hua.dit.dras.repositories.*;
 import gr.hua.dit.dras.services.domain.ListingService;
 import gr.hua.dit.dras.services.domain.OwnerService;
@@ -11,10 +12,29 @@ import gr.hua.dit.dras.services.domain.UserService;
 import gr.hua.dit.dras.services.infrastructure.EmailService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 import jakarta.servlet.http.HttpSession;
 
+/**
+ * Application service responsible for orchestrating listing-related workflows.
+ *
+ * This service coordinates interactions between Listing, Owner, Tenant,
+ * and User domain services to execute use cases such as:
+ *
+ * - Creating and deleting listings
+ * - Assigning owners and tenants
+ * - Approving or rejecting tenant applications
+ * - Managing listing approval workflows
+ *
+ * The service operates at the application layer and does not contain
+ * core domain business logic. Domain rules are delegated to the
+ * corresponding domain services.
+ *
+ * Email notifications may be triggered as side effects, but failures
+ * in notification delivery do not affect the main business transaction.
+ */
 @Service
 @Transactional
 public class ListingApplicationService {
@@ -184,6 +204,7 @@ public class ListingApplicationService {
     }
 
     /* Approval Workflows */
+
     public void approveListing(Integer listingId) {
 
         Listing listing = requireListing(listingId);
@@ -241,30 +262,112 @@ public class ListingApplicationService {
         ownerService.unassignOwnerFromListing(listingId);
     }
 
-    /* Tenant Assignment */
-
-    public void assignTenant(Integer listingId, Integer tenantId) {
-
-        User user = requireUser();
-        Listing listing = requireListing(listingId);
-        validateModificationRights(listing, user);
-
-        if (listing.getTenant() != null) {
-            throw new IllegalStateException("Listing already has a tenant assigned.");
-        }
-
-        Tenant tenant = tenantService.getTenant(tenantId);
-        tenantService.assignTenantToListing(listingId, tenant, "TENANT");
-    }
-
+    /* Tenant Unassignment */
     public void unassignTenant(Integer listingId) {
 
         User user = requireUser();
         Listing listing = requireListing(listingId);
-        validateModificationRights(listing, user);
+
+        validateModificationRights(listing, user); // validates permissions
 
         Integer tenantId = tenantService.getTenantIdForCurrentUser();
         tenantService.unassignTenantFromListing(listingId, tenantId);
+    }
+
+    /* Application Workflows */
+
+    @Transactional
+    public void approveTenantApplication(Integer listingId, Integer tenantId) {
+
+        User user = requireUser();
+        Listing listing = requireListing(listingId);
+        Tenant tenant = tenantService.getTenant(tenantId);
+
+        validateModificationRights(listing, user); // validates permissions
+
+        if (!listing.getApplicants().contains(tenant)) {
+            throw new IllegalStateException("This tenant did not apply for this listing.");
+        }
+
+        performTenantAssignment(listing, tenant);
+
+        /* Send Email */
+        User tenantUser = tenant.getUser();
+        if (tenantUser != null) {
+            trySendEmail(() -> emailService.sendEmailNotification(
+                    tenantUser.getEmail(),
+                    tenant.getFirstName() + " " + tenant.getLastName(),
+                    listing,
+                    "tenantApproval"
+            ));
+        }
+    }
+
+    private void performTenantAssignment(Listing listing, Tenant approvedTenant) {
+
+        /* Bind the winning tenant to the listing */
+        tenantService.bindTenantToListing(approvedTenant, listing);
+
+        /* Assign the TENANT role */
+        User tenantUser = approvedTenant.getUser();
+        if (tenantUser != null) {
+            Role tenantRole = roleRepository.findByName("TENANT")
+                    .orElseThrow(() -> new IllegalStateException("TENANT role not found"));
+
+            if (!tenantUser.getRoles().contains(tenantRole)) {
+                tenantUser.getRoles().add(tenantRole);
+                userService.updateUser(tenantUser);
+            }
+        }
+
+        /* Reject the other applicants */
+        List<Tenant> allApplicants = new ArrayList<>(listing.getApplicants());
+
+        for (Tenant applicant : allApplicants) {
+            if (applicant.getId().equals(approvedTenant.getId())) {
+                continue;
+            }
+
+            listingService.rejectApplicant(listing, applicant);
+
+            if (applicant.getAppliedListings().isEmpty() && applicant.getListing() == null) {
+                applicant.setRentalStatus(RentalStatus.CANCELED);
+            }
+
+            if (applicant.getUser() != null) {
+                trySendEmail(() -> emailService.sendEmailNotification(
+                        applicant.getUser().getEmail(),
+                        applicant.getFirstName() + " " + applicant.getLastName(),
+                        listing,
+                        "listingRentedToSomeoneElse"
+                ));
+            }
+        }
+
+        listing.getApplicants().clear();
+        approvedTenant.getAppliedListings().remove(listing);
+    }
+
+    @Transactional
+    public void rejectTenantApplication(Integer listingId, Integer tenantId) {
+
+        User currentUser = requireUser();
+        Listing listing = requireListing(listingId);
+        Tenant tenant = tenantService.getTenant(tenantId);
+
+        validateModificationRights(listing, currentUser); // validates permissions
+
+        listingService.rejectApplicant(listing, tenant); // executes domain logic
+
+        /* Send Email */
+        if (tenant.getUser() != null) {
+            trySendEmail(() -> emailService.sendEmailNotification(
+                    tenant.getUser().getEmail(),
+                    tenant.getFirstName() + " " + tenant.getLastName(),
+                    listing,
+                    "ownerRejectedApplication"
+            ));
+        }
     }
 
     /* Application View */

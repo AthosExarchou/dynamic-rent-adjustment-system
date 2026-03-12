@@ -87,7 +87,7 @@ public class TenantService {
             String phoneNumber
     ) {
 
-        User user = userService.getUser(userId); //fetches user by ID
+        User user = userService.getUser(userId); // fetches user by ID
 
         tenantRepository.findByUserId(userId).ifPresent(t -> {
             throw new ResponseStatusException(
@@ -101,11 +101,11 @@ public class TenantService {
         tenant.setLastName(lastName);
         tenant.setPhoneNumber(phoneNumber);
         tenant.setRentalStatus(RentalStatus.APPLIED);
-        tenant.setUser(user); //associates tenant with the user
+        tenant.setUser(user); // associates tenant with the user
 
         Tenant savedTenant = tenantRepository.save(tenant);
 
-        assignTenantRole(user); //assigns role 'TENANT'
+        assignTenantRole(user); // assigns role 'TENANT'
 
         return savedTenant;
     }
@@ -139,7 +139,7 @@ public class TenantService {
     public boolean isUserTenant() {
 
         Integer userId = userService.getCurrentUserId();
-        User user = userService.getUser(userId); //fetches user by ID
+        User user = userService.getUser(userId); // fetches user by ID
 
         return user.getRoles().stream()
                 .anyMatch(role -> "TENANT".equals(role.getName()));
@@ -167,7 +167,7 @@ public class TenantService {
                 );
 
         if (listing.getApplicants().contains(tenant)) {
-            return true; //already applied
+            return true; // already applied
         }
 
         if (tenant.getListing() != null) {
@@ -245,51 +245,38 @@ public class TenantService {
     }
 
     @Transactional
-    public void assignTenantToListing(Integer listingId, Tenant tenant, String RoleUserIs) {
+    public void bindTenantToListing(Tenant tenant, Listing listing) {
 
-        Listing listing = listingRepository.findById(listingId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found"));
+        if (listing.getTenant() != null) {
+            throw new IllegalStateException("Listing already rented.");
+        }
 
+        if (tenant.getListing() != null) {
+            throw new IllegalStateException("Tenant is already renting another listing.");
+        }
+
+        tenant.setRentalStatus(RentalStatus.RENTING);
         listing.setTenant(tenant);
         listing.setStatus(ListingStatus.RENTED);
 
-        Integer currentUserId = userService.getCurrentUserId();
-        User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
-        Role tenantRole = roleRepository.findByName("TENANT")
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
-        Role ownerRole = roleRepository.findByName("OWNER")
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
-
-        if (!RoleUserIs.equals("owner")) {
-            currentUser.getRoles().add(tenantRole);
-            userService.updateUser(currentUser); //saves user
-        }
         listingRepository.save(listing);
+        tenantRepository.save(tenant);
     }
 
     @Transactional
     public void unassignTenantFromListing(Integer listingId, Integer tenantId) {
 
         Listing listing = listingRepository.findById(listingId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Listing not found"
-                ));
+                .orElseThrow(() -> new IllegalArgumentException("Listing not found"));
         Tenant tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Tenant not found"
-                ));
+                .orElseThrow(() -> new IllegalArgumentException("Tenant not found"));
 
         if (!tenant.equals(listing.getTenant())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST, "Tenant not assigned to this listing"
-            );
+            throw new IllegalStateException("Tenant not assigned to this listing");
         }
 
-        listing.setTenant(null); //unlinks tenant from listing
+        listing.setTenant(null); // unlinks tenant from listing
         listing.makeAvailable();
-
         tenant.setRentalStatus(RentalStatus.CANCELED);
 
         tenantRepository.save(tenant);
