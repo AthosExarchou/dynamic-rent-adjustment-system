@@ -239,21 +239,7 @@ public class ListingController {
     }
 
     @Secured("OWNER")
-    @PostMapping("/tenantassign/{id}")
-    public String assignTenantToListing(
-            @PathVariable Integer id,
-            @RequestParam(value = "tenant") Integer tenantId,
-            RedirectAttributes redirectAttributes
-    ) {
-        listingApplicationService.assignTenant(id, tenantId);
-
-        redirectAttributes.addFlashAttribute("successMessage",
-                "Tenant assigned successfully!");
-        return "redirect:/listings";
-    }
-
-    @Secured("OWNER")
-    @GetMapping("/unassign/tenant/{id}")
+    @PostMapping("/unassign/tenant/{id}")
     public String unassignTenantFromListing(
             @PathVariable Integer id,
             RedirectAttributes redirectAttributes
@@ -262,7 +248,8 @@ public class ListingController {
 
         redirectAttributes.addFlashAttribute("successMessage",
                 "Tenant unassigned successfully!");
-        return "redirect:/listings";
+
+        return "redirect:/listings/mylisting";
     }
 
     /* Applications View */

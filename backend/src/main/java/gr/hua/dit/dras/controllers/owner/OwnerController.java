@@ -4,12 +4,11 @@ package gr.hua.dit.dras.controllers.owner;
 import gr.hua.dit.dras.dto.OwnerCreateRequest;
 import gr.hua.dit.dras.entities.Listing;
 import gr.hua.dit.dras.entities.Owner;
-import gr.hua.dit.dras.entities.Tenant;
 import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.repositories.RoleRepository;
+import gr.hua.dit.dras.services.application.ListingApplicationService;
 import gr.hua.dit.dras.services.domain.*;
-import gr.hua.dit.dras.services.infrastructure.EmailService;
 import jakarta.validation.Valid;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.annotation.Secured;
@@ -29,24 +28,18 @@ public class OwnerController {
     private final OwnerService ownerService;
     private final UserService userService;
     private final RoleRepository roleRepository;
-    private final EmailService emailService;
-    private final ListingService listingService;
-    private final TenantService tenantService;
+    private final ListingApplicationService listingApplicationService;
 
     public OwnerController(
             OwnerService ownerService,
             UserService userService,
             RoleRepository roleRepository,
-            EmailService emailService,
-            ListingService listingService,
-            TenantService tenantService
+            ListingApplicationService listingApplicationService
     ) {
         this.ownerService = ownerService;
         this.userService = userService;
         this.roleRepository = roleRepository;
-        this.emailService = emailService;
-        this.listingService = listingService;
-        this.tenantService = tenantService;
+        this.listingApplicationService = listingApplicationService;
     }
 
     @GetMapping("/auth/users")
@@ -122,6 +115,23 @@ public class OwnerController {
         return "listing/listings";
     }
 
+    /* Owner approves tenant's application */
+    @Secured("OWNER")
+    @PostMapping("/listings/{listingId}/approveApplicant/{tenantId}")
+    public String approveTenantApplication(
+            @PathVariable Integer listingId,
+            @PathVariable Integer tenantId,
+            RedirectAttributes redirectAttributes
+    ) {
+        listingApplicationService.approveTenantApplication(listingId, tenantId);
+
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Application approved successfully.");
+
+        return "redirect:/listings/mylisting";
+    }
+
+    /* Owner rejects tenant's application */
     @Secured("OWNER")
     @PostMapping("/listings/{listingId}/rejectApplicant/{tenantId}")
     public String rejectTenantApplication(
@@ -129,39 +139,12 @@ public class OwnerController {
             @PathVariable Integer tenantId,
             RedirectAttributes redirectAttributes
     ) {
-        Integer currentUserId = userService.getCurrentUserId();
-        User currentUser = userService.getUser(currentUserId);
-        Listing listing = listingService.getListing(listingId);
-        Tenant tenant = tenantService.getTenant(tenantId);
+        listingApplicationService.rejectTenantApplication(listingId, tenantId);
 
-        listingService.validateListingModificationRights(listing, currentUser);
+        redirectAttributes.addFlashAttribute("successMessage",
+                "Tenant application rejected successfully.");
 
-        if (!listing.getApplicants().contains(tenant)) {
-            throw new IllegalStateException("Tenant did not apply for this listing.");
-        }
-
-        listingService.rejectApplicant(listing, tenant);
-
-        try {
-            /* Sends email notification to the tenant of said listing */
-            if (tenant.getUser() != null) {
-                emailService.sendEmailNotification(
-                        tenant.getUser().getEmail(),
-                        tenant.getFirstName() + " " + tenant.getLastName(),
-                        listing,
-                        "ownerRejectedApplication"
-                );
-            }
-
-            redirectAttributes.addFlashAttribute("successMessage",
-                    "Tenant application rejected successfully");
-
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("emailError",
-                    "Tenant rejected but email could not be sent.");
-        }
-
-        return "redirect:/listing/mylisting";
+        return "redirect:/listings/mylisting";
     }
 
 }
