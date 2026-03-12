@@ -10,9 +10,7 @@ import gr.hua.dit.dras.repositories.OwnerRepository;
 import gr.hua.dit.dras.repositories.RoleRepository;
 import gr.hua.dit.dras.repositories.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @Service
@@ -49,20 +47,14 @@ public class OwnerService {
         if (ownerId != null) {
             return ownerRepository.findById(ownerId)
                     .orElseThrow(() ->
-                            new ResponseStatusException(
-                                    HttpStatus.NOT_FOUND,
-                                    "Owner not found with id: " + ownerId
-                            )
+                            new IllegalStateException("Owner not found with id: " + ownerId)
                     );
         }
 
         Integer currentUserId = userService.getCurrentUserId();
         return ownerRepository.findByUserId(currentUserId)
                 .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Owner not found for current user"
-                        )
+                        new IllegalStateException("Owner not found for current user")
                 );
     }
 
@@ -74,20 +66,17 @@ public class OwnerService {
             String phoneNumber
     ) {
 
-        User user = userService.getUser(userId); //fetches user by ID
+        User user = userService.getUser(userId); // fetches user by ID
 
         ownerRepository.findByUserId(userId).ifPresent(o -> {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "User already has an Owner profile"
-            );
+            throw new IllegalStateException("User already has an Owner profile");
         });
 
         Owner owner = new Owner();
         owner.setFirstName(firstName);
         owner.setLastName(lastName);
         owner.setPhoneNumber(phoneNumber);
-        owner.setUser(user); //associates owner with the user
+        owner.setUser(user); // associates owner with the user
 
         Owner savedOwner = ownerRepository.save(owner);
 
@@ -113,10 +102,7 @@ public class OwnerService {
         return ownerRepository.findByUserId(userId)
                 .map(Owner::getId)
                 .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Owner profile not found for current user"
-                        )
+                        new IllegalStateException("Owner profile not found for current user")
                 );
     }
 
@@ -124,10 +110,7 @@ public class OwnerService {
 
         Role ownerRole = roleRepository.findByName("OWNER")
                 .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.INTERNAL_SERVER_ERROR,
-                                "OWNER role not found in database"
-                        )
+                        new IllegalStateException("OWNER role not found in database")
                 );
 
         if (!user.getRoles().contains(ownerRole)) {
@@ -145,20 +128,26 @@ public class OwnerService {
     public void assignOwnerToListing(Integer listingId, Owner owner) {
 
         Listing listing = listingRepository.findById(listingId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Listing not found"));
+                .orElseThrow(() ->
+                        new IllegalStateException("Listing not found")
+                );
 
         listing.setOwner(owner);
 
         Integer currentUserId = userService.getCurrentUserId();
         User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() ->
+                        new IllegalStateException("User not found")
+                );
 
         Role ownerRole = roleRepository.findByName("OWNER")
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Role not found"));
+                .orElseThrow(() ->
+                        new IllegalStateException("OWNER role not found in database")
+                );
 
         if (!currentUser.getRoles().contains(ownerRole)) {
             currentUser.getRoles().add(ownerRole);
-            userService.updateUser(currentUser); //saves the user
+            userService.updateUser(currentUser); // saves the user
         }
         listingRepository.save(listing);
     }
@@ -167,9 +156,9 @@ public class OwnerService {
     public void unassignOwnerFromListing(Integer listingId) {
 
         Listing listing = listingRepository.findById(listingId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Listing not found"
-                ));
+                .orElseThrow(() ->
+                        new IllegalStateException("Listing not found")
+                );
         listing.setOwner(null);
         listing.disable();
         listingRepository.save(listing);

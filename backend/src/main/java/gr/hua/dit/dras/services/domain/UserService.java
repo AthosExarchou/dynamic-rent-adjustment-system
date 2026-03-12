@@ -4,7 +4,6 @@ package gr.hua.dit.dras.services.domain;
 import gr.hua.dit.dras.entities.*;
 import gr.hua.dit.dras.repositories.*;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,7 +15,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @Transactional
@@ -52,7 +50,7 @@ public class UserService implements UserDetailsService {
         user.setPassword(encodedPassword);
 
         Role role = roleRepository.findByName("USER")
-                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                .orElseThrow(() -> new RuntimeException("USER role not found."));
         Set<Role> roles = new HashSet<>();
         roles.add(role);
         user.setRoles(roles);
@@ -90,11 +88,14 @@ public class UserService implements UserDetailsService {
     @Transactional(readOnly = true)
     public Integer getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User is not authenticated.");
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+            throw new IllegalStateException("User is not authenticated.");
         }
         User user = userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found: " + authentication.getName()));
+                .orElseThrow(() -> new IllegalStateException(
+                        "User not found: " + authentication.getName()
+                ));
         return user.getId();
     }
 
@@ -102,7 +103,7 @@ public class UserService implements UserDetailsService {
     public boolean isUserOwner() {
         Integer currentUserId = getCurrentUserId();
         if (currentUserId == null) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "User id must not be null");
+            throw new IllegalStateException("User id must not be null");
         }
         User currentUser = getUser(currentUserId);
         for (Role role : currentUser.getRoles()) {
@@ -116,7 +117,7 @@ public class UserService implements UserDetailsService {
     @Transactional
     public void deleteUser(Integer userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new IllegalStateException("User not found"));
         Optional<Role> ownerRole = roleRepository.findByName("OWNER");
         if (ownerRole.isPresent() && user.getRoles().contains(ownerRole.get())) {
             if (user.getOwner() != null) {
@@ -163,13 +164,15 @@ public class UserService implements UserDetailsService {
     @Transactional(readOnly = true)
     public User getUser(Integer userId) {
         return userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException("User with id " + userId + " not found"));
+                .orElseThrow(() -> new NoSuchElementException(
+                        "User with id " + userId + " not found"
+                ));
     }
 
     @Transactional(readOnly = true)
     public User getUserByEmail(String email) {
         return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found: " + email));
+                .orElseThrow(() -> new IllegalStateException("User not found: " + email));
     }
 
     @Transactional(readOnly = true)
@@ -189,8 +192,10 @@ public class UserService implements UserDetailsService {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
-            return Optional.empty(); //unauthenticated
+        if (auth == null || !auth.isAuthenticated() ||
+                auth instanceof AnonymousAuthenticationToken) {
+
+            return Optional.empty(); // unauthenticated
         }
         return userRepository.findByEmail(auth.getName());
     }

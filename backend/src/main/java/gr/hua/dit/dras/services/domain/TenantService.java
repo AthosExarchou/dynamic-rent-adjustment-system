@@ -10,9 +10,7 @@ import gr.hua.dit.dras.repositories.RoleRepository;
 import gr.hua.dit.dras.repositories.UserRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,20 +22,17 @@ public class TenantService {
     private final ListingRepository listingRepository;
     private final UserService userService;
     private final RoleRepository roleRepository;
-    private final UserRepository userRepository;
 
     public TenantService(
             TenantRepository tenantRepository,
             ListingRepository listingRepository,
             UserService userService,
-            RoleRepository roleRepository,
-            UserRepository userRepository
+            RoleRepository roleRepository
     ) {
         this.tenantRepository = tenantRepository;
         this.listingRepository = listingRepository;
         this.userService = userService;
         this.roleRepository = roleRepository;
-        this.userRepository = userRepository;
     }
 
     @Transactional(readOnly = true)
@@ -61,10 +56,7 @@ public class TenantService {
         if (tenantId != null) {
             return tenantRepository.findById(tenantId)
                     .orElseThrow(() ->
-                            new ResponseStatusException(
-                                    HttpStatus.NOT_FOUND,
-                                    "Tenant not found with id: " + tenantId
-                            )
+                            new IllegalStateException("Tenant not found with id: " + tenantId)
                     );
         }
 
@@ -72,10 +64,7 @@ public class TenantService {
 
         return tenantRepository.findByUserId(currentUserId)
                 .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Tenant profile not found for current user"
-                        )
+                        new IllegalStateException("Tenant profile not found for current user")
                 );
     }
 
@@ -90,8 +79,7 @@ public class TenantService {
         User user = userService.getUser(userId); // fetches user by ID
 
         tenantRepository.findByUserId(userId).ifPresent(t -> {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
+            throw new IllegalStateException(
                     "User already has a Tenant profile"
             );
         });
@@ -128,8 +116,7 @@ public class TenantService {
         return tenantRepository.findByUserId(userId)
                 .map(Tenant::getId)
                 .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
+                        new IllegalStateException(
                                 "Tenant profile not found for current user"
                         )
                 );
@@ -152,16 +139,14 @@ public class TenantService {
 
         Tenant tenant = tenantRepository.findByUserId(userId)
                 .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.BAD_REQUEST,
+                        new IllegalStateException(
                                 "Current user is not a tenant"
                         )
                 );
 
         Listing listing = listingRepository.findById(listingId)
                 .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
+                        new IllegalStateException(
                                 "Listing not found"
                         )
                 );
@@ -171,8 +156,7 @@ public class TenantService {
         }
 
         if (tenant.getListing() != null) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
+            throw new IllegalStateException(
                     "Tenant is already renting a listing"
             );
         }
@@ -194,30 +178,26 @@ public class TenantService {
 
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
+                        new IllegalStateException(
                                 "Tenant not found"
                         )
                 );
 
         Listing listing = listingRepository.findById(listingId)
                 .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
+                        new IllegalStateException(
                                 "Listing not found"
                         )
                 );
 
         if (listing.getTenant() != null) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
+            throw new IllegalStateException(
                     "Listing is already rented"
             );
         }
 
         if (tenant.getListing() != null) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
+            throw new IllegalStateException(
                     "Tenant is already renting another listing"
             );
         }
@@ -232,8 +212,7 @@ public class TenantService {
 
         Role tenantRole = roleRepository.findByName("TENANT")
                 .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.INTERNAL_SERVER_ERROR,
+                        new IllegalStateException(
                                 "TENANT role not found"
                         )
                 );
