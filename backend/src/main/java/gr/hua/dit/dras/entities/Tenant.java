@@ -32,6 +32,10 @@ public class Tenant {
     @Pattern(regexp = "^\\+?[0-9. ()-]{7,25}$", message = "Invalid phone number format")
     private String phoneNumber;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RentalStatus rentalStatus;
+
     /* Tenant-Listing relationship */
     @OneToOne(mappedBy = "tenant", cascade = {
             CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH
@@ -39,7 +43,9 @@ public class Tenant {
     private Listing listing;
 
     /* Tenant applications relationship */
-    @ManyToMany(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+    @ManyToMany(cascade = {
+            CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH
+    })
     @JoinTable(
             name = "tenant_listing_applications",
             joinColumns = @JoinColumn(name = "tenant_id"),
@@ -47,21 +53,9 @@ public class Tenant {
     )
     private Set<Listing> appliedListings = new HashSet<>();
 
-    public Set<Listing> getAppliedListings() {
-        return appliedListings;
-    }
-
-    public void setAppliedListings(Set<Listing> appliedListings) {
-        this.appliedListings = appliedListings;
-    }
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private RentalStatus rentalStatus;
-
     /* Tenant-User relationship */
     @OneToOne(cascade = {
-            CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH, CascadeType.REMOVE
+            CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH
     })
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
@@ -131,11 +125,19 @@ public class Tenant {
         this.rentalStatus = rentalStatus;
     }
 
+    public Set<Listing> getAppliedListings() {
+        return appliedListings;
+    }
+
+    public void setAppliedListings(Set<Listing> appliedListings) {
+        this.appliedListings = appliedListings;
+    }
+
     public void applyToListing(Listing listing) {
 
         if (!appliedListings.contains(listing)) {
             appliedListings.add(listing);
-            listing.getApplicants().add(this); //bidirectional relationship
+            listing.getApplicants().add(this); // bidirectional relationship
         }
     }
 

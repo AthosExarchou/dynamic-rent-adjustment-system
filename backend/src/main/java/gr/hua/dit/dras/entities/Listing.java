@@ -21,7 +21,7 @@ public class Listing {
     @Column(name = "id")
     private Integer id;
 
-    @Column(name = "date_scraped", nullable = false)
+    @Column(name = "date_scraped")
     private Instant dateScraped;
 
     @NotBlank
@@ -46,7 +46,7 @@ public class Listing {
 
     @NotNull
     @Min(0)
-    @Max(200) //0-200 €/m2
+    @Max(200) // 0-200 €/m2
     @Column(nullable = false)
     private Integer pricePerM2;
 
@@ -116,14 +116,6 @@ public class Listing {
             CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH
     })
     private Set<Tenant> applicants = new HashSet<>();
-
-    public Set<Tenant> getApplicants() {
-        return applicants;
-    }
-
-    public void setApplicants(Set<Tenant> applicants) {
-        this.applicants = applicants;
-    }
 
     public Listing(
             Integer id,
@@ -350,6 +342,14 @@ public class Listing {
         this.updatedAt = updatedAt;
     }
 
+    public Set<Tenant> getApplicants() {
+        return applicants;
+    }
+
+    public void setApplicants(Set<Tenant> applicants) {
+        this.applicants = applicants;
+    }
+
     public void addApplicant(Tenant tenant) {
         if (!applicants.contains(tenant)) {
             applicants.add(tenant);
@@ -395,6 +395,11 @@ public class Listing {
             throw new IllegalStateException("Cannot make rented listing available");
         }
         this.status = ListingStatus.APPROVED;
+    }
+
+    public void removeApplicant(Tenant tenant) {
+        this.applicants.remove(tenant); // removes tenant from listing's applicant list
+        tenant.getAppliedListings().remove(this); // removes listing from tenant's applied listings
     }
 
     @Override

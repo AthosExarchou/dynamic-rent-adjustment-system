@@ -37,12 +37,12 @@ public class Owner {
 
     /* Owner-Listing relationship */
     @OneToMany(mappedBy = "owner", cascade= {CascadeType.PERSIST, CascadeType.MERGE,
-            CascadeType.DETACH, CascadeType.REFRESH, CascadeType.REMOVE, CascadeType.DETACH})
+            CascadeType.REFRESH, CascadeType.REMOVE, CascadeType.DETACH})
     private List<Listing> listings = new ArrayList<>();
 
     /* Owner-User relationship */
     @OneToOne(cascade = {
-            CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH, CascadeType.REMOVE
+            CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH
     })
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;

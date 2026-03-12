@@ -59,9 +59,7 @@ public class User {
     private Set<Role> roles = new HashSet<>();
 
     /* User-Owner relationship */
-    @OneToOne(mappedBy = "user", cascade = {
-            CascadeType.PERSIST, CascadeType.DETACH, CascadeType.REMOVE
-    }, orphanRemoval = true)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Owner owner;
 
     /* User-Tenant relationship */
