@@ -1,12 +1,14 @@
 package gr.hua.dit.dras.controllers.user;
 
 /* imports */
+import gr.hua.dit.dras.dto.AccountDeletionRequest;
 import gr.hua.dit.dras.entities.Owner;
 import gr.hua.dit.dras.entities.Role;
 import gr.hua.dit.dras.entities.Tenant;
 import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.repositories.UserRepository;
 import gr.hua.dit.dras.repositories.RoleRepository;
+import gr.hua.dit.dras.services.application.UserApplicationService;
 import gr.hua.dit.dras.services.infrastructure.EmailService;
 import gr.hua.dit.dras.services.domain.UserService;
 import jakarta.servlet.http.HttpSession;
@@ -30,17 +32,20 @@ public class UserController {
     private final UserService userService;
     private final RoleRepository roleRepository;
     private final EmailService emailService;
+    private final UserApplicationService userApplicationService;
 
     public UserController(
             UserRepository userRepository,
             UserService userService,
             RoleRepository roleRepository,
-            EmailService emailService
+            EmailService emailService,
+            UserApplicationService userApplicationService
     ) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.roleRepository = roleRepository;
         this.emailService = emailService;
+        this.userApplicationService = userApplicationService;
     }
 
     @ModelAttribute
@@ -318,47 +323,45 @@ public class UserController {
     @PostMapping("/user/delete/{user_id}")
     public String deleteUser(@PathVariable Integer user_id, RedirectAttributes redirectAttributes) {
 
-        User user = userService.getUser(user_id);
-        userService.assertNotAdmin(user);
+        userApplicationService.deleteUserAsAdmin(user_id);
 
-        Optional<Role> adminRole = roleRepository.findByName("ADMIN");
+        redirectAttributes.addFlashAttribute("successMessage",
+                "User deleted successfully.");
 
-        if (adminRole.isPresent() && user.getRoles().contains(adminRole.get())) {
-            throw new AccessDeniedException("You do not have the permission to delete this user!");
-        }
-
-        /* Sends email before deleting the user */
-        try {
-            emailService.sendAccountDeletionEmail(user.getEmail(), user);
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("emailError",
-                    "User deleted, but email could not be sent.");
-        }
-
-        userService.deleteUser(user_id);
-        redirectAttributes.addFlashAttribute("successMessage", "User deleted successfully.");
         return "redirect:/auth/users";
+    }
+
+    @Secured("USER")
+    @GetMapping("/user/delete/self")
+    public String showDeleteAccountForm(Model model) {
+        if (!model.containsAttribute("deletionRequest")) {
+            model.addAttribute("deletionRequest", new AccountDeletionRequest());
+        }
+        return "profile/delete-account";
     }
 
     /* Allows users to delete their own account */
     @Secured("USER")
     @PostMapping("/user/delete/self")
     public String deleteOwnAccount(
-            Authentication authentication,
+            @Valid @ModelAttribute("deletionRequest") AccountDeletionRequest request,
+            BindingResult bindingResult,
             RedirectAttributes redirectAttributes,
             HttpSession session
     ) {
-        String email = authentication.getName();
-        User currentUser = userService.getUserByEmail(email);
-        userService.assertNotAdmin(currentUser);
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute(
+                    "org.springframework.validation.BindingResult.deletionRequest", bindingResult);
+            redirectAttributes.addFlashAttribute("deletionRequest", request);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Please fill out all required fields.");
 
-        try {
-            emailService.sendAccountDeletionEmail(currentUser.getEmail(), currentUser);
-        } catch (Exception e) {
-            // Ignores email error on self-delete since session will be invalidated anyway
+            return "redirect:/user/delete/self";
         }
+
+        userApplicationService.deleteCurrentUserAccount(request);
+
         session.invalidate(); // force logout
-        userService.deleteUser(currentUser.getId());
 
         return "redirect:/";
     }
