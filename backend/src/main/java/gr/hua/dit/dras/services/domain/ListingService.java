@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -98,6 +99,16 @@ public class ListingService {
         }
 
         listingRepository.delete(listing);
+    }
+
+    @Transactional
+    public void deleteAllListingsForOwner(Owner owner) {
+        /* Create a copy of the list to prevent ConcurrentModificationException during deletion */
+        List<Listing> listings = new ArrayList<>(owner.getListings());
+
+        for (Listing listing : listings) {
+            deleteListing(listing.getId());
+        }
     }
 
     @Transactional(readOnly = true)
