@@ -118,43 +118,9 @@ public class UserService implements UserDetailsService {
     public void deleteUser(Integer userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalStateException("User not found"));
-        Optional<Role> ownerRole = roleRepository.findByName("OWNER");
-        if (ownerRole.isPresent() && user.getRoles().contains(ownerRole.get())) {
-            if (user.getOwner() != null) {
-                List<Listing> listings = user.getOwner().getListings();
-                if (listings != null) {
-                    for (Listing listing : listings) {
-                        listing.setOwner(null);
-                        if (listing.isRented()) {
-                            Tenant tenant = listing.getTenant();
-                            listing.setTenant(null);
-                            listing.setApplicants(null);
-                            tenant.setListing(null);
-                        }
-                        tenantRepository.deleteApplicationsByListingId(listing.getId());
-                        listingRepository.save(listing);
-                        listingRepository.delete(listing);
-                    }
-                }
-                ownerRepository.delete(user.getOwner());
-            }
-        }
-
-        Optional<Role> tenantRole = roleRepository.findByName("TENANT");
-        if (tenantRole.isPresent() && user.getRoles().contains(tenantRole.get())) {
-            if (user.getTenant() != null) {
-                Tenant tenant = user.getTenant();
-                if (tenant.getListing() != null) {
-                    tenant.getListing().setTenant(null);
-                    tenant.setListing(null);
-                }
-                tenantRepository.delete(user.getTenant());
-            }
-        }
 
         userRepository.delete(user);
     }
-
 
     @Transactional(readOnly = true)
     public List<User> getUsers() {
