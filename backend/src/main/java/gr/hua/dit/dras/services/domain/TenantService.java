@@ -7,10 +7,10 @@ import gr.hua.dit.dras.model.enums.RentalStatus;
 import gr.hua.dit.dras.repositories.TenantRepository;
 import gr.hua.dit.dras.repositories.ListingRepository;
 import gr.hua.dit.dras.repositories.RoleRepository;
-import gr.hua.dit.dras.repositories.UserRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -278,6 +278,23 @@ public class TenantService {
         if (listing.getOwner() != null &&
                 listing.getOwner().getUser().getId().equals(user.getId()))
             throw new AccessDeniedException("Owners cannot rent their own listings");
+    }
+
+    @Transactional
+    public void prepareTenantForDeletion(Tenant tenant) {
+
+        /* If actively renting, unassign them */
+        if (tenant.getListing() != null) {
+            unassignTenantFromListing(tenant.getListing().getId(), tenant.getId());
+        }
+
+        /* Clear pending applications */
+        List<Listing> appliedListings = new ArrayList<>(tenant.getAppliedListings());
+        for (Listing listing : appliedListings) {
+            listing.getApplicants().remove(tenant);
+            listingRepository.save(listing);
+        }
+        tenant.getAppliedListings().clear();
     }
 
 }
