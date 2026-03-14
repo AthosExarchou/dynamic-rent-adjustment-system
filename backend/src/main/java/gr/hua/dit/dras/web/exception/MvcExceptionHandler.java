@@ -3,6 +3,7 @@ package gr.hua.dit.dras.web.exception;
 /* imports */
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -57,7 +58,27 @@ public class MvcExceptionHandler {
             HttpServletRequest request,
             RedirectAttributes redirectAttributes
     ) {
-        redirectAttributes.addFlashAttribute("errorMessage", ex.getReason());
+        redirectAttributes.addFlashAttribute("errorMessage",
+                ex.getReason() != null ? ex.getReason() : "Request failed.");
+
+        return redirectToReferer(request);
+    }
+
+    /**
+     * Catches database constraint violations (e.g., race conditions where
+     * two users register the exact same username at the exact same time).
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public String handleDataIntegrityViolation(
+            DataIntegrityViolationException ex,
+            HttpServletRequest request,
+            RedirectAttributes redirectAttributes
+    ) {
+        /* Logs the exception */
+        log.warn("Database constraint violation at {}", request.getRequestURI(), ex);
+
+        redirectAttributes.addFlashAttribute("errorMessage",
+                "A database conflict occurred. The data you entered might already exist.");
 
         return redirectToReferer(request);
     }
@@ -72,7 +93,8 @@ public class MvcExceptionHandler {
             RedirectAttributes redirectAttributes
     ) {
         /* Logs the exception */
-        log.error("Unhandled MVC exception at URI: {}", request.getRequestURI(), ex);
+        log.error("Unhandled MVC exception [{} {}]",
+                request.getMethod(), request.getRequestURI(), ex);
 
         redirectAttributes.addFlashAttribute("errorMessage",
                 "An unexpected error occurred. Please try again later.");
