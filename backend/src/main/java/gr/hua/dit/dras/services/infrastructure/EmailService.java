@@ -8,7 +8,6 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -106,6 +105,10 @@ public class EmailService {
             case "ownerRejectedApplication":
                 subject = "Your application has been rejected by the listing owner";
                 template = "email/application-rejected-owner.html";
+                break;
+            case "listingRentedToSomeoneElse":
+                subject = "A listing you applied for has been rented";
+                template = "email/listing-rented-to-someone-else.html";
                 break;
             default:
                 log.error("Unsupported email type requested: {}", emailType);
