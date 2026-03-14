@@ -176,4 +176,18 @@ public class UserService implements UserDetailsService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public boolean isUsernameTaken(String username, Integer excludeUserId) {
+        return userRepository.findByUsername(username)
+                .filter(user -> !user.getId().equals(excludeUserId))
+                .isPresent();
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isEmailTaken(String email, Integer excludeUserId) {
+        return userRepository.findByEmail(email)
+                .filter(user -> !user.getId().equals(excludeUserId))
+                .isPresent();
+    }
+
 }

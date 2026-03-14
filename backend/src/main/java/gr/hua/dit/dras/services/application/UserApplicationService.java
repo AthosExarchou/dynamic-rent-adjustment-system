@@ -1,6 +1,7 @@
 package gr.hua.dit.dras.services.application;
 
 /* imports */
+import gr.hua.dit.dras.dto.UserEditRequest;
 import gr.hua.dit.dras.services.domain.ListingService;
 import gr.hua.dit.dras.services.domain.TenantService;
 import org.slf4j.Logger;
@@ -22,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
  * to execute user account management use cases.
  *
  * Responsibilities include:
- * - Handling secure self-service account deletion
+ * - Handling secure self-service account deletion / editing
  * - Allowing administrators to delete user accounts
  * - Performing security checks such as password re-authentication
  * - Ensuring proper cleanup of associated domain data (listings, tenant data)
@@ -165,6 +166,93 @@ public class UserApplicationService {
                             "| actorEmail={} | targetId={} | targetEmail={}",
                     actorId, actorEmail, targetId, targetEmail, e);
         }
+    }
+
+    @Transactional
+    public boolean editUser(Integer targetUserId, UserEditRequest request) {
+
+        /* Get current user */
+        User currentUser = userService.getCurrentUserOptional()
+                .orElseThrow(() -> new AccessDeniedException("Unauthenticated"));
+
+        final Integer actorId = currentUser.getId();
+
+        log.info("SECURITY_AUDIT | event=PROFILE_EDIT | stage=ATTEMPT | actorId={} | targetId={}",
+                actorId, targetUserId);
+
+        User targetUser;
+        String oldUsername;
+        String oldEmail;
+        boolean usernameChanged;
+        boolean emailChanged;
+
+        try {
+            targetUser = userService.getUser(targetUserId);
+
+            /* Authorization Check */
+            boolean isAdmin = currentUser.getRoles().stream()
+                    .anyMatch(r -> r.getName().equals("ADMIN"));
+            boolean isSelfEdit = actorId.equals(targetUser.getId());
+
+            if (!isAdmin && !isSelfEdit) {
+                throw new AccessDeniedException("You cannot edit another user's profile.");
+            }
+
+            userService.assertNotAdmin(targetUser);
+
+            /* Check for changes */
+            oldUsername = targetUser.getUsername();
+            oldEmail = targetUser.getEmail();
+            usernameChanged = !oldUsername.equals(request.getUsername());
+            emailChanged = !oldEmail.equals(request.getEmail());
+
+            if (!usernameChanged && !emailChanged) {
+                log.info("SECURITY_AUDIT | event=PROFILE_EDIT | result=NO_CHANGES | actorId={} | targetId={}",
+                        actorId, targetUserId);
+                return false; // no changes made
+            }
+
+            /* Update Domain Entity */
+            targetUser.setUsername(request.getUsername());
+            targetUser.setEmail(request.getEmail());
+            userService.updateUser(targetUser);
+
+            log.info("SECURITY_AUDIT | event=PROFILE_EDIT | result=SUCCESS | actorId={} " +
+                            "| targetId={} | usernameChanged={} | emailChanged={}",
+                    actorId, targetUserId, usernameChanged, emailChanged);
+
+        } catch (AccessDeniedException | IllegalArgumentException e) {
+            log.warn("SECURITY_AUDIT | event=PROFILE_EDIT | result=DENIED | actorId={} | targetId={} | reason={}",
+                    actorId, targetUserId, e.getMessage());
+            throw e;
+
+        } catch (Exception e) {
+            log.error("SECURITY_AUDIT | event=PROFILE_EDIT | result=FAILED | actorId={} | targetId={}",
+                    actorId, targetUserId, e);
+            throw e;
+        }
+
+        /* Send Email */
+        try {
+            if (emailChanged) {
+                /* Notify old email */
+                emailService.sendUserDetailsChangedEmail(oldEmail, targetUser.getUsername(),
+                        targetUser.getEmail(), oldUsername, oldEmail, usernameChanged, true);
+                /* Notify new email */
+                emailService.sendUserDetailsChangedEmail(targetUser.getEmail(), targetUser.getUsername(),
+                        targetUser.getEmail(), oldUsername, oldEmail, usernameChanged, true);
+            } else {
+                /* Notify current email of username change */
+                emailService.sendUserDetailsChangedEmail(targetUser.getEmail(), targetUser.getUsername(),
+                        targetUser.getEmail(), oldUsername, oldEmail, true, false);
+            }
+        } catch (Exception e) {
+            log.error("SECURITY_AUDIT | event=PROFILE_EDIT | result=EMAIL_FAILED | actorId={} " +
+                            "| targetId={} | oldEmail={}",
+                    actorId, targetUserId, oldEmail, e);
+        }
+
+        return true; // changes made successfully
     }
 
     /**

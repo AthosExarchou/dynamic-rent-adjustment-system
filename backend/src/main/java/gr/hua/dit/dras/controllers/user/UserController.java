@@ -2,6 +2,7 @@ package gr.hua.dit.dras.controllers.user;
 
 /* imports */
 import gr.hua.dit.dras.dto.AccountDeletionRequest;
+import gr.hua.dit.dras.dto.UserEditRequest;
 import gr.hua.dit.dras.entities.Owner;
 import gr.hua.dit.dras.entities.Role;
 import gr.hua.dit.dras.entities.Tenant;
@@ -13,7 +14,6 @@ import gr.hua.dit.dras.services.infrastructure.EmailService;
 import gr.hua.dit.dras.services.domain.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -23,7 +23,6 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import java.util.Optional;
 
 @Controller
 public class UserController {
@@ -145,87 +144,60 @@ public class UserController {
         return "auth/user";
     }
 
+    @Secured("USER")
     @PostMapping("/user/{user_id}")
     public String editUser(
-            @PathVariable Integer user_id,
-            @ModelAttribute("user") User user,
+            @PathVariable("user_id") Integer targetUserId,
+            @Valid @ModelAttribute("userEditRequest") UserEditRequest request,
+            BindingResult bindingResult,
             RedirectAttributes redirectAttributes,
             HttpSession session
     ) {
-        User the_user = userService.getUser(user_id);
-        userService.assertNotAdmin(the_user);
-
-        if (user.getUsername() == null || user.getUsername().isBlank()) {
-            throw new IllegalArgumentException("Username cannot be empty or just spaces.");
+        if (userService.isUsernameTaken(request.getUsername(), targetUserId)) {
+            bindingResult.rejectValue("username",
+                    "error.userEditRequest", "This username is already taken.");
         }
 
-        if (user.getEmail() == null || user.getEmail().isBlank()) {
-            throw new IllegalArgumentException("Email cannot be empty or just spaces.");
+        if (userService.isEmailTaken(request.getEmail(), targetUserId)) {
+            bindingResult.rejectValue("email",
+                    "error.userEditRequest", "This email is already registered.");
         }
 
-        String oldUsername = the_user.getUsername();
-        String oldEmail = the_user.getEmail();
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute(
+                    "org.springframework.validation.BindingResult.userEditRequest", bindingResult);
+            redirectAttributes.addFlashAttribute("userEditRequest", request);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Please correct the highlighted errors.");
+            return "redirect:/user/" + targetUserId;
+        }
 
-        /* Who is currently logged in? */
+        boolean changesMade = userApplicationService.editUser(targetUserId, request);
+
+        if (!changesMade) {
+            redirectAttributes.addFlashAttribute("infoMessage",
+                    "No changes were detected.");
+        } else {
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Profile updated successfully.");
+        }
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String currentUsername = auth.getName();
         boolean isAdmin = auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ADMIN"));
+        boolean isSelfEdit = userService.getCurrentUserId().equals(targetUserId);
 
-        /* Checks for changes */
-        boolean usernameChanged = !the_user.getUsername().equals(user.getUsername());
-        boolean emailChanged = !the_user.getEmail().equals(user.getEmail());
-
-        /* If nothing changed, add an info message and return early */
-        if (!usernameChanged && !emailChanged) {
-            redirectAttributes.addFlashAttribute("infoMessage",
-                    "No changes were detected for user '" + the_user.getUsername() + "'.");
-            return isAdmin ? "redirect:/auth/users" : "redirect:/auth/login";
-        }
-
-        /* Updates the user's information */
-        the_user.setEmail(user.getEmail());
-        the_user.setUsername(user.getUsername());
-        userService.updateUser(the_user);
-
-        /* Sends email notification to user */
-        try {
-            if (emailChanged) {
-                /* Notify the old email address that details have changed */
-                emailService.sendUserDetailsChangedEmail(
-                        oldEmail, the_user.getUsername(), user.getEmail(),
-                        oldUsername, oldEmail, usernameChanged, emailChanged
-                );
-
-                /* Notify the new email address */
-                emailService.sendUserDetailsChangedEmail(
-                        user.getEmail(), the_user.getUsername(), user.getEmail(),
-                        oldUsername, oldEmail, usernameChanged, emailChanged
-                );
-            } else {
-                /* Runs if only the username has changed */
-                emailService.sendUserDetailsChangedEmail(
-                        the_user.getEmail(), user.getUsername(), user.getEmail(),
-                        oldUsername, oldEmail, usernameChanged, emailChanged
-                );
-            }
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("emailError",
-                    "User edited, but notification email could not be sent.");
-        }
-
-        if (!isAdmin && currentUsername.equals(oldUsername)) {
+        /* Handle Session Invalidation */
+        if (!isAdmin && isSelfEdit) {
             session.invalidate();
-            redirectAttributes.addFlashAttribute("successMessage",
-                    "Profile updated. Please log in again.");
-
+            if (changesMade) {
+                redirectAttributes.addFlashAttribute("infoMessage",
+                        "Profile updated. Please log in again.");
+            }
             return "redirect:/auth/login";
         }
 
-        redirectAttributes.addFlashAttribute("successMessage",
-                "User updated successfully.");
-
-        return "redirect:/auth/users";
+        return "redirect:/auth/users"; // admins go back to the user management page
     }
 
     @Secured("ADMIN")
