@@ -305,35 +305,16 @@ public class ListingApplicationService {
 
     private void performTenantAssignment(Listing listing, Tenant approvedTenant) {
 
-        /* Bind the winning tenant to the listing */
-        tenantService.bindTenantToListing(approvedTenant, listing);
+        /* Execute Domain Behavior */
+        List<Tenant> rejectedApplicants = listing.rentTo(approvedTenant);
 
-        /* Assign the TENANT role */
-        User tenantUser = approvedTenant.getUser();
-        if (tenantUser != null) {
-            Role tenantRole = roleRepository.findByName("TENANT")
-                    .orElseThrow(() -> new IllegalStateException("TENANT role not found"));
+        /* Process Rejections */
+        for (Tenant applicant : rejectedApplicants) {
 
-            if (!tenantUser.getRoles().contains(tenantRole)) {
-                tenantUser.getRoles().add(tenantRole);
-                userService.updateUser(tenantUser);
-            }
-        }
+            /* Updates the Tenant's domain state and removes DB join records */
+            applicant.processRejection(listing);
 
-        /* Reject the other applicants */
-        List<Tenant> allApplicants = new ArrayList<>(listing.getApplicants());
-
-        for (Tenant applicant : allApplicants) {
-            if (applicant.getId().equals(approvedTenant.getId())) {
-                continue;
-            }
-
-            listingService.rejectApplicant(listing, applicant);
-
-            if (applicant.getAppliedListings().isEmpty() && applicant.getListing() == null) {
-                applicant.setRentalStatus(RentalStatus.CANCELED);
-            }
-
+            /* Send Email */
             if (applicant.getUser() != null) {
                 trySendEmail(() -> emailService.sendEmailNotification(
                         applicant.getUser().getEmail(),
@@ -344,8 +325,22 @@ public class ListingApplicationService {
             }
         }
 
-        listing.getApplicants().clear();
-        approvedTenant.getAppliedListings().remove(listing);
+        grantPlatformAccessRole(approvedTenant.getUser(), "TENANT");
+    }
+
+    private void grantPlatformAccessRole(User user, String roleName) {
+
+        if (user == null) {
+            return;
+        }
+
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new IllegalStateException(roleName + " role not found"));
+
+        if (!user.getRoles().contains(role)) {
+            user.getRoles().add(role);
+            userService.updateUser(user);
+        }
     }
 
     @Transactional

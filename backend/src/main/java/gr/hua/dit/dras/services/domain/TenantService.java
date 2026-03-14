@@ -173,40 +173,6 @@ public class TenantService {
         return false;
     }
 
-    @Transactional
-    public void approveApplication(Integer tenantId, Integer listingId) {
-
-        Tenant tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() ->
-                        new IllegalStateException(
-                                "Tenant not found"
-                        )
-                );
-
-        Listing listing = listingRepository.findById(listingId)
-                .orElseThrow(() ->
-                        new IllegalStateException(
-                                "Listing not found"
-                        )
-                );
-
-        if (listing.getTenant() != null) {
-            throw new IllegalStateException(
-                    "Listing is already rented"
-            );
-        }
-
-        if (tenant.getListing() != null) {
-            throw new IllegalStateException(
-                    "Tenant is already renting another listing"
-            );
-        }
-
-        tenant.setRentalStatus(RentalStatus.RENTING);
-        listing.setTenant(tenant);
-        listing.setStatus(ListingStatus.RENTED);
-    }
-
     /* Assigns role 'TENANT' if renting for the first time */
     private void assignTenantRole(User user) {
 
@@ -221,25 +187,6 @@ public class TenantService {
             user.getRoles().add(tenantRole);
             userService.updateUser(user);
         }
-    }
-
-    @Transactional
-    public void bindTenantToListing(Tenant tenant, Listing listing) {
-
-        if (listing.getTenant() != null) {
-            throw new IllegalStateException("Listing already rented.");
-        }
-
-        if (tenant.getListing() != null) {
-            throw new IllegalStateException("Tenant is already renting another listing.");
-        }
-
-        tenant.setRentalStatus(RentalStatus.RENTING);
-        listing.setTenant(tenant);
-        listing.setStatus(ListingStatus.RENTED);
-
-        listingRepository.save(listing);
-        tenantRepository.save(tenant);
     }
 
     @Transactional

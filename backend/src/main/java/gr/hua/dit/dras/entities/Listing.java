@@ -402,6 +402,32 @@ public class Listing {
         tenant.getAppliedListings().remove(this); // removes listing from tenant's applied listings
     }
 
+    /**
+     * Domain Logic: The listing manages its own rental state.
+     */
+    public List<Tenant> rentTo(Tenant winningTenant) {
+
+        if (!applicants.contains(winningTenant)) {
+            throw new IllegalStateException("Tenant did not apply");
+        }
+
+        if (this.tenant != null) {
+            throw new IllegalStateException("Listing is already rented.");
+        }
+
+        this.tenant = winningTenant;
+        this.status = ListingStatus.RENTED;
+
+        winningTenant.rent(this);
+
+        List<Tenant> rejected = new ArrayList<>(this.applicants);
+        rejected.remove(winningTenant);
+
+        this.applicants.clear();
+
+        return rejected;
+    }
+
     @Override
     public String toString() {
         return "Listing{" +

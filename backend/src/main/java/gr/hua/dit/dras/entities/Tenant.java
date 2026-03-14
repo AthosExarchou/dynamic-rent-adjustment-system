@@ -141,6 +141,34 @@ public class Tenant {
         }
     }
 
+    /**
+     * Domain Logic: A tenant successfully rents a listing.
+     */
+    public void rent(Listing listing) {
+
+        if (this.listing != null) {
+            throw new IllegalStateException("Tenant is already renting another listing.");
+        }
+
+        this.appliedListings.remove(listing); // the winner is no longer an applicant
+        this.listing = listing;
+        this.rentalStatus = RentalStatus.RENTING;
+    }
+
+    /**
+     * Domain Logic: A tenant processes a rejection.
+     * If they have no other pending applications or active rentals, their status changes.
+     */
+    public void processRejection(Listing listing) {
+
+        this.appliedListings.remove(listing);
+
+        if (this.appliedListings.isEmpty() && this.listing == null) {
+            this.rentalStatus = RentalStatus.CANCELED;
+        }
+    }
+
+
     @Override
     public String toString() {
         return "Tenant{" +
