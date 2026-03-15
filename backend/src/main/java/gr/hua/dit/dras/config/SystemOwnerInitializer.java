@@ -13,6 +13,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,6 +39,7 @@ public class SystemOwnerInitializer {
         this.roleRepository = roleRepository;
     }
 
+    @Transactional
     @EventListener(ApplicationReadyEvent.class)
     public void createSystemOwner() {
 
@@ -67,7 +69,7 @@ public class SystemOwnerInitializer {
                     .orElseThrow(() -> new IllegalStateException("USER role not found in database"));
 
             systemUser.getRoles().add(userRole);
-            userRepository.save(systemUser);
+            systemUser = userRepository.save(systemUser);
 
             log.info("System user created successfully.");
         }
