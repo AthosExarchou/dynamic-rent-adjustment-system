@@ -1,28 +1,57 @@
 package gr.hua.dit.dras.dto;
 
 /* imports */
-import java.time.Instant;
+import jakarta.validation.constraints.*;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Objects;
 
 public class ExternalListingDTO {
 
+    @NotBlank(message = "Title is mandatory")
+    @Size(max = 150)
     private String title;
+
+    @Size(max = 250)
     private String subtitle;
+
+    @NotBlank(message = "Description is mandatory")
+    @Size(max = 5000)
     private String description;
+
+    @NotNull(message = "Price is mandatory")
+    @Min(value = 0, message = "Price cannot be negative")
+    @Max(20000)
     private Integer price;
+
+    @Min(value = 0, message = "Price per M2 cannot be negative")
+    @Max(200)
     private Integer pricePerM2;
+
+    @NotBlank(message = "Address is mandatory")
+    @Size(max = 255)
     private String address;
+
+    @NotNull(message = "Size in M2 is mandatory")
+    @Min(value = 5, message = "Size must be at least 5 sq meters")
+    @Max(1000)
     private Integer sizeM2;
+
+    @Min(value = 1, message = "Must have at least 1 room")
+    @Max(20)
     private Integer rooms;
+
     private String propertyType;
+
     private String rentalDuration;
+
+    @NotBlank(message = "Source URL is mandatory")
+    @Size(max = 500)
     private String sourceUrl;
-    private Instant dateScraped;
+
     private List<String> images = new ArrayList<>();
 
     /* getters and setters */
+
     public String getTitle() {
         return title;
     }
@@ -52,9 +81,6 @@ public class ExternalListingDTO {
     }
 
     public void setPrice(Integer price) {
-        if (price != null && price < 0) {
-            throw new IllegalArgumentException("Price cannot be negative");
-        }
         this.price = price;
     }
 
@@ -111,36 +137,15 @@ public class ExternalListingDTO {
     }
 
     public void setSourceUrl(String sourceUrl) {
-        if (sourceUrl == null || sourceUrl.isBlank()) {
-            throw new IllegalArgumentException("Source Url is mandatory for external listings");
-        }
-        this.sourceUrl = sourceUrl.trim();
-    }
-
-    public Instant getDateScraped() {
-        return dateScraped;
-    }
-
-    public void setDateScraped(Instant dateScraped) {
-        if (dateScraped == null) {
-            throw new IllegalArgumentException("dateScraped cannot be null");
-        }
-        this.dateScraped = dateScraped;
+        this.sourceUrl = sourceUrl;
     }
 
     public List<String> getImages() {
-        return images == null ? List.of() : List.copyOf(images);
+        return images;
     }
 
     public void setImages(List<String> images) {
-        if (images == null) {
-            this.images = List.of();
-        } else {
-            this.images = images.stream()
-                    .filter(Objects::nonNull)
-                    .map(String::trim)
-                    .filter(s -> !s.isBlank())
-                    .toList();
-        }
+        this.images = images;
     }
+
 }
