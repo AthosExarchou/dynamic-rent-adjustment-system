@@ -230,6 +230,7 @@ public class ListingController {
         return "redirect:/listings";
     }
 
+    @Secured("USER")
     @GetMapping("/tenantassign/{id}")
     public String showAssignTenantToListing(@PathVariable Integer id, Model model) {
 
