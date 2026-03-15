@@ -6,6 +6,8 @@ import gr.hua.dit.dras.model.enums.PropertyType;
 import gr.hua.dit.dras.model.enums.RentalDuration;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -93,9 +95,11 @@ public class Listing {
     @Column(nullable = false)
     private boolean external = false;
 
+    @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
+    @UpdateTimestamp
     @Column(nullable = false)
     private Instant updatedAt;
 

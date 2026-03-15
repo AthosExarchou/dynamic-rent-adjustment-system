@@ -30,9 +30,9 @@ public class Owner {
     @Column(nullable = false, unique = true)
     @NotBlank(message = "Phone number is required")
     @Pattern(regexp = "^\\+?[0-9. ()-]{7,25}$", message = "Invalid phone number format")
-    private String phoneNumber; //accepts phone numbers worldwide
+    private String phoneNumber; // accepts phone numbers worldwide
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean systemOwner = false;
 
     /* Owner-Listing relationship */
