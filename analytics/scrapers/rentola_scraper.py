@@ -413,6 +413,71 @@ def save_meta(meta_path: Path, data: dict):
         print(f"    [Meta Save Error] {e}")
 
 
+def push_to_backend(
+        df: pd.DataFrame, api_url: str = "http://localhost:8080/api/external-import/listings"):
+    """
+    Transforms the scraped DataFrame and pushes it to the Spring Boot REST API.
+    The Java backend handles mapping the raw Greek strings to Enums.
+    """
+    print("\nPreparing to send data to backend API...")
+
+    payload = []
+
+    for _, row in df.iterrows():
+        # Cleans numeric fields
+        price = row.get("price")
+        price_m2 = row.get("price_per_m2")
+        size = parse_numeric(row.get("Μέγεθος"))
+        rooms = parse_numeric(row.get("Δωμάτια"))
+
+        # Skips invalid rows before sending
+        if pd.isna(price) or pd.isna(size):
+            continue
+
+        # Handles images
+        images = row.get("images", [])
+        if isinstance(images, str):
+            images = [i.strip().strip("'\"") for i in images.strip("[]").split(",")]
+
+        # Sends the raw Greek text
+        raw_property_type = str(row.get("Τύπος_ακινήτου", "")).strip()
+        raw_rental_duration = str(row.get("Διάρκεια_ενοικίασης", "")).strip()
+
+        dto = {
+            "sourceUrl": row.get("url"),
+            "title": str(row.get("title"))[:150],
+            "subtitle": str(row.get("subtitle"))[:250] if pd.notna(row.get("subtitle")) else None,
+            "description": str(row.get("description"))[:5000],
+            "price": int(price),
+            "pricePerM2": int(price_m2) if pd.notna(price_m2) else None,
+            "address": str(row.get("address"))[:255],
+            "sizeM2": int(size),
+            "rooms": int(rooms) if pd.notna(rooms) else 1,
+            "propertyType": raw_property_type,
+            "rentalDuration": raw_rental_duration,
+            "images": [img for img in images if img],
+        }
+
+        payload.append(dto)
+
+    if not payload:
+        print("No valid listings to send to the backend.")
+        return
+
+    # Sends the POST request
+    try:
+        print(f"Sending {len(payload)} listings to {api_url}...")
+        response = requests.post(
+            api_url, json=payload, headers={"Content-Type": "application/json"})
+
+        if response.status_code in [200, 201]:
+            print(f"Backend Response: Success! {response.text}")
+        else:
+            print(f"Backend Error [{response.status_code}]: {response.text}")
+    except Exception as e:
+        print(f"CRITICAL: Failed to connect to the backend API: {e}")
+
+
 # Selenium scraping loop
 def run_scraper(MAX_PAGES, image_download=False, mode="normal"):
     """
@@ -897,6 +962,9 @@ def run_scraper(MAX_PAGES, image_download=False, mode="normal"):
             pd.DataFrame([record]).to_csv(hist_path, index=False)
 
         print(f"Updated {hist_path} with {record}")
+
+        # Pushes the cleaned dataframe directly to the Java backend
+        push_to_backend(df)
 
     else:
         print("\nNo data was extracted. Check selectors or website access.")
