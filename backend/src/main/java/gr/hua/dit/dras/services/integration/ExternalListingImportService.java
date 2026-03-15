@@ -9,72 +9,118 @@ import gr.hua.dit.dras.model.enums.PropertyType;
 import gr.hua.dit.dras.model.enums.RentalDuration;
 import gr.hua.dit.dras.repositories.ListingRepository;
 import gr.hua.dit.dras.repositories.OwnerRepository;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ExternalListingImportService {
 
+    private static final Logger log = LoggerFactory.getLogger(ExternalListingImportService.class);
+
     private final ListingRepository listingRepository;
     private final OwnerRepository ownerRepository;
+    private final Validator validator;
 
-    public ExternalListingImportService(ListingRepository listingRepository, OwnerRepository ownerRepository) {
+    public ExternalListingImportService(
+            ListingRepository listingRepository,
+            OwnerRepository ownerRepository,
+            Validator validator
+    ) {
         this.listingRepository = listingRepository;
         this.ownerRepository = ownerRepository;
+        this.validator = validator;
     }
 
     /**
      * Imports or updates external listings.
      */
     @Transactional
-    public void importExternalListings(List<ExternalListingDTO> dtos) {
+    public int importExternalListings(List<ExternalListingDTO> dtos) {
 
-        /* Retrieve the dedicated system owner for externally imported listings */
+        /* Retrieves the dedicated system owner for externally imported listings */
         Owner systemOwner = ownerRepository.findBySystemOwnerTrue()
                 .orElseThrow(() -> new IllegalStateException("System owner not found!"));
 
+        List<Listing> listingsToSave = new ArrayList<>();
+        int successCount = 0;
+        int failCount = 0;
+
         for (ExternalListingDTO dto : dtos) {
+            try {
+                /* Validates mandatory external data before processing */
+                Set<ConstraintViolation<ExternalListingDTO>> violations = validator.validate(dto);
+                if (!violations.isEmpty()) {
+                    String msg = violations.stream()
+                            .map(ConstraintViolation::getMessage)
+                            .collect(Collectors.joining("; "));
+                    throw new IllegalArgumentException(msg);
+                }
 
-            /* Validates mandatory external data before processing */
-            validateDto(dto);
+                /* Reuses existing listing by source URL or creates a new one */
+                Listing listing = listingRepository
+                        .findBySourceUrl(dto.getSourceUrl())
+                        .orElseGet(Listing::new);
 
-            /* Reuses existing listing by source URL or creates a new one */
-            Listing listing = listingRepository
-                    .findBySourceUrl(dto.getSourceUrl())
-                    .orElseGet(Listing::new);
+                /* Maps basic listing fields from external DTO */
+                listing.setTitle(dto.getTitle());
+                listing.setSubtitle(dto.getSubtitle());
+                listing.setDescription(dto.getDescription());
+                listing.setAddress(dto.getAddress());
+                listing.setSourceUrl(dto.getSourceUrl());
 
-            /* Maps basic listing fields from external DTO */
-            listing.setTitle(dto.getTitle());
-            listing.setSubtitle(dto.getSubtitle());
-            listing.setDescription(dto.getDescription());
-            listing.setPrice(dto.getPrice());
-            listing.setPricePerM2(dto.getPricePerM2());
-            listing.setAddress(dto.getAddress());
-            listing.setSizeM2(dto.getSizeM2());
-            listing.setRooms(dto.getRooms());
-            listing.setPropertyType(mapPropertyType(dto.getPropertyType()));
-            listing.setRentalDuration(mapRentalDuration(dto.getRentalDuration()));
-            listing.setSourceUrl(dto.getSourceUrl());
+                /* Bounds numeric values to prevent JPA Constraint Exceptions */
+                listing.setPrice(Math.max(0, Math.min(dto.getPrice(), 20000)));
+                listing.setSizeM2(Math.max(5, Math.min(dto.getSizeM2(), 1000)));
+                listing.setRooms(
+                        Math.max(1, Math.min(dto.getRooms() != null ? dto.getRooms() : 1, 20))
+                ); // caps at entity @Max(20)
 
-            /* Marks as externally sourced and auto-approved */
-            listing.setExternal(true);
-            listing.setOwner(systemOwner);
-            listing.setStatus(ListingStatus.APPROVED);
-            listing.setDateScraped(dto.getDateScraped());
+                /* Calculates pricePerM2 if missing, and enforces the 0-200 boundary */
+                int calculatedPricePerM2 = dto.getPricePerM2() != null
+                        ? dto.getPricePerM2()
+                        : (listing.getSizeM2() > 0 ? (listing.getPrice() / listing.getSizeM2()) : 0);
 
-            /* Replaces images if valid image URLs are provided */
-            if (dto.getImages() != null && !dto.getImages().isEmpty()) {
-                listing.setImages(
-                        dto.getImages().stream()
-                                .filter(img -> img != null && !img.isBlank())
-                                .toList()
-                );
+                listing.setPricePerM2(Math.max(0, Math.min(calculatedPricePerM2, 200)));
+
+                listing.setPropertyType(mapPropertyType(dto.getPropertyType()));
+                listing.setRentalDuration(mapRentalDuration(dto.getRentalDuration()));
+
+                /* Marks as externally sourced and auto-approved */
+                listing.setExternal(true);
+                listing.setOwner(systemOwner);
+                listing.setStatus(ListingStatus.APPROVED);
+                listing.setDateScraped(Instant.now());
+
+                /* Replaces images if valid image URLs are provided */
+                if (dto.getImages() != null && !dto.getImages().isEmpty()) {
+                    listing.setImages(
+                            dto.getImages().stream()
+                                    .filter(img -> img != null && !img.isBlank())
+                                    .toList()
+                    );
+                }
+
+                listingsToSave.add(listing);
+                successCount++;
+            } catch (Exception e) {
+                log.warn("Skipping invalid listing [{}]: {}", dto.getSourceUrl(), e.getMessage());
+                failCount++;
             }
-
-            listingRepository.save(listing);
         }
+        listingRepository.saveAll(listingsToSave);
+
+        log.info("Import complete. Success: {}, Failed: {}", successCount, failCount);
+        return successCount;
     }
 
     /**
@@ -121,24 +167,6 @@ public class ExternalListingImportService {
                 .map(Map.Entry::getKey)
                 .findFirst()
                 .orElse(PropertyType.OTHER);
-    }
-
-    /**
-     * Validates mandatory external listing fields.
-     * Throws IllegalArgumentException if required data is missing.
-     */
-    private void validateDto(ExternalListingDTO dto) {
-        if (dto.getSourceUrl() == null) {
-            throw new IllegalArgumentException("Missing sourceUrl");
-        }
-
-        if (dto.getDateScraped() == null) {
-            throw new IllegalArgumentException("Missing scrape timestamp for: " + dto.getSourceUrl());
-        }
-
-        if (dto.getTitle() == null || dto.getTitle().isBlank()) {
-            throw new IllegalArgumentException("Missing title for: " + dto.getSourceUrl());
-        }
     }
 
 }
