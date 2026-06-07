@@ -7,13 +7,16 @@ from pathlib import Path
 
 # Configuration
 POPULATION_CSV = Path("data/rentola_population.csv")
-OUTPUT_PLOT = Path("outputs/sample_size_funnel.png")
+OUTPUT_PLOT = Path("outputs/rentola_sample_size_funnel.png")
 
 ITERATIONS_PER_SIZE = 1000
 TOLERANCE_RATIO = 0.05     # ±5%
 STABILITY_CONSECUTIVE = 3  # requires 3 consecutive stable Ns
 RANDOM_SEED = 42
 
+# Validation Rules
+MIN_SIZE, MAX_SIZE = 30, 250
+MIN_PPM2, MAX_PPM2 = 2, 80
 
 # Helpers
 def parse_numeric(x):
@@ -60,7 +63,18 @@ def main():
     df_pop["area_numeric"] = df_pop["Μέγεθος"].apply(parse_numeric)
 
     df_pop = df_pop.dropna(subset=["price_per_m2", "area_numeric"])
+    # Apply Strict Scraper Validation Bounds
+    initial_len = len(df_pop)
+    df_pop = df_pop.dropna(subset=["price_per_m2", "area_numeric"])
+    df_pop = df_pop[
+        (df_pop["area_numeric"] >= MIN_SIZE) &
+        (df_pop["area_numeric"] <= MAX_SIZE) &
+        (df_pop["price_per_m2"] >= MIN_PPM2) &
+        (df_pop["price_per_m2"] <= MAX_PPM2)
+        ]
+
     max_available = len(df_pop)
+    print(f"Filtered outliers. Valid population size: {max_available} (out of {initial_len})")
 
     if max_available < 50:
         print("Population too small for meaningful analysis.")
