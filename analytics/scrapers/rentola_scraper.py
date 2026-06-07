@@ -91,7 +91,7 @@ def parse_numeric(x):
         return None
     # Removes euro and non-digit except ".", and ","
     s = re.sub(r"[^\d.,\-]", "", s)
-    # If both "." and "," exist and "." appears before comma, treats "." as thousand seperator
+    # If both "." and "," exist and "." appear before comma, treats "." as thousand seperator
     if "." in s and "," in s:
         # Converts thousand separators
         if s.rfind(".") < s.rfind(","):
@@ -420,7 +420,6 @@ def push_to_backend(
     The Java backend handles mapping the raw Greek strings to Enums.
     """
     print("\nPreparing to send data to backend API...")
-
     payload = []
 
     for _, row in df.iterrows():
@@ -434,7 +433,6 @@ def push_to_backend(
         if pd.isna(price) or pd.isna(size):
             continue
 
-        # Handles images
         images = row.get("images", [])
         if isinstance(images, str):
             images = [i.strip().strip("'\"") for i in images.strip("[]").split(",")]
@@ -447,7 +445,7 @@ def push_to_backend(
             "sourceUrl": row.get("url"),
             "title": str(row.get("title"))[:150],
             "subtitle": str(row.get("subtitle"))[:250] if pd.notna(row.get("subtitle")) else None,
-            "description": str(row.get("description"))[:5000],
+            "description": str(row.get("description"))[:5000] if pd.notna(row.get("description")) else "",
             "price": int(price),
             "pricePerM2": int(price_m2) if pd.notna(price_m2) else None,
             "address": str(row.get("address"))[:255],
@@ -457,7 +455,6 @@ def push_to_backend(
             "rentalDuration": raw_rental_duration,
             "images": [img for img in images if img],
         }
-
         payload.append(dto)
 
     if not payload:
@@ -478,7 +475,7 @@ def push_to_backend(
         print(f"CRITICAL: Failed to connect to the backend API: {e}")
 
 
-# Selenium scraping loop
+# Main Scraper Pipeline
 def run_scraper(MAX_PAGES, image_download=False, mode="normal"):
     """
     Executes the full web scraping pipeline for Rentola Athens listings.
@@ -616,7 +613,7 @@ def run_scraper(MAX_PAGES, image_download=False, mode="normal"):
                     print("No cookie banner found or already dismissed.")
 
             except Exception as e:
-                print(f"️ Cookie handling failed or not needed: {e}")
+                print(f"️Cookie handling failed or not needed: {e}")
 
         # Waits for listings or break if none found
         try:
@@ -903,12 +900,12 @@ def run_scraper(MAX_PAGES, image_download=False, mode="normal"):
 
             print("\nImage processing complete.\n")
 
-        # Saves CSV after images are processed (if '--full' mode)
+        # Save to CSV
         # Uses utf-8-sig for Excel to correctly read Greek characters
         df.to_csv(LATEST_CSV, index=False, encoding='utf-8-sig')
         print(f"Saved {len(df)} listings to {LATEST_CSV}\n")
 
-        # History aggregation
+        # History aggregation (Weighted Average)
         if mode == "weekly":
             hist_path = DATA_DIR / "rentola_history_weekly.csv"
         else:
@@ -919,7 +916,6 @@ def run_scraper(MAX_PAGES, image_download=False, mode="normal"):
         # Calculation of average price (area-weighted mean)
         if "price_per_m2" in df.columns and "Μέγεθος" in df.columns:
 
-            # Converts columns to numeric types (if not already converted)
             df["price_per_m2"] = pd.to_numeric(df["price_per_m2"], errors="coerce")
             df["area_numeric"] = df["Μέγεθος"].apply(parse_numeric)
 
@@ -933,10 +929,8 @@ def run_scraper(MAX_PAGES, image_download=False, mode="normal"):
                 (df["price_per_m2"] <= 40)
                 ]
 
-            clean_sample_size = len(df)
-
             # Computes weighted mean on cleaned data
-            if clean_sample_size > 0:
+            if not df.empty:
                 weighted_sum = (df["price_per_m2"] * df["area_numeric"]).sum()
                 total_area = df["area_numeric"].sum()
 
@@ -956,14 +950,14 @@ def run_scraper(MAX_PAGES, image_download=False, mode="normal"):
         # Append or Create
         if hist_path.exists():
             hist_df = pd.read_csv(hist_path)
-            hist_df = pd.concat([hist_df, pd.DataFrame([record])], ignore_index=True)
-            hist_df.to_csv(hist_path, index=False)
+            updated_hist = pd.concat([hist_df, pd.DataFrame([record])], ignore_index=True)
+            updated_hist.to_csv(hist_path, index=False)
         else:
             pd.DataFrame([record]).to_csv(hist_path, index=False)
 
         print(f"Updated {hist_path} with {record}")
 
-        # Pushes the cleaned dataframe directly to the Java backend
+        # Pushes the cleaned dataframe to the Java backend
         push_to_backend(df)
 
     else:
