@@ -5,6 +5,7 @@ import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.model.enums.PropertyType;
 import gr.hua.dit.dras.model.enums.RentalDuration;
 import jakarta.persistence.*;
+import gr.hua.dit.dras.model.validation.ValidYearBuilt;
 import jakarta.validation.constraints.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -63,11 +64,6 @@ public class Listing {
     @Column(nullable = false)
     private Integer sizeM2;
 
-    @NotNull
-    @Min(1)
-    @Max(20)
-    private Integer rooms;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private PropertyType propertyType;
@@ -75,6 +71,25 @@ public class Listing {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private RentalDuration rentalDuration;
+
+    @Min(-3)
+    @Max(100)
+    @Column
+    private Integer floor;
+
+    @ValidYearBuilt
+    @Column
+    private Integer yearBuilt;
+
+    @Min(0)
+    @Max(10)
+    @Column
+    private Integer bedrooms;
+
+    @Min(0)
+    @Max(5)
+    @Column
+    private Integer bathrooms;
 
     @Size(max = 500)
     @Column(name = "source_url",unique = true, length = 500)
@@ -131,9 +146,12 @@ public class Listing {
             Integer pricePerM2,
             String address,
             Integer sizeM2,
-            Integer rooms,
             PropertyType propertyType,
             RentalDuration rentalDuration,
+            Integer floor,
+            Integer yearBuilt,
+            Integer bedrooms,
+            Integer bathrooms,
             String sourceUrl,
             ListingStatus status,
             boolean external,
@@ -143,7 +161,7 @@ public class Listing {
             Tenant tenant
     ) {
         this.id = id;
-        this.dateScraped=dateScraped;
+        this.dateScraped = dateScraped;
         this.title = title;
         this.subtitle = subtitle;
         this.description = description;
@@ -151,9 +169,12 @@ public class Listing {
         this.pricePerM2 = pricePerM2;
         this.address = address;
         this.sizeM2 = sizeM2;
-        this.rooms = rooms;
         this.propertyType = propertyType;
         this.rentalDuration = rentalDuration;
+        this.floor = floor;
+        this.yearBuilt = yearBuilt;
+        this.bedrooms = bedrooms;
+        this.bathrooms = bathrooms;
         this.sourceUrl = sourceUrl;
         this.status = status;
         this.external = external;
@@ -238,14 +259,6 @@ public class Listing {
         this.sizeM2 = sizeM2;
     }
 
-    public Integer getRooms() {
-        return rooms;
-    }
-
-    public void setRooms(Integer rooms) {
-        this.rooms = rooms;
-    }
-
     public PropertyType getPropertyType() {
         return propertyType;
     }
@@ -260,6 +273,38 @@ public class Listing {
 
     public void setRentalDuration(RentalDuration rentalDuration) {
         this.rentalDuration = rentalDuration;
+    }
+
+    public Integer getFloor() {
+        return floor;
+    }
+
+    public void setFloor(Integer floor) {
+        this.floor = floor;
+    }
+
+    public Integer getYearBuilt() {
+        return yearBuilt;
+    }
+
+    public void setYearBuilt(Integer yearBuilt) {
+        this.yearBuilt = yearBuilt;
+    }
+
+    public Integer getBedrooms() {
+        return bedrooms;
+    }
+
+    public void setBedrooms(Integer bedrooms) {
+        this.bedrooms = bedrooms;
+    }
+
+    public Integer getBathrooms() {
+        return bathrooms;
+    }
+
+    public void setBathrooms(Integer bathrooms) {
+        this.bathrooms = bathrooms;
     }
 
     public String getSourceUrl() {
@@ -442,7 +487,10 @@ public class Listing {
                 ", pricePerM2=" + pricePerM2 +
                 ", address='" + address + '\'' +
                 ", sizeM2=" + sizeM2 +
-                ", rooms=" + rooms +
+                ", floor=" + floor +
+                ", yearBuilt=" + yearBuilt +
+                ", bedrooms=" + bedrooms +
+                ", bathrooms=" + bathrooms +
                 ", propertyType=" + propertyType +
                 ", rentalDuration=" + rentalDuration +
                 ", sourceUrl='" + sourceUrl + '\'' +

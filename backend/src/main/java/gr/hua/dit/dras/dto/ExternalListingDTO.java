@@ -1,6 +1,7 @@
 package gr.hua.dit.dras.dto;
 
 /* imports */
+import gr.hua.dit.dras.model.validation.ValidYearBuilt;
 import jakarta.validation.constraints.*;
 import java.util.List;
 import java.util.ArrayList;
@@ -36,9 +37,20 @@ public class ExternalListingDTO {
     @Max(1000)
     private Integer sizeM2;
 
-    @Min(value = 1, message = "Must have at least 1 room")
-    @Max(20)
-    private Integer rooms;
+    @Min(value = -3)
+    @Max(100)
+    private Integer floor;
+
+    @ValidYearBuilt
+    private Integer yearBuilt;
+
+    @Min(value = 0)
+    @Max(10)
+    private Integer bedrooms;
+
+    @Min(value = 0)
+    @Max(5)
+    private Integer bathrooms;
 
     private String propertyType;
 
@@ -108,12 +120,36 @@ public class ExternalListingDTO {
         this.sizeM2 = sizeM2;
     }
 
-    public Integer getRooms() {
-        return rooms;
+    public Integer getFloor() {
+        return floor;
     }
 
-    public void setRooms(Integer rooms) {
-        this.rooms = rooms;
+    public void setFloor(Integer floor) {
+        this.floor = floor;
+    }
+
+    public Integer getYearBuilt() {
+        return yearBuilt;
+    }
+
+    public void setYearBuilt(Integer yearBuilt) {
+        this.yearBuilt = yearBuilt;
+    }
+
+    public Integer getBedrooms() {
+        return bedrooms;
+    }
+
+    public void setBedrooms(Integer bedrooms) {
+        this.bedrooms = bedrooms;
+    }
+
+    public Integer getBathrooms() {
+        return bathrooms;
+    }
+
+    public void setBathrooms(Integer bathrooms) {
+        this.bathrooms = bathrooms;
     }
 
     public String getPropertyType() {
