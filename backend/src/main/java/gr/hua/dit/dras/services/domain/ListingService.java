@@ -177,6 +177,32 @@ public class ListingService {
                             filter.getMaxBedrooms()));
         }
 
+        /* Bathroom range filters */
+        if (filter.getMinBathrooms() != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.greaterThanOrEqualTo(root.get("bathrooms"),
+                            filter.getMinBathrooms()));
+        }
+
+        if (filter.getMaxBathrooms() != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.lessThanOrEqualTo(root.get("bathrooms"),
+                            filter.getMaxBathrooms()));
+        }
+
+        /* Year built range filters */
+        if (filter.getMinYear() != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.greaterThanOrEqualTo(root.get("yearBuilt"),
+                            filter.getMinYear()));
+        }
+
+        if (filter.getMaxYear() != null) {
+            spec = spec.and((root, query, cb) ->
+                    cb.lessThanOrEqualTo(root.get("yearBuilt"),
+                            filter.getMaxYear()));
+        }
+
         /* Last updated date range filters */
         if (filter.getUpdatedAfter() != null) {
             spec = spec.and((root, query, cb) ->

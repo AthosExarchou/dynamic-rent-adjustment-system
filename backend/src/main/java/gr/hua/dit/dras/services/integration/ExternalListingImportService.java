@@ -81,9 +81,6 @@ public class ExternalListingImportService {
                 /* Bounds numeric values to prevent JPA Constraint Exceptions */
                 listing.setPrice(Math.max(0, Math.min(dto.getPrice(), 20000)));
                 listing.setSizeM2(Math.max(5, Math.min(dto.getSizeM2(), 1000)));
-                listing.setRooms(
-                        Math.max(1, Math.min(dto.getRooms() != null ? dto.getRooms() : 1, 20))
-                ); // caps at entity @Max(20)
 
                 /* Calculates pricePerM2 if missing, and enforces the 0-200 boundary */
                 int calculatedPricePerM2 = dto.getPricePerM2() != null
@@ -91,6 +88,12 @@ public class ExternalListingImportService {
                         : (listing.getSizeM2() > 0 ? (listing.getPrice() / listing.getSizeM2()) : 0);
 
                 listing.setPricePerM2(Math.max(0, Math.min(calculatedPricePerM2, 200)));
+
+                /* Maps optional property detail fields from scraper */
+                listing.setFloor(dto.getFloor());
+                listing.setYearBuilt(dto.getYearBuilt());
+                listing.setBedrooms(dto.getBedrooms());
+                listing.setBathrooms(dto.getBathrooms());
 
                 listing.setPropertyType(mapPropertyType(dto.getPropertyType()));
                 listing.setRentalDuration(mapRentalDuration(dto.getRentalDuration()));
@@ -127,12 +130,19 @@ public class ExternalListingImportService {
      * Maps raw external rental duration text to internal enum representation.
      */
     private RentalDuration mapRentalDuration(String raw) {
-        if (raw == null)
+        if (raw == null || raw.isBlank())
             return RentalDuration.OTHER;
 
-        return switch (raw.trim().toLowerCase()) {
-            case "απεριόριστη" -> RentalDuration.INDEFINITE;
-            default -> RentalDuration.OTHER;
+        return switch (raw.trim().toUpperCase()) {
+            case "LONG_TERM", "INDEFINITE" -> RentalDuration.LONG_TERM;
+            case "SHORT_TERM" -> RentalDuration.SHORT_TERM;
+            case "FIXED_TERM" -> RentalDuration.FIXED_TERM;
+            default -> {
+                /* Handles Greek text fallback */
+                String lower = raw.trim().toLowerCase();
+                if (lower.contains("απεριόριστη")) yield RentalDuration.INDEFINITE;
+                yield RentalDuration.OTHER;
+            }
         };
     }
 
