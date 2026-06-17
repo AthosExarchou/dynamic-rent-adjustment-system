@@ -10,6 +10,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -157,11 +158,11 @@ public class ListingService {
                     cb.equal(root.get("propertyType"), filter.getType()));
         }
 
-        /* Case-insensitive exact match on municipality */
+        /* Case-insensitive partial match on address (municipality) */
         if (hasText(filter.getMunicipality())) {
             spec = spec.and((root, query, cb) ->
-                    cb.equal(cb.lower(root.get("municipality")),
-                            filter.getMunicipality().trim().toLowerCase()));
+                    cb.like(cb.lower(root.get("address")),
+                            "%" + filter.getMunicipality().trim().toLowerCase() + "%"));
         }
 
         /* Bedroom range filters */
@@ -205,15 +206,20 @@ public class ListingService {
 
         /* Last updated date range filters */
         if (filter.getUpdatedAfter() != null) {
+            Instant from = filter.getUpdatedAfter()
+                    .atStartOfDay(ZoneId.systemDefault())
+                    .toInstant();
             spec = spec.and((root, query, cb) ->
-                    cb.greaterThanOrEqualTo(root.get("updatedAt"),
-                            filter.getUpdatedAfter()));
+                    cb.greaterThanOrEqualTo(root.get("updatedAt"), from));
         }
 
         if (filter.getUpdatedBefore() != null) {
+            Instant to = filter.getUpdatedBefore()
+                    .plusDays(1)
+                    .atStartOfDay(ZoneId.systemDefault())
+                    .toInstant();
             spec = spec.and((root, query, cb) ->
-                    cb.lessThanOrEqualTo(root.get("updatedAt"),
-                            filter.getUpdatedBefore()));
+                    cb.lessThanOrEqualTo(root.get("updatedAt"), to));
         }
 
         /* Includes only externally sourced listings */

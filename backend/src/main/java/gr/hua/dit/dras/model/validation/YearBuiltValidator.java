@@ -15,7 +15,7 @@ public class YearBuiltValidator implements ConstraintValidator<ValidYearBuilt, I
     @Override
     public boolean isValid(Integer value, ConstraintValidatorContext context) {
         if (value == null) {
-            return true; // null is valid — use @NotNull separately if required
+            return true; // null is valid
         }
 
         int maxYear = Year.now().getValue() + FUTURE_OFFSET;

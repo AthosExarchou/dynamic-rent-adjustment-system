@@ -18,6 +18,8 @@ public class ExternalImportController {
     }
 
     @PostMapping("/listings")
+    /* @Valid intentionally omitted: ExternalListingImportService performs per-DTO
+    validation and skips invalid entries instead of failing the entire batch. */
     public ResponseEntity<String> importListings(@RequestBody List<ExternalListingDTO> dtos) {
 
         if (dtos == null || dtos.isEmpty()) {

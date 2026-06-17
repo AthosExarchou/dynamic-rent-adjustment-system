@@ -67,10 +67,12 @@ public class Listing {
     @Column(nullable = false)
     private Integer sizeM2;
 
+    @NotNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private PropertyType propertyType;
 
+    @NotNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private RentalDuration rentalDuration;
@@ -438,17 +440,7 @@ public class Listing {
         this.status = ListingStatus.REJECTED;
     }
 
-    public void markAsRented(Tenant tenant) {
-        if (!isApproved()) {
-            throw new IllegalStateException("Only approved listings can be rented");
-        }
-        if (tenant == null) {
-            throw new IllegalArgumentException("Tenant cannot be null");
-        }
 
-        this.tenant = tenant;
-        this.status = ListingStatus.RENTED;
-    }
 
     public void makeAvailable() {
         if (status == ListingStatus.RENTED) {
