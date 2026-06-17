@@ -24,6 +24,9 @@ public class Listing {
     @Column(name = "id")
     private Integer id;
 
+    @Version
+    private Integer version;
+
     @Column(name = "date_scraped")
     private Instant dateScraped;
 
@@ -193,6 +196,14 @@ public class Listing {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
     }
 
     public Instant getDateScraped() {
@@ -472,9 +483,29 @@ public class Listing {
         List<Tenant> rejected = new ArrayList<>(this.applicants);
         rejected.remove(winningTenant);
 
+        // Sync inverse side: remove this listing from each applicant's appliedListings
+        for (Tenant applicant : this.applicants) {
+            applicant.getAppliedListings().remove(this);
+        }
         this.applicants.clear();
 
         return rejected;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+
+        Listing listing = (Listing) o;
+        return id != null && id.equals(listing.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 
     @Override
@@ -512,9 +543,7 @@ public class Listing {
     }
 
     private String safeTrim(String s) {
-        if (s == null) return null;
-        String trimmed = s.trim();
-        return trimmed.isEmpty() ? null : trimmed;
+        return s == null ? null : s.trim();
     }
 
 }

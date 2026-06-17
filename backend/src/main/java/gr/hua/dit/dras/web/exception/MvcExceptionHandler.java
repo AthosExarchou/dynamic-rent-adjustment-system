@@ -84,6 +84,24 @@ public class MvcExceptionHandler {
     }
 
     /**
+     * Catches optimistic locking failures like race conditions where
+     * two users try to rent the same listing at the exact same time.
+     */
+    @ExceptionHandler(org.springframework.dao.OptimisticLockingFailureException.class)
+    public String handleOptimisticLockingFailure(
+            org.springframework.dao.OptimisticLockingFailureException ex,
+            HttpServletRequest request,
+            RedirectAttributes redirectAttributes
+    ) {
+        log.warn("Optimistic locking failure at {}", request.getRequestURI(), ex);
+
+        redirectAttributes.addFlashAttribute("errorMessage",
+                "The record was modified by another user. Please try again.");
+
+        return redirectToReferer(request);
+    }
+
+    /**
      * Generic fallback for unexpected server errors.
      */
     @ExceptionHandler(Exception.class)
