@@ -84,7 +84,7 @@ public class OwnerController {
         redirectAttributes.addFlashAttribute("successMessage",
                 "Owner created successfully.");
 
-        return "redirect:/auth/users";
+        return "redirect:/users";
     }
 
     @GetMapping("/{id}/listings")

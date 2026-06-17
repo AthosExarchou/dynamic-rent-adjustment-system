@@ -113,11 +113,13 @@ public class ProfileController {
     @PostMapping("/user/edit/{id}")
     @Secured("USER")
     public String updateProfile(
-            @Valid @PathVariable Integer id,
+            @PathVariable Integer id,
             @Valid @ModelAttribute("user") User updatedUser,
             BindingResult bindingResult,
             RedirectAttributes redirectAttributes
     ) {
+        validateProfileOwnership(id);
+
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute(
                     "org.springframework.validation.BindingResult.user", bindingResult);

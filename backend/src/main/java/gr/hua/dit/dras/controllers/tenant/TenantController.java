@@ -88,6 +88,18 @@ public class TenantController {
 
         boolean isAlreadyTenant = tenantService.isUserTenant();
 
+        /* Pre-validate existing tenants before any state changes */
+        if (isAlreadyTenant) {
+            Tenant existingTenant = tenantService.getTenant(currentUser.getId());
+
+            if (existingTenant.getListing() != null) {
+                throw new IllegalStateException("You already rent a listing.");
+            }
+            if (listing.getApplicants().contains(existingTenant)) {
+                throw new IllegalStateException("You have already applied for this listing.");
+            }
+        }
+
         /* If not a tenant, validates the form fields and creates the profile */
         if (!isAlreadyTenant) {
             if (bindingResult.hasErrors() ||
@@ -109,16 +121,10 @@ public class TenantController {
                     lastName.trim(),
                     phoneNumber.trim()
             );
-        } else {
-            Tenant existingTenant = tenantService.getTenant(currentUser.getId());
-            if (existingTenant.getListing() != null) {
-                throw new IllegalStateException("You already rent a listing.");
-            }
         }
 
-        if (tenantService.submitApplication(listingId)) {
-            throw new IllegalStateException("You have already applied for this listing.");
-        }
+        /* All preconditions validated - submit application */
+        tenantService.submitApplication(listingId);
 
         redirectAttributes.addFlashAttribute("successMessage",
                 "Application submitted successfully.");
@@ -158,7 +164,7 @@ public class TenantController {
         redirectAttributes.addFlashAttribute("successMessage",
                 "Tenant created successfully.");
 
-        return "redirect:/auth/users";
+        return "redirect:/users";
     }
 
 }

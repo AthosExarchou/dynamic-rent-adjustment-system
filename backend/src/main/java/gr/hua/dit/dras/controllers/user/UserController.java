@@ -105,7 +105,7 @@ public class UserController {
                     "org.springframework.validation.BindingResult.user", bindingResult);
             redirectAttributes.addFlashAttribute("user", user);
 
-            return "redirect:/auth/register";
+            return "redirect:/register";
         }
 
         Integer id = userService.saveUser(user);
@@ -120,7 +120,7 @@ public class UserController {
         String message = "User '"+id+"' saved successfully !";
         redirectAttributes.addFlashAttribute("successMessage", message);
 
-        return "redirect:/auth/login";
+        return "redirect:/login";
     }
 
     @Secured("ADMIN")
@@ -194,10 +194,10 @@ public class UserController {
                 redirectAttributes.addFlashAttribute("infoMessage",
                         "Profile updated. Please log in again.");
             }
-            return "redirect:/auth/login";
+            return "redirect:/login";
         }
 
-        return "redirect:/auth/users"; // admins go back to the user management page
+        return "redirect:/users"; // admins go back to the user management page
     }
 
     @Secured("ADMIN")
@@ -219,7 +219,7 @@ public class UserController {
         redirectAttributes.addFlashAttribute("successMessage",
                 "Role removed successfully.");
 
-        return "redirect:/auth/users";
+        return "redirect:/users";
     }
 
     @Secured("ADMIN")
@@ -246,7 +246,7 @@ public class UserController {
                     redirectAttributes.addFlashAttribute("successMessage",
                             "Owner role added successfully.");
 
-                    return "redirect:/auth/users";
+                    return "redirect:/users";
                 }
                 model.addAttribute("owner", new Owner());
                 model.addAttribute("userId", user_id);
@@ -258,7 +258,7 @@ public class UserController {
                     redirectAttributes.addFlashAttribute("successMessage",
                             "Tenant role added successfully.");
 
-                    return "redirect:/auth/users";
+                    return "redirect:/users";
                 }
                 Tenant tenant = new Tenant();
                 tenant.setId(user.getId());
@@ -271,7 +271,7 @@ public class UserController {
                 redirectAttributes.addFlashAttribute("successMessage",
                         "User role added successfully.");
 
-                return "redirect:/auth/users";
+                return "redirect:/users";
 
             default:
                 throw new IllegalStateException("Unhandled role type: " + role.getName());
@@ -300,7 +300,7 @@ public class UserController {
         redirectAttributes.addFlashAttribute("successMessage",
                 "User deleted successfully.");
 
-        return "redirect:/auth/users";
+        return "redirect:/users";
     }
 
     @Secured("USER")
