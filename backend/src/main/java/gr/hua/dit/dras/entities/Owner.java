@@ -36,8 +36,8 @@ public class Owner {
     private boolean systemOwner = false;
 
     /* Owner-Listing relationship */
-    @OneToMany(mappedBy = "owner", cascade= {CascadeType.PERSIST, CascadeType.MERGE,
-            CascadeType.REFRESH, CascadeType.REMOVE, CascadeType.DETACH})
+    @OneToMany(mappedBy = "owner", cascade = {CascadeType.PERSIST, CascadeType.MERGE,
+            CascadeType.REFRESH, CascadeType.DETACH})
     private List<Listing> listings = new ArrayList<>();
 
     /* Owner-User relationship */

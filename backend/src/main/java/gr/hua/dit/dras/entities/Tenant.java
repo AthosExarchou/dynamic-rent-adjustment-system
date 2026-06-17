@@ -34,7 +34,7 @@ public class Tenant {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private RentalStatus rentalStatus;
+    private RentalStatus rentalStatus = RentalStatus.APPLIED;
 
     /* Tenant-Listing relationship */
     @OneToOne(mappedBy = "tenant", cascade = {
@@ -168,6 +168,22 @@ public class Tenant {
         }
     }
 
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+
+        Tenant tenant = (Tenant) o;
+        return id != null && id.equals(tenant.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 
     @Override
     public String toString() {

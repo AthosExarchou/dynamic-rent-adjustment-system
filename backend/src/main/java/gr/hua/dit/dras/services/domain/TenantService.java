@@ -163,7 +163,6 @@ public class TenantService {
 
         tenant.setRentalStatus(RentalStatus.APPLIED);
 
-        listing.addApplicant(tenant);
         tenant.applyToListing(listing);
 
         /* Ensures persistence */
