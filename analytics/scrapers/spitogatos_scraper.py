@@ -105,6 +105,21 @@ import datetime as dt
 import ast
 import platform
 
+# Sleep Tracker
+_original_sleep = time.sleep
+_total_sleep_time = 0.0
+
+def _tracked_sleep(secs):
+    global _total_sleep_time
+    if secs > 0:
+        try:
+            _total_sleep_time += float(secs)
+        except (TypeError, ValueError):
+            pass
+    _original_sleep(secs)
+
+time.sleep = _tracked_sleep
+
 logger = logging.getLogger("dras.scraper")
 
 __version__ = "1.2.1"
@@ -1706,10 +1721,17 @@ def main():
     finally:
         end_time = dt.datetime.now()
         duration = end_time - start_time
+        total_seconds = duration.total_seconds()
+        
+        # Calculate tracked sleep
+        time_spent_sleeping = _total_sleep_time
+        true_runtime = max(0.0, total_seconds - time_spent_sleeping)
 
-        logger.info("DRAS end | finished_at=%s | runtime=%s",
+        logger.info("DRAS end | finished_at=%s | runtime=%s | time_spent_sleeping=%s | true_runtime=%s",
                     end_time.strftime("%Y-%m-%d %H:%M:%S"),
-                    str(duration).split(".")[0])
+                    str(dt.timedelta(seconds=int(total_seconds))),
+                    str(dt.timedelta(seconds=int(time_spent_sleeping))),
+                    str(dt.timedelta(seconds=int(true_runtime))))
 
 
 if __name__ == "__main__":
