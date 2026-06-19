@@ -1195,21 +1195,48 @@ def run_scraper(config: ScraperConfig):
     try:
         # Loops through result pages for Spitogatos Athens
         base_search_url = "https://www.spitogatos.gr/enoikiaseis-katoikies/athina-kentro/selida_{}"
-        all_property_urls = set()
-        all_property_data = []
+        
+        # State Management
+        state_file = DATA_DIR / "scraper_state.json"
+        state = {}
+        if state_file.exists():
+            try:
+                with open(state_file, "r", encoding="utf-8") as f:
+                    state = json.load(f)
+                logger.info(
+                    "Resuming from saved state. Phase 1 complete: %s",
+                    state.get("phase_1_complete", False)
+                )
+            except Exception as e:
+                logger.warning("Failed to load state file: %s", e)
+
+        start_page = state.get("last_page", 0) + 1
+        phase_1_complete = state.get("phase_1_complete", False)
+        all_property_data = state.get("all_property_data", [])
+        all_property_urls = {d["url"] for d in all_property_data if "url" in d}
+        last_detail_index = state.get("last_detail_index", -1)
 
         cookies_accepted = False
         fresh_session = True
 
         # STEP 1: Parse Search Pages
-        logger.info("Phase 1: scraping search pages | max_pages=%d", max_pages)
-        for page_num in range(1, max_pages + 1):
+        if phase_1_complete:
+            logger.info(
+                "Phase 1 skipped (already complete in saved state) | unique_listings=%d",
+                len(all_property_data)
+            )
+            start_page = max_pages + 1  # Skip loop
+        else:
+            logger.info("Phase 1: scraping search pages | max_pages=%d", max_pages)
+
+        for page_num in range(start_page, max_pages + 1):
             url = base_search_url.format(page_num)
             logger.info("Scraping search page | page=%d/%d | url=%s", page_num, max_pages, url)
 
             try:
                 if not safe_get(driver, url):
-                    logger.warning("Hard block on search page | page=%d | rotating session", page_num)
+                    logger.warning(
+                        "Hard block on search page | page=%d | rotating session", page_num)
                     driver, dynamic_user_agent = rotate_session(driver)
 
                     cookies_accepted = False
@@ -1339,18 +1366,41 @@ def run_scraper(config: ScraperConfig):
                     logger.info("Long break between pages | page=%d | duration=30-50s", page_num)
                     time.sleep(random.uniform(30, 50))
 
+                # Save state after each page
+                state["last_page"] = page_num
+                state["all_property_data"] = all_property_data
+                try:
+                    with open(state_file, "w", encoding="utf-8") as f:
+                        json.dump(state, f, ensure_ascii=False)
+                except Exception as e:
+                    logger.warning("Failed to save state: %s", e)
+
             except Exception:
                 logger.exception("Error scraping search page | page=%d | url=%s", page_num, url)
                 break
-
-        logger.info("Phase 1 complete | unique_listings=%d", len(all_property_data))
+        else:
+            # this block runs only if the loop completed without break
+            if not phase_1_complete:
+                state["phase_1_complete"] = True
+                try:
+                    with open(state_file, "w", encoding="utf-8") as f:
+                        json.dump(state, f, ensure_ascii=False)
+                except Exception:
+                    pass
+                logger.info("Phase 1 complete | unique_listings=%d", len(all_property_data))
 
         # STEP 2: Enrich with Detail Pages
         if all_property_data:
             logger.info("Phase 2: detail scraping | total=%d", len(all_property_data))
 
+            resume_index = last_detail_index + 1
+            details_processed = 0
+
             for i, data in enumerate(all_property_data):
-                if i > 0 and i % 100 == 0:
+                if i < resume_index:
+                    continue
+
+                if details_processed > 0 and details_processed % 100 == 0:
                     logger.info("Deep sleep for IP cooldown | listing=%d | duration=5-10 min", i)
                     time.sleep(random.uniform(300, 600))  # 5 to 10 minutes
                     driver, dynamic_user_agent = rotate_session(driver)
@@ -1396,6 +1446,17 @@ def run_scraper(config: ScraperConfig):
                 detail_html = driver.page_source
                 details = parse_property_page(detail_html)
                 data.update(details)
+
+                # Save state after each detail page
+                state["last_detail_index"] = i
+                state["all_property_data"] = all_property_data
+                try:
+                    with open(state_file, "w", encoding="utf-8") as f:
+                        json.dump(state, f, ensure_ascii=False)
+                except Exception:
+                    pass
+
+                details_processed += 1
 
         if not all_property_data:
             logger.critical("No data extracted. Exiting.")
@@ -1594,6 +1655,15 @@ def run_scraper(config: ScraperConfig):
             )
         else:
             logger.info("Backend upload skipped (--push-backend not set)")
+
+        # Clear state file on successful completion
+        if state_file.exists():
+            try:
+                state_file.unlink()
+                logger.info("Cleared state file after successful run.")
+            except Exception as e:
+                logger.warning("Could not clear state file: %s", e)
+
     finally:
         # Cleanup
         logger.info("Shutting down driver and virtual display")
