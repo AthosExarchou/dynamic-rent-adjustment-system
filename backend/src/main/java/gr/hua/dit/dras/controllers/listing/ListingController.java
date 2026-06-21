@@ -59,14 +59,14 @@ public class ListingController {
     }
 
     /* Public listings */
-    @GetMapping("/listings")
+    @GetMapping({"", "/"})
     public String showListings(Model model) {
 
         model.addAttribute("listings", listingService.getListings());
         return "listing/listings";
     }
 
-    @GetMapping("/listings/local")
+    @GetMapping("/local")
     public String showLocalListings(Model model) {
 
         model.addAttribute("listings", listingService.getLocalListings());
@@ -165,8 +165,8 @@ public class ListingController {
 
     /* Approve listings (admin) */
     @Secured("ADMIN")
-    @GetMapping("/listingsforapproval")
-    public String showListingsForApproval(Model model) {
+    @GetMapping("/forapproval")
+    public String listingsForApproval(Model model) {
 
         model.addAttribute("listings", listingService.getPendingListings());
         return "listing/listingsforapproval";
