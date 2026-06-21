@@ -2,7 +2,8 @@ package gr.hua.dit.dras.services.domain;
 
 /* imports */
 import gr.hua.dit.dras.entities.*;
-import gr.hua.dit.dras.repositories.*;
+import gr.hua.dit.dras.repositories.RoleRepository;
+import gr.hua.dit.dras.repositories.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,24 +24,15 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-    private final ListingRepository listingRepository;
-    private final TenantRepository tenantRepository;
-    private final OwnerRepository  ownerRepository;
 
     public UserService(
             UserRepository userRepository,
             RoleRepository roleRepository,
-            BCryptPasswordEncoder passwordEncoder,
-            ListingRepository listingRepository,
-            TenantRepository tenantRepository,
-            OwnerRepository  ownerRepository
+            BCryptPasswordEncoder passwordEncoder
     ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
-        this.listingRepository = listingRepository;
-        this.tenantRepository = tenantRepository;
-        this.ownerRepository = ownerRepository;
     }
 
     @Transactional
