@@ -215,11 +215,11 @@ public class TenantService {
         if (userService.currentUserHasRole("ADMIN"))
             throw new AccessDeniedException("Admins cannot rent listings");
 
-        if (!listing.isApproved())
-            throw new IllegalStateException("Listing not available for rental");
-
         if (listing.isRented())
             throw new IllegalStateException("Listing already rented");
+
+        if (!listing.isApproved())
+            throw new IllegalStateException("Listing not available for rental");
 
         if (listing.getOwner() != null &&
                 listing.getOwner().getUser().getId().equals(user.getId()))
