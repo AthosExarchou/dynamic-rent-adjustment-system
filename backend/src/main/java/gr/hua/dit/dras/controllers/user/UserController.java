@@ -15,6 +15,7 @@ import gr.hua.dit.dras.services.domain.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -134,6 +135,7 @@ public class UserController {
         return "auth/users";
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @userService.getCurrentUserId() == #user_id")
     @GetMapping("/user/{user_id}")
     public String showUser(@PathVariable Integer user_id, Model model) {
 
