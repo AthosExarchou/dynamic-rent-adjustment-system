@@ -1,0 +1,111 @@
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.title {
+  margin-bottom: var(--spacing-8);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-8);
+}
+
+.card {
+  background-color: var(--background-paper);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+.cardContent {
+  padding: 1.5rem;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.cardTitle {
+  font-size: 1.2rem;
+}
+
+.badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.badgeApproved {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+.badgePending {
+  background-color: #fff3cd;
+  color: #664d03;
+}
+
+.badgeDisabled {
+  background-color: #f8d7da;
+  color: #842029;
+}
+
+.badgeOther {
+  background-color: var(--color-neutral-100);
+  color: var(--text-secondary);
+}
+
+.address {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing-4);
+}
+
+.appBtn {
+  flex: 1;
+  text-decoration: none;
+  text-align: center;
+  padding: 0.5rem;
+  background-color: var(--color-primary-600);
+  color: #fff;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.appBtn:hover {
+  background-color: var(--color-primary-500);
+}
+
+.deleteBtn {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+  background-color: transparent;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deleteBtn:hover {
+  background-color: var(--color-danger);
+  color: #fff;
+}

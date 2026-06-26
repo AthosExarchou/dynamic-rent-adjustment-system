@@ -1,0 +1,111 @@
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: var(--spacing-8) 0;
+}
+
+.card {
+  background-color: var(--background-paper);
+  padding: 2.5rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.title {
+  margin-bottom: 1.5rem;
+  color: var(--color-primary-600);
+}
+
+.error {
+  background-color: #fdf2f2;
+  color: var(--color-danger);
+  padding: var(--spacing-4);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-4);
+  border: 1px solid #fbd5d5;
+}
+
+.formGroup {
+  margin-bottom: 1.25rem;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-4);
+  margin-bottom: 1.25rem;
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-4);
+  margin-bottom: 1.25rem;
+}
+
+.grid3Last {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-8);
+}
+
+.label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  color: var(--text-primary);
+}
+
+.input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  font-size: 1rem;
+  background-color: var(--background-paper);
+  color: var(--text-primary);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 3px var(--color-primary-100);
+}
+
+.ownerSection {
+  border: 1px dashed var(--color-primary-500);
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-8);
+  background-color: var(--color-primary-50);
+}
+
+.ownerTitle {
+  color: var(--color-primary-600);
+  margin-bottom: var(--spacing-4);
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 0.8rem;
+  background-color: var(--color-success);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.submitBtn:hover {
+  background-color: #059669;
+}
+
+.submitBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

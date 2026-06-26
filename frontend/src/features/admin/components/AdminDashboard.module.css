@@ -1,0 +1,154 @@
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.title {
+  margin-bottom: 2rem;
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.card {
+  background-color: var(--background-paper);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+.cardContent {
+  padding: 1.5rem;
+}
+
+.cardTitle {
+  margin-bottom: 0.5rem;
+}
+
+.address {
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.specs {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.approveBtn {
+  padding: 0.6rem 1.5rem;
+  background-color: var(--color-success);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.approveBtn:hover {
+  background-color: #059669;
+}
+
+.rejectBtn {
+  padding: 0.6rem 1.5rem;
+  background-color: var(--color-danger);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.rejectBtn:hover {
+  background-color: #b91c1c;
+}
+
+.emptyState {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 2rem;
+}
+
+.tableContainer {
+  background-color: var(--background-paper);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 1.5rem;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  border-bottom: 2px solid var(--border-color);
+  text-align: left;
+  padding: 0.75rem;
+  color: var(--text-primary);
+}
+
+.table td {
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.75rem;
+  color: var(--text-primary);
+}
+
+.centerAlign {
+  text-align: center !important;
+}
+
+.roleActions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.addBtn {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background-color: #e2f0d9;
+  border: 1px solid #385723;
+  color: #385723;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.removeBtn {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background-color: #fce4d6;
+  border: 1px solid #c65911;
+  color: #c65911;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.delBtn {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  background-color: #f8d7da;
+  border: 1px solid #dc3545;
+  color: #dc3545;
+  border-radius: 4px;
+  cursor: pointer;
+}

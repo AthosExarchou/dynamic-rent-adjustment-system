@@ -1,0 +1,141 @@
+.container {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.card {
+  background-color: var(--background-paper);
+  padding: 2.5rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.title {
+  margin-bottom: 1.5rem;
+  color: var(--color-primary-600);
+}
+
+.titleDanger {
+  margin-bottom: 1rem;
+  color: var(--color-danger);
+}
+
+.error {
+  background-color: #fdf2f2;
+  color: var(--color-danger);
+  padding: 0.8rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  border: 1px solid #fbd5d5;
+}
+
+.success {
+  background-color: #f0fdf4;
+  color: var(--color-success);
+  padding: 0.8rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  border: 1px solid #bbf7d0;
+}
+
+.warning {
+  background-color: #fffbeb;
+  color: #b45309;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  border: 1px solid #fef3c7;
+}
+
+.formGroup {
+  margin-bottom: 1.25rem;
+}
+
+.formGroupLarge {
+  margin-bottom: 1.5rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: var(--text-primary);
+}
+
+.labelDanger {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: var(--color-danger);
+}
+
+.input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  font-size: 1rem;
+  background-color: var(--background-paper);
+  color: var(--text-primary);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 3px var(--color-primary-100);
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 0.8rem;
+  background-color: var(--color-success);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.submitBtn:hover {
+  background-color: #059669;
+}
+
+.primaryBtn {
+  width: 100%;
+  padding: 0.8rem;
+  background-color: var(--color-primary-600);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.primaryBtn:hover {
+  background-color: var(--color-primary-500);
+}
+
+.deleteBtn {
+  width: 100%;
+  padding: 0.8rem;
+  background-color: var(--color-danger);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.deleteBtn:hover {
+  background-color: #b91c1c;
+}

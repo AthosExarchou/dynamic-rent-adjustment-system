@@ -1,0 +1,83 @@
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--spacing-8) 0;
+}
+
+.card {
+  background-color: var(--background-paper);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.header {
+  background-color: var(--color-primary-600);
+  color: #fff;
+  padding: var(--spacing-8);
+}
+
+.title {
+  color: #fff;
+  margin-bottom: var(--spacing-2);
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.content {
+  padding: var(--spacing-8);
+}
+
+.description {
+  font-size: 1.1rem;
+  margin-bottom: var(--spacing-8);
+  white-space: pre-wrap;
+}
+
+.sectionTitle {
+  margin-bottom: var(--spacing-4);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: var(--spacing-2);
+}
+
+.specsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-4);
+  margin-bottom: var(--spacing-8);
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing-4);
+}
+
+.backBtn {
+  text-decoration: none;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.backBtn:hover {
+  background-color: var(--color-neutral-100);
+}
+
+.applyBtn {
+  text-decoration: none;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--color-primary-600);
+  color: #fff;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+.applyBtn:hover {
+  background-color: var(--color-primary-500);
+}
