@@ -10,6 +10,7 @@ import java.util.Set;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(	name = "users",
@@ -35,6 +36,7 @@ public class User {
     @Email
     private String email;
 
+    @JsonIgnore
     @Column
     @NotBlank
     @Size(max = 100)
@@ -59,10 +61,12 @@ public class User {
     private Set<Role> roles = new HashSet<>();
 
     /* User-Owner relationship */
+    @JsonIgnore
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Owner owner;
 
     /* User-Tenant relationship */
+    @JsonIgnore
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Tenant tenant;
 

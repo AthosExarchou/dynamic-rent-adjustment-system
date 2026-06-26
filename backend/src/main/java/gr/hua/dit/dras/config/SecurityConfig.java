@@ -7,6 +7,12 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -14,9 +20,29 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            LoginSuccessHandler successHandler) throws Exception {
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
                 .authorizeHttpRequests((requests) -> requests
                         /* Static Resources */
                         .requestMatchers("/images/**", "/js/**", "/css/**").permitAll()
@@ -30,17 +56,20 @@ public class SecurityConfig {
                                 "/register", "/saveUser", "/error"
                         ).permitAll()
 
-                        /* Public API Endpoints */
+                        /* REST Auth Endpoints */
+                        .requestMatchers("/api/auth/**").permitAll()
+
+                        /* Protected API Endpoints */
                         .requestMatchers("/api/external-import/**").hasAuthority("ADMIN")
 
                         /* Role-specific checks are handled by @Secured in the controllers */
                         .anyRequest().authenticated()
                 )
 
-                /* Disable CSRF only for the secured REST API */
+                /* Disable CSRF for all REST API endpoints */
                 .csrf((csrf) -> csrf
-                        .ignoringRequestMatchers("/api/external-import/**")
-        )
+                        .ignoringRequestMatchers("/api/**")
+                )
 
                 .formLogin((form) -> form
                         .loginPage("/login")

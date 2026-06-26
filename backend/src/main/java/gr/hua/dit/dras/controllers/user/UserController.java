@@ -135,7 +135,7 @@ public class UserController {
         return "auth/users";
     }
 
-    @PreAuthorize("hasRole('ADMIN') or @userService.getCurrentUserId() == #user_id")
+    @PreAuthorize("hasAuthority('ADMIN') or @userService.getCurrentUserId() == #user_id")
     @GetMapping("/user/{user_id}")
     public String showUser(@PathVariable Integer user_id, Model model) {
 

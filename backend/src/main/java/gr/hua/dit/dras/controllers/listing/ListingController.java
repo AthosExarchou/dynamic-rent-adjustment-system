@@ -98,7 +98,7 @@ public class ListingController {
     }
 
     /* Add new listing form */
-    @PreAuthorize("hasRole('USER') and !hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') and !hasAuthority('ADMIN')")
     @GetMapping("/new")
     public String addListing(Model model) {
 
@@ -121,7 +121,7 @@ public class ListingController {
     }
 
     /* Save new listing */
-    @PreAuthorize("hasRole('USER') and !hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') and !hasAuthority('ADMIN')")
     @PostMapping("/new")
     public String saveListing(@Valid @ModelAttribute("listing") Listing listing,
                               BindingResult bindingResult,
