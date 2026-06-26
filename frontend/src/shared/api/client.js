@@ -30,7 +30,7 @@ async function apiClient(endpoint, options = {}) {
   };
 
   /* Set JSON content-type for requests with a body */
-  if (body && !(body instanceof FormData)) {
+  if (body && !(body instanceof FormData) && !headers['Content-Type']) {
     headers['Content-Type'] = 'application/json';
   }
 

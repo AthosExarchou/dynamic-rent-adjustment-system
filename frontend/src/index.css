@@ -41,6 +41,21 @@
 
   /* Layout */
   --max-width-container: 1280px;
+
+  /* Centralized Theme variables (Light Theme Default) */
+  --background-default: var(--color-neutral-50);
+  --background-paper: #ffffff;
+  --text-primary: var(--color-neutral-900);
+  --text-secondary: #64748b;
+  --border-color: #e2e8f0;
+}
+
+[data-theme="dark"] {
+  --background-default: #121212;
+  --background-paper: #1e1e1e;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --border-color: #2d2d2d;
 }
 
 * {
@@ -52,14 +67,15 @@
 body {
   font-family: var(--font-family-base);
   font-size: var(--font-size-base);
-  color: var(--color-neutral-900);
-  background-color: var(--color-neutral-50);
+  color: var(--text-primary);
+  background-color: var(--background-default);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  color: var(--color-neutral-900);
+  color: var(--text-primary);
   font-weight: 600;
   line-height: 1.2;
 }

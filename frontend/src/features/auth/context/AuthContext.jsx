@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import apiClient from '../../shared/api/client';
+import apiClient from '../../../shared/api/client';
 
 /**
  * Authentication Context for the DRAS frontend.

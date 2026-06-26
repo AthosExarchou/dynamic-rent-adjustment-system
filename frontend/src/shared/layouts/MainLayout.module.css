@@ -1,0 +1,223 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--background-default);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.navbar {
+  background-color: var(--background-paper);
+  border-bottom: 1px solid var(--border-color);
+  padding: 1rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.navContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.brand {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--color-primary-600);
+  transition: opacity 0.2s ease;
+}
+
+.brand:hover {
+  opacity: 0.85;
+}
+
+.brand:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 4px;
+  border-radius: var(--radius-md);
+}
+
+.navLinks {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.navLink {
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: color 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+  padding: 0.25rem 0;
+  border-bottom: 2px solid transparent;
+}
+
+.navLink:hover {
+  color: var(--text-primary);
+}
+
+.navLink:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.active {
+  color: var(--color-primary-600) !important;
+  border-bottom-color: var(--color-primary-600);
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.themeToggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.themeToggle:hover {
+  background-color: var(--color-neutral-100);
+  color: var(--text-primary);
+  transform: scale(1.08);
+}
+
+.themeToggle:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.userWelcome {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.loginBtn {
+  text-decoration: none;
+  padding: 0.5rem 1.2rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-primary-600);
+  color: var(--color-primary-600);
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease-in-out;
+  display: inline-block;
+  text-align: center;
+}
+
+.loginBtn:hover {
+  background-color: var(--color-primary-50);
+  border-color: var(--color-primary-500);
+  color: var(--color-primary-500);
+  transform: translateY(-1px);
+}
+
+.loginBtn:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.registerBtn {
+  text-decoration: none;
+  padding: 0.5rem 1.2rem;
+  border-radius: var(--radius-md);
+  background-color: var(--color-primary-600);
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease-in-out;
+  display: inline-block;
+  text-align: center;
+  border: 1px solid transparent;
+}
+
+.registerBtn:hover {
+  background-color: var(--color-primary-500);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.registerBtn:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.logoutBtn {
+  padding: 0.5rem 1.2rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+  background-color: transparent;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: all 0.2s ease-in-out;
+}
+
+.logoutBtn:hover {
+  background-color: #fdf2f2;
+  border-color: #ef4444;
+  color: #ef4444;
+  transform: translateY(-1px);
+}
+
+.logoutBtn:focus-visible {
+  outline: 2px solid var(--color-danger);
+  outline-offset: 2px;
+}
+
+.mainContent {
+  flex: 1;
+  padding: 2rem;
+  max-width: var(--max-width-container);
+  width: 100%;
+  margin: 0 auto;
+}
+
+.footer {
+  background-color: var(--background-paper);
+  border-top: 1px solid var(--border-color);
+  padding: 1.5rem 2rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.footerLinks {
+  margin-bottom: 0.5rem;
+}
+
+.footerLink {
+  text-decoration: none;
+  color: var(--text-secondary);
+  margin: 0 0.5rem;
+  transition: color 0.2s ease;
+}
+
+.footerLink:hover {
+  color: var(--text-primary);
+}
+
+.footerLink:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}

@@ -8,16 +8,16 @@
  *   title           - String (max 150)
  *   subtitle        - String | null (max 250)
  *   description     - String (max 5000)
- *   price           - Integer (0–20000)
- *   pricePerM2      - Integer (0–200)
+ *   price           - Integer (0-20000)
+ *   pricePerM2      - Integer (0-200)
  *   address         - String (max 255)
- *   sizeM2          - Integer (5–1000)
+ *   sizeM2          - Integer (5-1000)
  *   propertyType    - PropertyType enum
  *   rentalDuration  - RentalDuration enum
- *   floor           - Integer | null (-3–100)
+ *   floor           - Integer | null (-3-100)
  *   yearBuilt       - Integer | null
- *   bedrooms        - Integer | null (0–10)
- *   bathrooms       - Integer | null (0–5)
+ *   bedrooms        - Integer | null (0-10)
+ *   bathrooms       - Integer | null (0-5)
  *   sourceUrl       - String | null (max 500)
  *   status          - ListingStatus enum
  *   images          - String[]
