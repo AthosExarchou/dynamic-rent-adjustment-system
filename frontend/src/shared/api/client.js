@@ -6,7 +6,9 @@
  * base URL, credentials, headers, and error handling.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+import config from '../../config';
+
+const API_BASE_URL = config.apiBaseUrl;
 
 /**
  * Wrapper around fetch() pre-configured for the DRAS backend.
