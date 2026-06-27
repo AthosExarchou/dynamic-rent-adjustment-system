@@ -1,0 +1,3 @@
+git
+docker-workflow
+pipeline-stage-view
