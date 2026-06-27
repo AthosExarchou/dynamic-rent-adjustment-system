@@ -3,9 +3,7 @@ package gr.hua.dit.dras.controllers.user;
 /* imports */
 import gr.hua.dit.dras.dto.AccountDeletionRequest;
 import gr.hua.dit.dras.dto.UserEditRequest;
-import gr.hua.dit.dras.entities.Owner;
 import gr.hua.dit.dras.entities.Role;
-import gr.hua.dit.dras.entities.Tenant;
 import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.repositories.UserRepository;
 import gr.hua.dit.dras.repositories.RoleRepository;
@@ -16,19 +14,14 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
-import java.util.Optional;
 
-@Controller
+@RestController
 public class UserController {
 
     private final UserRepository userRepository;
@@ -49,34 +42,6 @@ public class UserController {
         this.roleRepository = roleRepository;
         this.emailService = emailService;
         this.userApplicationService = userApplicationService;
-    }
-
-    @ModelAttribute
-    public void addCommonAttributes(Model model) {
-
-        /* Gets current user info */
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
-            User currentUser = userService.getUserByEmail(auth.getName());
-            model.addAttribute("currentUserId", currentUser.getId());
-
-            boolean currentUserIsAdmin = auth.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ADMIN"));
-            model.addAttribute("currentUserIsAdmin", currentUserIsAdmin);
-        } else {
-            /* Not logged in or anonymous */
-            model.addAttribute("currentUserId", null);
-            model.addAttribute("currentUserIsAdmin", false);
-        }
-    }
-
-    @GetMapping("/register")
-    public String register(Model model) {
-        if (!model.containsAttribute("user")) {
-            model.addAttribute("user", new User());
-        }
-        return "auth/register";
     }
 
     @PostMapping("/saveUser")
@@ -260,14 +225,7 @@ public class UserController {
         return org.springframework.http.ResponseEntity.ok().build();
     }
 
-    @Secured("USER")
-    @GetMapping("/user/delete/self")
-    public String showDeleteAccountForm(Model model) {
-        if (!model.containsAttribute("deletionRequest")) {
-            model.addAttribute("deletionRequest", new AccountDeletionRequest());
-        }
-        return "profile/delete-account";
-    }
+
 
     /* Allows users to delete their own account */
     @Secured("USER")

@@ -39,10 +39,10 @@ class AuthControllerTest {
     }
 
     @Test
-    @DisplayName("Should return login view")
+    @DisplayName("Should return unauthorized response")
     void shouldReturnLoginView() {
-        String view = authController.login();
+        org.springframework.http.ResponseEntity<?> response = authController.login();
 
-        assertThat(view).isEqualTo("auth/login");
+        assertThat(response.getStatusCodeValue()).isEqualTo(401);
     }
 }

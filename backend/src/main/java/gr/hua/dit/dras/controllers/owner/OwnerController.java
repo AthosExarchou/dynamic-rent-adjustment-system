@@ -1,18 +1,13 @@
 package gr.hua.dit.dras.controllers.owner;
 
-import gr.hua.dit.dras.dto.OwnerCreateRequest;
-import gr.hua.dit.dras.entities.Listing;
+/* imports */
 import gr.hua.dit.dras.entities.Owner;
-import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.services.application.ListingApplicationService;
 import gr.hua.dit.dras.services.domain.*;
-import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;

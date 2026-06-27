@@ -1,13 +1,11 @@
 package gr.hua.dit.dras.controllers;
 
+/* imports */
 import gr.hua.dit.dras.dto.ContactForm;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import gr.hua.dit.dras.services.infrastructure.EmailService;
 import java.util.Map;
 
@@ -23,7 +21,7 @@ public class HomeController {
 
     @PostMapping("/contact/send")
     public ResponseEntity<?> sendContactMessage(
-            @Valid @ModelAttribute ContactForm contactForm,
+            @Valid @RequestBody ContactForm contactForm,
             BindingResult bindingResult
     ) {
         if (bindingResult.hasErrors()) {

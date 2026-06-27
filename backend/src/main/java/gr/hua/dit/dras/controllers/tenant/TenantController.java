@@ -1,5 +1,6 @@
 package gr.hua.dit.dras.controllers.tenant;
 
+/* imports */
 import gr.hua.dit.dras.dto.TenantCreateRequest;
 import gr.hua.dit.dras.entities.Listing;
 import gr.hua.dit.dras.entities.Tenant;

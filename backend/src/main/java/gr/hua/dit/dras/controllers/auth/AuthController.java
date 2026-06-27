@@ -4,10 +4,10 @@ package gr.hua.dit.dras.controllers.auth;
 import gr.hua.dit.dras.entities.Role;
 import gr.hua.dit.dras.repositories.RoleRepository;
 import jakarta.annotation.PostConstruct;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+@RestController
 public class AuthController {
 
     private final RoleRepository roleRepository;
@@ -29,7 +29,8 @@ public class AuthController {
     }
 
     @GetMapping("/login")
-    public String login() {
-        return "auth/login";
+    public org.springframework.http.ResponseEntity<?> login() {
+        return org.springframework.http.ResponseEntity.status(401)
+                .body(java.util.Map.of("error", "Unauthorized", "message", "Please authenticate via /api/auth/login"));
     }
 }

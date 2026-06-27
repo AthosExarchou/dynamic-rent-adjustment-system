@@ -1,5 +1,6 @@
 package gr.hua.dit.dras.dto;
 
+/* imports */
 import gr.hua.dit.dras.entities.User;
 import java.time.LocalDateTime;
 import java.util.List;
