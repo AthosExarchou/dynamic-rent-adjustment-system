@@ -149,6 +149,66 @@ VITE_API_BASE_URL=http://localhost:8080/api
 2. Review and approve pending property listings.
 3. Manage users and assign or revoke roles as necessary.
 
+## Docker Deployment
+
+The application is containerized using Docker and orchestrated with Docker Compose.
+Nginx acts as a reverse proxy, routing traffic to the frontend and backend containers.
+
+### Development Environment
+To run the containers in a development setup:
+```bash
+docker-compose up -d --build
+```
+Access the application at `http://localhost:5173` (or `http://localhost` if using the Nginx reverse proxy).
+
+### Production Environment
+The production configuration (`docker-compose.prod.yml`) includes restart policies, health checks,
+named volumes, and log rotation. Nginx is the only publicly exposed service.
+
+```bash
+cp .env.example .env
+# Edit .env with your credentials
+docker-compose -f docker-compose.prod.yml up -d --build
+```
+
+## Jenkins Pipeline
+
+The project includes a `Jenkinsfile` for CI/CD, containing stages for:
+1. Backend Build (`mvn package`)
+2. Backend Tests (`mvn test`)
+3. Frontend Install (`npm install`)
+4. Frontend Build (`npm run build`)
+5. Docker Image Build (`docker compose build`)
+6. Docker Compose Deployment (`docker compose up -d`)
+7. Health Check (Verify Spring Boot Actuator)
+8. Archive Logs
+
+To use the pipeline, configure Jenkins with the Multibranch Pipeline plugin and point it to the repository.
+
+## Vagrant Provisioning
+
+A complete, reproducible infrastructure is provided via Vagrant. The `Vagrantfile` and `bootstrap.sh` automate the setup of an Ubuntu VM containing:
+- Java 21
+- Node.js 18
+- Docker & Docker Compose
+- Jenkins
+
+To start the VM and trigger provisioning:
+```bash
+cd infrastructure/vagrant
+vagrant up
+```
+Jenkins will be accessible at `http://localhost:8888` on your host machine.
+
+## Troubleshooting
+
+- **Database Connection Issues**: Ensure your `.env` credentials match the Spring Boot configuration.
+  If using Docker, ensure the `db` service is healthy before `backend` starts.
+- **Port Conflicts**: If port 8080 or 5432 is already in use on your host machine,
+  modify `docker-compose.yml` or the `Vagrantfile` port forwarding settings.
+- **Nginx 502 Bad Gateway**: Check the backend logs (`docker-compose logs backend`).
+  This typically occurs if the Spring Boot application fails to start or is still initializing.
+
 ## Author
 
 - **Name**: Exarchou Athos
@@ -156,4 +216,5 @@ VITE_API_BASE_URL=http://localhost:8080/api
 - **Email**: athosexarhou@gmail.com
 
 ## License
+
 This project is licensed under the **MIT License**.
