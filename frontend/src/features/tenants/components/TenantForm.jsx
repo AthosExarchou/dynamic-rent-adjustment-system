@@ -19,18 +19,17 @@ export default function TenantForm() {
     setLoading(true);
     setError('');
 
-    const params = new URLSearchParams();
-    if (!isTenant) {
-      params.append('firstName', formData.firstName);
-      params.append('lastName', formData.lastName);
-      params.append('phoneNumber', formData.phoneNumber);
-    }
+    const payload = !isTenant ? {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      phoneNumber: formData.phoneNumber
+    } : {};
 
     try {
       await apiClient(`/tenant/rent/${listingId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString()
+        headers: { 'Content-Type': 'application/json' },
+        body: payload
       });
       alert('Application submitted successfully!');
       navigate('/listings');
@@ -53,15 +52,21 @@ export default function TenantForm() {
               <h4 className={styles.sectionTitle}>Create Tenant Profile</h4>
               <div>
                 <label htmlFor="firstName" className={styles.label}>First Name</label>
-                <input id="firstName" type="text" required value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} className={styles.input} />
+                <input id="firstName" type="text" required value={formData.firstName}
+                       onChange={e => setFormData(
+                           {...formData, firstName: e.target.value})} className={styles.input} />
               </div>
               <div>
                 <label htmlFor="lastName" className={styles.label}>Last Name</label>
-                <input id="lastName" type="text" required value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} className={styles.input} />
+                <input id="lastName" type="text" required value={formData.lastName}
+                       onChange={e => setFormData(
+                           {...formData, lastName: e.target.value})} className={styles.input} />
               </div>
               <div>
                 <label htmlFor="phoneNumber" className={styles.label}>Phone Number</label>
-                <input id="phoneNumber" type="text" required value={formData.phoneNumber} onChange={e => setFormData({...formData, phoneNumber: e.target.value})} className={styles.input} placeholder="+30 690 1234567" />
+                <input id="phoneNumber" type="text" required value={formData.phoneNumber}
+                       onChange={e => setFormData(
+                           {...formData, phoneNumber: e.target.value})} className={styles.input} placeholder="+30 690 1234567" />
               </div>
             </div>
           ) : (

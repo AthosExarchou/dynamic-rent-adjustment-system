@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import apiClient from '../../../shared/api/client';
 import styles from './AdminDashboard.module.css';
+import EditUserModal from './EditUserModal';
+import AdminProfileCreationModal from './AdminProfileCreationModal';
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
+  
+  // Modal states
+  const [editingUser, setEditingUser] = useState(null);
+  const [creatingProfileFor, setCreatingProfileFor] = useState(null); // { userId, roleType }
 
   useEffect(() => {
     fetchUsersAndRoles();
@@ -28,12 +34,23 @@ export default function UserManagement() {
   };
 
   const handleAddRole = async (userId, roleId) => {
+    const role = roles.find(r => r.id === roleId);
     try {
       await apiClient(`/user/role/add/${userId}/${roleId}`, { method: 'POST' });
       fetchUsersAndRoles();
-    } catch {
-      alert('Role operation performed.');
-      fetchUsersAndRoles();
+    } catch (err) {
+      // If backend says profile required, open profile creation modal
+      if (err.message && err.message.includes('PROFILE_REQUIRED')) {
+         setCreatingProfileFor({ userId, roleType: role.name });
+      } else {
+         // Fallback for mocked behavior or other errors
+         const willMockProfile = confirm(`This user needs a ${role.name} profile first. Open creation form?`);
+         if (willMockProfile) {
+           setCreatingProfileFor({ userId, roleType: role.name });
+         } else {
+           fetchUsersAndRoles();
+         }
+      }
     }
   };
 
@@ -69,7 +86,7 @@ export default function UserManagement() {
               <th>Username</th>
               <th>Email Address</th>
               <th>Assigned Roles</th>
-              <th className={styles.centerAlign}>Manage Roles / Delete</th>
+              <th className={styles.centerAlign}>Manage Roles / Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -80,6 +97,7 @@ export default function UserManagement() {
                 <td>{u.roles.map(r => r.name).join(', ')}</td>
                 <td>
                   <div className={styles.roleActions}>
+                    <button onClick={() => setEditingUser(u)} className={styles.editBtn}>Edit</button>
                     {roles.map(r => {
                       const hasRole = u.roles.some(ur => ur.name === r.name);
                       return hasRole ? (
@@ -96,6 +114,21 @@ export default function UserManagement() {
           </tbody>
         </table>
       </div>
+
+      <EditUserModal 
+        user={editingUser} 
+        onClose={() => setEditingUser(null)} 
+        onRefresh={fetchUsersAndRoles} 
+      />
+
+      {creatingProfileFor && (
+        <AdminProfileCreationModal
+          userId={creatingProfileFor.userId}
+          roleType={creatingProfileFor.roleType}
+          onClose={() => setCreatingProfileFor(null)}
+          onRefresh={fetchUsersAndRoles}
+        />
+      )}
     </div>
   );
 }
