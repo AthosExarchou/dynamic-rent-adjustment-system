@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      padding: 20px; background-color: #f9f9f9; border-radius: 10px;
+    }
+    .header {
+      font-size: 20px; font-weight: bold; color: #198754;
+    }
+    .footer {
+      margin-top: 30px; font-size: 12px; color: gray;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">Application Approved!</div>
+  <p>Dear <strong th:text="${name}">Tenant</strong>,</p>
+  <p>Congratulations! Your rental application has been <span style="color: green; font-weight: bold;">approved</span> by the owner!</p>
+  
+  <table style="border-collapse: collapse; width: 100%; margin-top: 15px; margin-bottom: 15px;">
+    <tbody>
+      <tr style="border-bottom: 1px solid #ddd;">
+        <th style="text-align: left; padding: 8px; width: 120px;">Title:</th>
+        <td style="padding: 8px;" th:text="${listing.title}">Beautiful Listing</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #ddd;">
+        <th style="text-align: left; padding: 8px;">Address:</th>
+        <td style="padding: 8px;" th:text="${listing.address}">Athens</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #ddd;">
+        <th style="text-align: left; padding: 8px;">Floor:</th>
+        <td style="padding: 8px;" th:text="${listing.floor}">3</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #ddd;">
+        <th style="text-align: left; padding: 8px;">Bedrooms:</th>
+        <td style="padding: 8px;" th:text="${listing.bedrooms}">3</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #ddd;">
+        <th style="text-align: left; padding: 8px;">Bathrooms:</th>
+        <td style="padding: 8px;" th:text="${listing.bathrooms}">2</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #ddd;">
+        <th style="text-align: left; padding: 8px;">Area:</th>
+        <td style="padding: 8px;" th:text="${listing.sizeM2} + ' m²'">95 m²</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #ddd;">
+        <th style="text-align: left; padding: 8px;">Price:</th>
+        <td style="padding: 8px;" th:text="${listing.price} + ' €'">950 €</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #ddd;">
+        <th style="text-align: left; padding: 8px;">Property Type:</th>
+        <td style="padding: 8px;" th:text="${listing.propertyType}">APARTMENT</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #ddd;">
+        <th style="text-align: left; padding: 8px;">Duration:</th>
+        <td style="padding: 8px;" th:text="${listing.rentalDuration}">LONG_TERM</td>
+      </tr>
+      <tr style="border-bottom: 1px solid #ddd;">
+        <th style="text-align: left; padding: 8px;">Year Built:</th>
+        <td style="padding: 8px;" th:text="${listing.yearBuilt}">2007</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>You can now log in to the platform and access tenant services for your new home.</p>
+  <div class="footer">Contact support at realestate2025project@gmail.com</div>
+</div>
+</body>
+</html>

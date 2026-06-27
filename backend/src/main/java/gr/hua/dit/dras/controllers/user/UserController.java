@@ -25,6 +25,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.List;
+import java.util.Optional;
+
 @Controller
 public class UserController {
 
@@ -77,36 +80,27 @@ public class UserController {
     }
 
     @PostMapping("/saveUser")
-    public String saveUser(
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> saveUser(
             @Valid @ModelAttribute User user,
-            BindingResult bindingResult,
-            RedirectAttributes redirectAttributes
+            BindingResult bindingResult
     ) {
-        /* Check if username already exists */
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
-            bindingResult.rejectValue(
-                    "username",
-                    "error.user",
-                    "Username already taken!"
+            return org.springframework.http.ResponseEntity.badRequest().body(
+                    java.util.Map.of("error", "Username already taken!")
             );
         }
 
-        /* Check if email already exists */
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            bindingResult.rejectValue(
-                    "email",
-                    "error.user",
-                    "Email already registered!"
+            return org.springframework.http.ResponseEntity.badRequest().body(
+                    java.util.Map.of("error", "Email already registered!")
             );
         }
 
-        /* If there are errors, show the form again */
         if (bindingResult.hasErrors()) {
-            redirectAttributes.addFlashAttribute(
-                    "org.springframework.validation.BindingResult.user", bindingResult);
-            redirectAttributes.addFlashAttribute("user", user);
-
-            return "redirect:/register";
+            return org.springframework.http.ResponseEntity.badRequest().body(
+                    java.util.Map.of("error", "Validation failed", "details", bindingResult.getAllErrors())
+            );
         }
 
         Integer id = userService.saveUser(user);
@@ -114,45 +108,37 @@ public class UserController {
         try {
             emailService.sendWelcomeEmail(user.getEmail(), user);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("emailError",
-                    "User saved, but notification email could not be sent.");
+            // Log it, but user is saved
         }
 
-        String message = "User '"+id+"' saved successfully !";
-        redirectAttributes.addFlashAttribute("successMessage", message);
-
-        return "redirect:/login";
+        return org.springframework.http.ResponseEntity.ok().build();
     }
 
     @Secured("ADMIN")
     @GetMapping("/users")
-    public String showUsers(Model model) {
-
-        model.addAttribute("users", userService.getUsers());
-        model.addAttribute("roles", roleRepository.findAll());
-        model.addAttribute("currentUserId", userService.getCurrentUserId());
-
-        return "auth/users";
+    @ResponseBody
+    public List<gr.hua.dit.dras.dto.UserDTO> showUsers() {
+        return userService.getUsers().stream()
+                .map(gr.hua.dit.dras.dto.UserDTO::new)
+                .collect(java.util.stream.Collectors.toList());
     }
 
     @PreAuthorize("hasAuthority('ADMIN') or @userService.getCurrentUserId() == #user_id")
     @GetMapping("/user/{user_id}")
-    public String showUser(@PathVariable Integer user_id, Model model) {
-
+    @ResponseBody
+    public gr.hua.dit.dras.dto.UserDTO showUser(@PathVariable Integer user_id) {
         User user = userService.getUser(user_id);
         userService.assertNotAdmin(user);
-
-        model.addAttribute("user", user);
-        return "auth/user";
+        return new gr.hua.dit.dras.dto.UserDTO(user);
     }
 
     @Secured("USER")
     @PostMapping("/user/{user_id}")
-    public String editUser(
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> editUser(
             @PathVariable("user_id") Integer targetUserId,
             @Valid @ModelAttribute("userEditRequest") UserEditRequest request,
             BindingResult bindingResult,
-            RedirectAttributes redirectAttributes,
             HttpSession session
     ) {
         if (userService.isUsernameTaken(request.getUsername(), targetUserId)) {
@@ -166,23 +152,12 @@ public class UserController {
         }
 
         if (bindingResult.hasErrors()) {
-            redirectAttributes.addFlashAttribute(
-                    "org.springframework.validation.BindingResult.userEditRequest", bindingResult);
-            redirectAttributes.addFlashAttribute("userEditRequest", request);
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "Please correct the highlighted errors.");
-            return "redirect:/user/" + targetUserId;
+            return org.springframework.http.ResponseEntity.badRequest().body(
+                    java.util.Map.of("error", "Validation failed", "details", bindingResult.getAllErrors())
+            );
         }
 
         boolean changesMade = userApplicationService.editUser(targetUserId, request);
-
-        if (!changesMade) {
-            redirectAttributes.addFlashAttribute("infoMessage",
-                    "No changes were detected.");
-        } else {
-            redirectAttributes.addFlashAttribute("successMessage",
-                    "Profile updated successfully.");
-        }
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isAdmin = auth.getAuthorities().stream()
@@ -192,22 +167,20 @@ public class UserController {
         /* Handle Session Invalidation */
         if (!isAdmin && isSelfEdit) {
             session.invalidate();
-            if (changesMade) {
-                redirectAttributes.addFlashAttribute("infoMessage",
-                        "Profile updated. Please log in again.");
-            }
-            return "redirect:/login";
+            return org.springframework.http.ResponseEntity.ok(
+                    java.util.Map.of("message", "Profile updated. Please log in again.", "requiresLogin", true)
+            );
         }
 
-        return "redirect:/users"; // admins go back to the user management page
+        return org.springframework.http.ResponseEntity.ok().build();
     }
 
     @Secured("ADMIN")
     @PostMapping("/user/role/delete/{user_id}/{role_id}")
-    public String deleteRolefromUser(
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> deleteRolefromUser(
             @PathVariable Integer user_id,
-            @PathVariable Integer role_id,
-            RedirectAttributes redirectAttributes
+            @PathVariable Integer role_id
     ) {
         User user = userService.getUser(user_id);
         userService.assertNotAdmin(user);
@@ -218,19 +191,15 @@ public class UserController {
         user.getRoles().remove(role);
         userService.updateUser(user);
 
-        redirectAttributes.addFlashAttribute("successMessage",
-                "Role removed successfully.");
-
-        return "redirect:/users";
+        return org.springframework.http.ResponseEntity.ok().build();
     }
 
     @Secured("ADMIN")
     @PostMapping("/user/role/add/{user_id}/{role_id}")
-    public String addRoletoUser(
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> addRoletoUser(
             @PathVariable Integer user_id,
-            @PathVariable Integer role_id,
-            Model model,
-            RedirectAttributes redirectAttributes
+            @PathVariable Integer role_id
     ) {
         /* Fetch user and assert they’re not admin */
         User user = userService.getUser(user_id);
@@ -245,35 +214,24 @@ public class UserController {
             case "OWNER":
                 if (user.getOwner() != null) {
                     assignRole(user, "OWNER");
-                    redirectAttributes.addFlashAttribute("successMessage",
-                            "Owner role added successfully.");
-
-                    return "redirect:/users";
+                    return org.springframework.http.ResponseEntity.ok().build();
                 }
-                model.addAttribute("owner", new Owner());
-                model.addAttribute("userId", user_id);
-                return "owner/ownerform";
+                return org.springframework.http.ResponseEntity.badRequest().body(
+                        java.util.Map.of("message", "OWNER_PROFILE_REQUIRED")
+                );
 
             case "TENANT":
                 if (user.getTenant() != null) {
                     assignRole(user, "TENANT");
-                    redirectAttributes.addFlashAttribute("successMessage",
-                            "Tenant role added successfully.");
-
-                    return "redirect:/users";
+                    return org.springframework.http.ResponseEntity.ok().build();
                 }
-                Tenant tenant = new Tenant();
-                tenant.setId(user.getId());
-                model.addAttribute("tenant", tenant);
-                model.addAttribute("userId", user_id);
-                return "tenant/tenantformforadmin";
+                return org.springframework.http.ResponseEntity.badRequest().body(
+                        java.util.Map.of("message", "TENANT_PROFILE_REQUIRED")
+                );
 
             case "USER":
                 assignRole(user, "USER");
-                redirectAttributes.addFlashAttribute("successMessage",
-                        "User role added successfully.");
-
-                return "redirect:/users";
+                return org.springframework.http.ResponseEntity.ok().build();
 
             default:
                 throw new IllegalStateException("Unhandled role type: " + role.getName());
@@ -292,17 +250,14 @@ public class UserController {
         }
     }
 
-    /* Admin deletes a user's account */
     @Secured("ADMIN")
     @PostMapping("/user/delete/{user_id}")
-    public String deleteUser(@PathVariable Integer user_id, RedirectAttributes redirectAttributes) {
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> deleteUser(@PathVariable Integer user_id) {
 
         userApplicationService.deleteUserAsAdmin(user_id);
 
-        redirectAttributes.addFlashAttribute("successMessage",
-                "User deleted successfully.");
-
-        return "redirect:/users";
+        return org.springframework.http.ResponseEntity.ok().build();
     }
 
     @Secured("USER")
@@ -317,27 +272,22 @@ public class UserController {
     /* Allows users to delete their own account */
     @Secured("USER")
     @PostMapping("/user/delete/self")
-    public String deleteOwnAccount(
+    @ResponseBody
+    public org.springframework.http.ResponseEntity<?> deleteOwnAccount(
             @Valid @ModelAttribute("deletionRequest") AccountDeletionRequest request,
             BindingResult bindingResult,
-            RedirectAttributes redirectAttributes,
             HttpSession session
     ) {
         if (bindingResult.hasErrors()) {
-            redirectAttributes.addFlashAttribute(
-                    "org.springframework.validation.BindingResult.deletionRequest", bindingResult);
-            redirectAttributes.addFlashAttribute("deletionRequest", request);
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "Please fill out all required fields.");
-
-            return "redirect:/user/delete/self";
+            return org.springframework.http.ResponseEntity.badRequest().body(
+                    java.util.Map.of("error", "Please fill out all required fields.")
+            );
         }
 
         userApplicationService.deleteCurrentUserAccount(request);
-
         session.invalidate(); // force logout
 
-        return "redirect:/";
+        return org.springframework.http.ResponseEntity.ok().build();
     }
 
 }

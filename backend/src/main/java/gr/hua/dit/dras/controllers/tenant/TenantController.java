@@ -1,6 +1,5 @@
 package gr.hua.dit.dras.controllers.tenant;
 
-/* imports */
 import gr.hua.dit.dras.dto.TenantCreateRequest;
 import gr.hua.dit.dras.entities.Listing;
 import gr.hua.dit.dras.entities.Tenant;
@@ -9,15 +8,14 @@ import gr.hua.dit.dras.services.domain.ListingService;
 import gr.hua.dit.dras.services.domain.TenantService;
 import gr.hua.dit.dras.services.domain.UserService;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.Map;
 
-@Controller
+@RestController
 @RequestMapping("tenant")
 public class TenantController {
 
@@ -35,50 +33,12 @@ public class TenantController {
         this.listingService = listingService;
     }
 
-    /* Apply to rent listing (form) */
-    @Secured("USER")
-    @GetMapping("/rent/{id}")
-    public String showTenantForm(
-            @PathVariable("id") Integer listingId,
-            Model model
-    ) {
-        Integer currentUserId = userService.getCurrentUserId();
-        User currentUser = userService.getUser(currentUserId);
-        Listing listing = listingService.getListing(listingId);
-
-        tenantService.validateRentalApplicationRights(currentUser, listing);
-
-        boolean isAlreadyTenant = tenantService.isUserTenant();
-
-        if (isAlreadyTenant) {
-            Tenant tenant = tenantService.getTenant(currentUser.getId());
-
-            if (tenant.getListing() != null) {
-                throw new IllegalStateException("You already rent a listing.");
-            }
-        }
-
-        if (!isAlreadyTenant && !model.containsAttribute("tenant")) {
-            model.addAttribute("tenant", new Tenant());
-        }
-
-        model.addAttribute("listingId", listingId);
-        model.addAttribute("isAlreadyTenant", isAlreadyTenant);
-
-        return "tenant/tenantform";
-    }
-
     /* Tenant applies for a listing */
     @Secured("USER")
     @PostMapping("/rent/{listingId}")
-    public String rentListing(
+    public ResponseEntity<?> rentListing(
             @PathVariable Integer listingId,
-            @Valid @ModelAttribute("tenant") Tenant tenant,
-            BindingResult bindingResult,
-            @RequestParam(required = false) String firstName,
-            @RequestParam(required = false) String lastName,
-            @RequestParam(required = false) String phoneNumber,
-            RedirectAttributes redirectAttributes
+            @RequestBody(required = false) Map<String, String> payload
     ) {
         Integer currentUserId = userService.getCurrentUserId();
         User currentUser = userService.getUser(currentUserId);
@@ -93,27 +53,27 @@ public class TenantController {
             Tenant existingTenant = tenantService.getTenant(currentUser.getId());
 
             if (existingTenant.getListing() != null) {
-                throw new IllegalStateException("You already rent a listing.");
+                return ResponseEntity.badRequest().body(Map.of("error", "You already rent a listing."));
             }
             if (listing.getApplicants().contains(existingTenant)) {
-                throw new IllegalStateException("You have already applied for this listing.");
+                return ResponseEntity.badRequest().body(Map.of("error", "You have already applied for this listing."));
             }
         }
 
         /* If not a tenant, validates the form fields and creates the profile */
         if (!isAlreadyTenant) {
-            if (bindingResult.hasErrors() ||
-                    firstName == null || firstName.isBlank() ||
-                    lastName == null || lastName.isBlank() ||
-                    phoneNumber == null || phoneNumber.isBlank()) {
+            if (payload == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Missing profile data."));
+            }
+            
+            String firstName = payload.get("firstName");
+            String lastName = payload.get("lastName");
+            String phoneNumber = payload.get("phoneNumber");
 
-                redirectAttributes.addFlashAttribute(
-                        "org.springframework.validation.BindingResult.tenant", bindingResult);
-                redirectAttributes.addFlashAttribute("tenant", tenant);
-                redirectAttributes.addFlashAttribute("errorMessage",
-                        "Invalid form data. All fields are required.");
-
-                return "redirect:/tenant/rent/" + listingId;
+            if (firstName == null || firstName.isBlank() ||
+                lastName == null || lastName.isBlank() ||
+                phoneNumber == null || phoneNumber.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid form data. All fields are required."));
             }
 
             tenantService.createTenantForCurrentUser(
@@ -126,28 +86,21 @@ public class TenantController {
         /* All preconditions validated - submit application */
         tenantService.submitApplication(listingId);
 
-        redirectAttributes.addFlashAttribute("successMessage",
-                "Application submitted successfully.");
-
-        return "redirect:/listings";
+        return ResponseEntity.ok().build();
     }
 
     /* Admin creates a tenant for a user */
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/new")
-    public String createTenant(
-            @Valid @ModelAttribute("tenantCreateRequest") TenantCreateRequest request,
-            BindingResult bindingResult,
-            RedirectAttributes redirectAttributes
+    public ResponseEntity<?> createTenant(
+            @Valid @RequestBody TenantCreateRequest request,
+            BindingResult bindingResult
     ) {
         if (bindingResult.hasErrors()) {
-            redirectAttributes.addFlashAttribute(
-                    "org.springframework.validation.BindingResult.tenantCreateRequest", bindingResult);
-            redirectAttributes.addFlashAttribute("tenantCreateRequest", request);
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "Please correct the highlighted errors.");
-
-            return "redirect:/tenants/new";
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed",
+                    "details", bindingResult.getAllErrors()
+            ));
         }
 
         Tenant tenant = tenantService.createTenantForUser(
@@ -158,13 +111,9 @@ public class TenantController {
         );
 
         if (tenant == null) {
-            throw new IllegalStateException("Tenant role revoked or creation failed.");
+            return ResponseEntity.badRequest().body(Map.of("error", "Tenant role revoked or creation failed."));
         }
 
-        redirectAttributes.addFlashAttribute("successMessage",
-                "Tenant created successfully.");
-
-        return "redirect:/users";
+        return ResponseEntity.ok().build();
     }
-
 }

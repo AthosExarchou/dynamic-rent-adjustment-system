@@ -1,22 +1,17 @@
 package gr.hua.dit.dras.controllers.user;
 
-/* imports */
 import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.services.domain.UserService;
-import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.Map;
 
-@Controller
+@RestController
 public class ProfileController {
 
     private final UserService userService;
@@ -27,126 +22,42 @@ public class ProfileController {
         this.passwordEncoder = passwordEncoder;
     }
 
-    /* View Profile */
-    @GetMapping("/profile")
-    public String viewProfile(Model model) {
-
-        /* Get the currently authenticated user entity */
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
-            throw new AccessDeniedException("User is not authenticated.");
-        }
-
-        User currentUser = userService.getUserByEmail(authentication.getName());
-        boolean isAdmin = currentUser.getRoles()
-                .stream()
-                .anyMatch(role -> role.getName().equals("ADMIN"));
-
-        model.addAttribute("user", currentUser);
-        model.addAttribute("isAdmin", isAdmin);
-        return "profile/profile";
-    }
-
-    /* Show change password form */
-    @GetMapping("/user/change-password/{id}")
-    @Secured("USER")
-    public String showChangePasswordForm(@PathVariable Integer id, Model model) {
-
-        validateProfileOwnership(id);
-
-        model.addAttribute("userId", id);
-        return "profile/change-password";
-    }
-
     /* Process password change */
     @PostMapping("/user/change-password/{id}")
     @Secured("USER")
-    public String changePassword(
+    public ResponseEntity<?> changePassword(
             @PathVariable Integer id,
             @RequestParam String oldPassword,
             @RequestParam String newPassword,
-            @RequestParam String confirmPassword,
-            RedirectAttributes redirectAttributes
+            @RequestParam String confirmPassword
     ) {
         validateProfileOwnership(id);
         User user = userService.getUser(id);
 
         /* Check old password */
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            throw new IllegalArgumentException("Old password is incorrect.");
+            return ResponseEntity.badRequest().body(Map.of("error", "Old password is incorrect."));
         }
 
         /* Confirm new password */
         if (passwordEncoder.matches(newPassword, user.getPassword())) {
-            throw new IllegalArgumentException("New password cannot be the same as the old one.");
+            return ResponseEntity.badRequest().body(Map.of("error", "New password cannot be the same as the old one."));
         }
 
         /* Check new password != old password */
         if (!newPassword.equals(confirmPassword)) {
-            throw new IllegalArgumentException("New password and confirmation do not match.");
+            return ResponseEntity.badRequest().body(Map.of("error", "New password and confirmation do not match."));
         }
 
         /* Save new password */
         user.setPassword(passwordEncoder.encode(newPassword));
         userService.updateUser(user);
 
-        redirectAttributes.addFlashAttribute("successMessage",
-                "Password changed successfully!");
-
-        return "redirect:/profile";
-    }
-
-    /* Show edit profile form */
-    @GetMapping("/user/edit/{id}")
-    @Secured("USER")
-    public String showEditProfileForm(@PathVariable Integer id, Model model) {
-
-        validateProfileOwnership(id);
-
-        if (!model.containsAttribute("user")) {
-            model.addAttribute("user", userService.getUser(id));
-        }
-        return "profile/edit-profile";
-    }
-
-    /* Update Profile */
-    @PostMapping("/user/edit/{id}")
-    @Secured("USER")
-    public String updateProfile(
-            @PathVariable Integer id,
-            @Valid @ModelAttribute("user") User updatedUser,
-            BindingResult bindingResult,
-            RedirectAttributes redirectAttributes
-    ) {
-        validateProfileOwnership(id);
-
-        if (bindingResult.hasErrors()) {
-            redirectAttributes.addFlashAttribute(
-                    "org.springframework.validation.BindingResult.user", bindingResult);
-            redirectAttributes.addFlashAttribute("user", updatedUser);
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "Please correct the highlighted errors.");
-
-            return "redirect:/user/edit/" + id;
-        }
-
-        User user = userService.getUser(id);
-        user.setUsername(updatedUser.getUsername());
-        user.setEmail(updatedUser.getEmail());
-        userService.updateUser(user);
-
-        redirectAttributes.addFlashAttribute("successMessage",
-                "Profile updated successfully!");
-
-        return "redirect:/profile";
+        return ResponseEntity.ok().build();
     }
 
     /* Helper Methods */
 
-    /**
-     * Prevents Insecure Direct Object Reference (IDOR) by ensuring
-     * the logged-in user can only modify their own profile, unless they are an Admin.
-     */
     private void validateProfileOwnership(Integer requestedId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currentUser = userService.getUserByEmail(authentication.getName());
@@ -158,5 +69,4 @@ public class ProfileController {
             throw new AccessDeniedException("You do not have permission to modify this profile.");
         }
     }
-
 }

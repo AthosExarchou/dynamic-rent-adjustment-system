@@ -1,95 +1,74 @@
 package gr.hua.dit.dras.controllers.owner;
 
-/* imports */
 import gr.hua.dit.dras.dto.OwnerCreateRequest;
 import gr.hua.dit.dras.entities.Listing;
 import gr.hua.dit.dras.entities.Owner;
 import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.model.enums.ListingStatus;
-import gr.hua.dit.dras.repositories.RoleRepository;
 import gr.hua.dit.dras.services.application.ListingApplicationService;
 import gr.hua.dit.dras.services.domain.*;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-@Controller
+@RestController
 @RequestMapping("owner")
 public class OwnerController {
 
     private final OwnerService ownerService;
     private final UserService userService;
-    private final RoleRepository roleRepository;
     private final ListingApplicationService listingApplicationService;
 
     public OwnerController(
             OwnerService ownerService,
             UserService userService,
-            RoleRepository roleRepository,
             ListingApplicationService listingApplicationService
     ) {
         this.ownerService = ownerService;
         this.userService = userService;
-        this.roleRepository = roleRepository;
         this.listingApplicationService = listingApplicationService;
     }
 
-    @GetMapping("/auth/users")
-    @PreAuthorize("hasRole('ADMIN')")
-    public String usersPage(Model model) {
-
-        List<User> users = userService.getUsers()
-                .stream()
-                .filter(u -> !"external-system".equals(u.getUsername()))
-                .toList();
-
-        model.addAttribute("users", users);
-        model.addAttribute("roles", roleRepository.findAll());
-
-        return "auth/users";
-    }
-
     @PostMapping("/new")
-    @PreAuthorize("hasRole('ADMIN')")
-    public String createOwner(
-            @Valid @ModelAttribute("ownerCreateRequest") OwnerCreateRequest request,
-            BindingResult bindingResult,
-            RedirectAttributes redirectAttributes
+    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+    public ResponseEntity<?> createOwner(
+            @RequestBody Map<String, String> payload
     ) {
-        if (bindingResult.hasErrors()) {
-            redirectAttributes.addFlashAttribute(
-                    "org.springframework.validation.BindingResult.ownerCreateRequest", bindingResult);
-            redirectAttributes.addFlashAttribute("ownerCreateRequest", request);
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "Please correct the highlighted errors.");
+        String firstName = payload.get("firstName");
+        String lastName = payload.get("lastName");
+        String phoneNumber = payload.get("phoneNumber");
+        Integer userId;
+        
+        if (payload.containsKey("userId") && payload.get("userId") != null) {
+            userId = Integer.parseInt(payload.get("userId").toString());
+        } else {
+            userId = userService.getCurrentUserId();
+        }
 
-            return "redirect:/owner/new";
+        if (firstName == null || lastName == null || phoneNumber == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Missing fields"));
         }
 
         ownerService.createOwnerForUser(
-                request.getUserId(),
-                request.getFirstName(),
-                request.getLastName(),
-                request.getPhoneNumber()
+                userId,
+                firstName,
+                lastName,
+                phoneNumber
         );
 
-        redirectAttributes.addFlashAttribute("successMessage",
-                "Owner created successfully.");
-
-        return "redirect:/users";
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{id}/listings")
     @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
-    public String showListings(@PathVariable Integer id, Model model) {
+    public ResponseEntity<?> showListings(@PathVariable Integer id) {
 
         Owner owner = ownerService.getOwner(id);
 
@@ -97,54 +76,48 @@ public class OwnerController {
         boolean isAdmin = userService.currentUserHasRole("ADMIN");
 
         if (!isAdmin && !owner.getUser().getId().equals(currentUserId)) {
-            throw new AccessDeniedException("You are not authorized to view these listings.");
+            return ResponseEntity.status(403).body(Map.of("error", "You are not authorized to view these listings."));
         }
 
         /* Protects system owner from direct UI access */
         if (owner.isSystemOwner()) {
-            throw new AccessDeniedException("System owner listings cannot be viewed.");
+            return ResponseEntity.status(403).body(Map.of("error", "System owner listings cannot be viewed."));
         }
 
-        /* Filters external listings */
-        List<Listing> visibleListings = owner.getListings()
+        List<Map<String, Object>> visibleListings = owner.getListings()
                 .stream()
                 .filter(l -> !l.isExternal() && l.getStatus() == ListingStatus.APPROVED)
+                .map(l -> {
+                    Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("id", l.getId());
+                    map.put("title", l.getTitle());
+                    map.put("status", l.getStatus().name());
+                    return map;
+                })
                 .collect(Collectors.toList());
 
-        model.addAttribute("listings", visibleListings);
-        return "listing/listings";
+        return ResponseEntity.ok(visibleListings);
     }
 
     /* Owner approves tenant's application */
     @Secured("OWNER")
     @PostMapping("/listings/{listingId}/approveApplicant/{tenantId}")
-    public String approveTenantApplication(
+    public ResponseEntity<?> approveTenantApplication(
             @PathVariable Integer listingId,
-            @PathVariable Integer tenantId,
-            RedirectAttributes redirectAttributes
+            @PathVariable Integer tenantId
     ) {
         listingApplicationService.approveTenantApplication(listingId, tenantId);
-
-        redirectAttributes.addFlashAttribute("successMessage",
-                "Application approved successfully.");
-
-        return "redirect:/listings/mylisting";
+        return ResponseEntity.ok().build();
     }
 
     /* Owner rejects tenant's application */
     @Secured("OWNER")
     @PostMapping("/listings/{listingId}/rejectApplicant/{tenantId}")
-    public String rejectTenantApplication(
+    public ResponseEntity<?> rejectTenantApplication(
             @PathVariable Integer listingId,
-            @PathVariable Integer tenantId,
-            RedirectAttributes redirectAttributes
+            @PathVariable Integer tenantId
     ) {
         listingApplicationService.rejectTenantApplication(listingId, tenantId);
-
-        redirectAttributes.addFlashAttribute("successMessage",
-                "Tenant application rejected successfully.");
-
-        return "redirect:/listings/mylisting";
+        return ResponseEntity.ok().build();
     }
-
 }
