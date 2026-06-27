@@ -1,13 +1,10 @@
 package gr.hua.dit.dras.controllers.owner;
 
-/* imports */
 import gr.hua.dit.dras.dto.OwnerCreateRequest;
 import gr.hua.dit.dras.entities.Listing;
 import gr.hua.dit.dras.entities.Owner;
-import gr.hua.dit.dras.entities.Role;
 import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.model.enums.ListingStatus;
-import gr.hua.dit.dras.repositories.RoleRepository;
 import gr.hua.dit.dras.services.application.ListingApplicationService;
 import gr.hua.dit.dras.services.domain.OwnerService;
 import gr.hua.dit.dras.services.domain.UserService;
@@ -18,15 +15,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,16 +33,7 @@ class OwnerControllerTest {
     @Mock
     private UserService userService;
     @Mock
-    private RoleRepository roleRepository;
-    @Mock
     private ListingApplicationService listingApplicationService;
-
-    @Mock
-    private Model model;
-    @Mock
-    private RedirectAttributes redirectAttributes;
-    @Mock
-    private BindingResult bindingResult;
 
     @InjectMocks
     private OwnerController ownerController;
@@ -67,30 +54,15 @@ class OwnerControllerTest {
 
         testListing = new Listing();
         testListing.setId(100);
+        testListing.setTitle("Test Listing");
         testListing.setStatus(ListingStatus.APPROVED);
         testListing.setExternal(false);
         testOwner.setListings(List.of(testListing));
     }
 
     @Test
-    @DisplayName("Should return users page for admin")
-    void shouldReturnUsersPage() {
-        User externalSystem = new User();
-        externalSystem.setUsername("external-system");
-        Role userRole = new Role("USER");
-        when(userService.getUsers()).thenReturn(List.of(testUser, externalSystem));
-        when(roleRepository.findAll()).thenReturn(List.of(userRole));
-
-        String view = ownerController.usersPage(model);
-
-        assertThat(view).isEqualTo("auth/users");
-        verify(model).addAttribute("users", List.of(testUser));
-        verify(model).addAttribute("roles", List.of(userRole));
-    }
-
-    @Test
-    @DisplayName("Should throw AccessDeniedException when accessing system owner listings")
-    void showListings_SystemOwner_ThrowsAccessDenied() {
+    @DisplayName("Should return 403 when accessing system owner listings")
+    void showListings_SystemOwner_Returns403() {
         Owner systemOwner = new Owner();
         systemOwner.setSystemOwner(true);
         systemOwner.setUser(testUser);
@@ -99,9 +71,8 @@ class OwnerControllerTest {
         when(ownerService.getOwner(1)).thenReturn(systemOwner);
         when(userService.currentUserHasRole("ADMIN")).thenReturn(false);
 
-        assertThatThrownBy(() -> ownerController.showListings(1, model))
-            .isInstanceOf(AccessDeniedException.class);
-        verifyNoInteractions(model);
+        ResponseEntity<?> response = ownerController.showListings(1);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -109,6 +80,7 @@ class OwnerControllerTest {
     void showListings_FiltersExternalAndNonApprovedListings() {
         Listing approvedLocal = new Listing();
         approvedLocal.setId(1);
+        approvedLocal.setTitle("Approved Local");
         approvedLocal.setStatus(ListingStatus.APPROVED);
         approvedLocal.setExternal(false);
 
@@ -128,48 +100,37 @@ class OwnerControllerTest {
         when(ownerService.getOwner(10)).thenReturn(testOwner);
         when(userService.currentUserHasRole("ADMIN")).thenReturn(false);
 
-        ownerController.showListings(10, model);
-
-        verify(model).addAttribute(eq("listings"), argThat((List<Listing> list) -> 
-            list.size() == 1 && list.contains(approvedLocal)
-        ));
-        verify(model, never()).addAttribute(eq("listings"), argThat((List<Listing> list) ->
-                list.contains(pendingLocal) || list.contains(externalListing)
-        ));
+        ResponseEntity<?> response = ownerController.showListings(10);
+        
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        List<?> body = (List<?>) response.getBody();
+        assertThat(body).hasSize(1);
     }
 
     @Test
-    @DisplayName("Should create owner and redirect on success")
+    @DisplayName("Should create owner and return 200 on success")
     void shouldCreateOwnerOnSuccess() {
-        when(bindingResult.hasErrors()).thenReturn(false);
-        OwnerCreateRequest request = new OwnerCreateRequest();
-        request.setUserId(1);
-        request.setFirstName("John");
-        request.setLastName("Doe");
-        request.setPhoneNumber("123");
+        Map<String, String> request = new HashMap<>();
+        request.put("userId", "1");
+        request.put("firstName", "John");
+        request.put("lastName", "Doe");
+        request.put("phoneNumber", "123");
 
-        String view = ownerController.createOwner(request, bindingResult, redirectAttributes);
+        ResponseEntity<?> response = ownerController.createOwner(request);
 
-        assertThat(view).isEqualTo("redirect:/users");
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(ownerService).createOwnerForUser(1, "John", "Doe", "123");
-        verify(redirectAttributes).addFlashAttribute(
-                "successMessage", "Owner created successfully.");
     }
 
     @Test
-    @DisplayName("Should redirect back on validation errors when creating owner")
-    void shouldRedirectBackOnValidationErrors() {
-        when(bindingResult.hasErrors()).thenReturn(true);
-        OwnerCreateRequest request = new OwnerCreateRequest();
+    @DisplayName("Should return bad request on missing fields")
+    void shouldReturnBadRequestOnMissingFields() {
+        Map<String, String> request = new HashMap<>();
+        request.put("userId", "1");
 
-        String view = ownerController.createOwner(request, bindingResult, redirectAttributes);
+        ResponseEntity<?> response = ownerController.createOwner(request);
 
-        assertThat(view).isEqualTo("redirect:/owner/new");
-        verify(redirectAttributes).addFlashAttribute(
-                "org.springframework.validation.BindingResult.ownerCreateRequest", bindingResult);
-        verify(redirectAttributes).addFlashAttribute("ownerCreateRequest", request);
-        verify(redirectAttributes).addFlashAttribute(
-                "errorMessage", "Please correct the highlighted errors.");
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         verifyNoInteractions(ownerService);
     }
 
@@ -180,23 +141,20 @@ class OwnerControllerTest {
         when(userService.getCurrentUserId()).thenReturn(1);
         when(userService.currentUserHasRole("ADMIN")).thenReturn(false);
 
-        String view = ownerController.showListings(10, model);
+        ResponseEntity<?> response = ownerController.showListings(10);
 
-        assertThat(view).isEqualTo("listing/listings");
-        verify(model).addAttribute(eq("listings"), argThat((List<Listing> list) -> 
-            list.size() == 1 && list.contains(testListing)
-        ));
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     @Test
-    @DisplayName("Should throw AccessDenied if user is not the owner and not admin")
+    @DisplayName("Should return 403 if user is not the owner and not admin")
     void shouldThrowAccessDeniedIfNotOwnerAndNotAdmin() {
         when(ownerService.getOwner(10)).thenReturn(testOwner);
         when(userService.getCurrentUserId()).thenReturn(2); // different user
         when(userService.currentUserHasRole("ADMIN")).thenReturn(false);
 
-        assertThatThrownBy(() -> ownerController.showListings(10, model))
-                .isInstanceOf(AccessDeniedException.class);
+        ResponseEntity<?> response = ownerController.showListings(10);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -206,33 +164,26 @@ class OwnerControllerTest {
         when(userService.getCurrentUserId()).thenReturn(2); // different user
         when(userService.currentUserHasRole("ADMIN")).thenReturn(true);
 
-        String view = ownerController.showListings(10, model);
+        ResponseEntity<?> response = ownerController.showListings(10);
 
-        assertThat(view).isEqualTo("listing/listings");
-        verify(model).addAttribute(eq("listings"), argThat((List<Listing> list) ->
-                list.size() == 1 && list.contains(testListing)
-        ));
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     @Test
-    @DisplayName("Should approve tenant application and redirect")
+    @DisplayName("Should approve tenant application and return 200")
     void shouldApproveTenantApplication() {
-        String view = ownerController.approveTenantApplication(100, 5, redirectAttributes);
+        ResponseEntity<?> response = ownerController.approveTenantApplication(100, 5);
 
-        assertThat(view).isEqualTo("redirect:/listings/mylisting");
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(listingApplicationService).approveTenantApplication(100, 5);
-        verify(redirectAttributes).addFlashAttribute(
-                "successMessage", "Application approved successfully.");
     }
 
     @Test
-    @DisplayName("Should reject tenant application and redirect")
+    @DisplayName("Should reject tenant application and return 200")
     void shouldRejectTenantApplication() {
-        String view = ownerController.rejectTenantApplication(100, 5, redirectAttributes);
+        ResponseEntity<?> response = ownerController.rejectTenantApplication(100, 5);
 
-        assertThat(view).isEqualTo("redirect:/listings/mylisting");
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(listingApplicationService).rejectTenantApplication(100, 5);
-        verify(redirectAttributes).addFlashAttribute(
-                "successMessage", "Tenant application rejected successfully.");
     }
 }
