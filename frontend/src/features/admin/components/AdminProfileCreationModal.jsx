@@ -14,9 +14,7 @@ export default function AdminProfileCreationModal({ userId, roleType, onClose, o
     setLoading(true);
     setError('');
 
-    // BUG-F02 FIX: Use URLSearchParams (form-encoded) instead of JSON to match
-    // the Spring MVC backend's expected Content-Type for /owner/new and /tenant/new.
-    // The userId is included so the admin can create profiles on behalf of other users.
+    const endpoint = roleType === 'OWNER' ? '/owner/new' : '/tenant/new';
     const params = new URLSearchParams({
       userId: String(userId),
       firstName: formData.firstName,
@@ -33,7 +31,7 @@ export default function AdminProfileCreationModal({ userId, roleType, onClose, o
       onRefresh();
       onClose();
     } catch (err) {
-      setError(`Failed to create ${roleType.toLowerCase()} profile. Data might be invalid.`);
+      setError(err.message || `Failed to create ${roleType.toLowerCase()} profile. Data might be invalid.`);
     } finally {
       setLoading(false);
     }

@@ -7,7 +7,7 @@ import styles from './OwnerForm.module.css';
 
 export default function OwnerForm() {
   const navigate = useNavigate();
-  const { fetchUserRoles } = useAuth();
+  const {} = useAuth();
   const [formData, setFormData] = useState({ firstName: '', lastName: '', phoneNumber: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);

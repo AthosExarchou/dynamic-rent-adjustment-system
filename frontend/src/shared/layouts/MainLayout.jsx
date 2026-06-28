@@ -10,10 +10,12 @@ export default function MainLayout() {
   const dropdownRef = useRef(null);
   
   const [theme, setTheme] = useState(() => {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    return savedTheme;
+    return localStorage.getItem('theme') || 'light';
   });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

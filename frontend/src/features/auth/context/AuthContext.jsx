@@ -4,12 +4,6 @@ import apiClient from '../../../shared/api/client';
 /**
  * Authentication Context for the DRAS frontend.
  *
- * STRATEGY NOTE:
- * The backend currently uses Spring Security session-based form login
- * (see SecurityConfig.java). For the React SPA to work, the backend
- * will need a REST-based auth endpoint (e.g. POST /api/auth/login
- * returning the user as JSON and setting a session cookie).
- *
  * This context provides:
  * - `user`       - The current authenticated user object, or null.
  * - `roles`      - Array of role name strings (e.g. ['USER', 'OWNER']).
@@ -74,7 +68,7 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
-  // BUG-F03 FIX: Memoize `roles` so it has a stable reference between renders.
+  // Memoize `roles` so it has a stable reference between renders
   const roles = useMemo(
     () => user?.roles?.map((r) => (typeof r === 'string' ? r : r.name)) || [],
     [user]

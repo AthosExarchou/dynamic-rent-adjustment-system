@@ -26,47 +26,34 @@ export default function ListingDetail() {
   const [listing, setListing] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [error, setError] = useState(null);
+
   useEffect(() => {
+    const controller = new AbortController();
     async function fetchDetail() {
       try {
-        const data = await apiClient(`/listings/${id}`);
+        const data = await apiClient(`/listings/${id}`, { signal: controller.signal });
         if (data && data.id) {
           setListing(data);
-        } else if (['1', '2', '3'].includes(String(id))) {
-          setListing(getMockListing(id));
+          setError(null);
         } else {
           setListing(null);
+          setError("Listing not found.");
         }
       } catch (err) {
+        if (err.name === 'AbortError') return;
         console.error("Failed to load listing detail:", err);
-        if (['1', '2', '3'].includes(String(id))) {
-          setListing(getMockListing(id));
-        } else {
-          setListing(null);
-        }
+        setListing(null);
+        setError("Failed to load listing details.");
       } finally {
         setLoading(false);
       }
     }
     fetchDetail();
+    return () => controller.abort();
   }, [id]);
 
-  const getMockListing = (listingId) => ({
-    id: listingId,
-    title: 'Luxury Penthouse in Athens Center',
-    subtitle: 'Stunning Acropolis view',
-    description: 'A beautiful penthouse located in the historic center. Spanning 120 square meters, this listing offers state of the art finishes, floor heating, and modern energy efficiencies.',
-    address: 'Panepistimiou 15, Athens',
-    bedrooms: 3,
-    bathrooms: 2,
-    sizeM2: 120,
-    price: 1200,
-    floor: 3,
-    yearBuilt: 2018,
-    propertyType: 'APARTMENT',
-    rentalDuration: 'LONG_TERM',
-    status: 'APPROVED'
-  });
+
 
   if (loading) return (
     <div className={styles.loadingContainer}>
@@ -75,14 +62,14 @@ export default function ListingDetail() {
     </div>
   );
   
-  if (!listing) return (
+  if (error || !listing) return (
     <div className={styles.loadingContainer}>
-      <p>Listing not found.</p>
+      <p>{error || "Listing not found."}</p>
       <Link to="/listings" className={styles.backBtn}>Return to listings</Link>
     </div>
   );
 
-  const isUserOnly = isAuthenticated && !roles.includes('ADMIN');
+  const isUserOnly = isAuthenticated && roles.includes('USER') && !roles.includes('OWNER') && !roles.includes('ADMIN');
 
   return (
     <div className={styles.container}>

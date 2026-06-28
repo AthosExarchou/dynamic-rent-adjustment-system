@@ -20,18 +20,21 @@ export default function TenantForm() {
     setLoading(true);
     setError('');
 
-    const payload = !isTenant ? {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      phoneNumber: formData.phoneNumber
-    } : {};
+    const requestOptions = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    };
+
+    if (!isTenant) {
+      requestOptions.body = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phoneNumber: formData.phoneNumber
+      };
+    }
 
     try {
-      await apiClient(`/tenant/rent/${listingId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: payload
-      });
+      await apiClient(`/tenant/rent/${listingId}`, requestOptions);
       alert('Application submitted successfully!');
       navigate('/listings');
     } catch {

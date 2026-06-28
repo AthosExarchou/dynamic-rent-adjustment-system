@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../auth';
 import { Settings, User, Mail, CheckCircle, ArrowLeft } from 'lucide-react';
@@ -6,12 +6,18 @@ import apiClient from '../../../shared/api/client';
 import styles from './ProfileForm.module.css';
 
 export default function ProfileEditForm() {
-  const { user, fetchUserRoles } = useAuth(); // Assuming fetchUserRoles can refresh user data
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ username: user?.username || '', email: user?.email || '' });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setFormData({ username: user.username || '', email: user.email || '' });
+    }
+  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,14 +33,23 @@ export default function ProfileEditForm() {
         }).toString()
       });
       setSuccess(true);
-      if (fetchUserRoles) await fetchUserRoles();
-      setTimeout(() => navigate('/profile'), 2000);
+      if (refreshUser) await refreshUser();
     } catch {
       setError('Failed to update details. Email or Username may be taken.');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    let timeoutId;
+    if (success) {
+      timeoutId = setTimeout(() => navigate('/profile'), 2000);
+    }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [success, navigate]);
 
   return (
     <div className={styles.container}>

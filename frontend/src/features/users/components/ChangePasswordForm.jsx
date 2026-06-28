@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../auth';
 import { Key, CheckCircle, ArrowLeft, Lock, Unlock } from 'lucide-react';
@@ -13,6 +13,16 @@ export default function ChangePasswordForm() {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    let timeoutId;
+    if (success) {
+      timeoutId = setTimeout(() => navigate('/profile'), 2000);
+    }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [success, navigate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.newPassword !== formData.confirmPassword) {
@@ -22,8 +32,6 @@ export default function ChangePasswordForm() {
     setError('');
     setLoading(true);
     try {
-      // BUG-F04 FIX: Strip `confirmPassword` before sending — the backend only
-      // expects `oldPassword` and `newPassword`. Sending extra fields may cause a 400.
       const { confirmPassword: _ignored, ...payloadData } = formData;
       await apiClient(`/user/change-password/${user?.id}`, {
         method: 'POST',
@@ -31,7 +39,6 @@ export default function ChangePasswordForm() {
         body: new URLSearchParams(payloadData).toString()
       });
       setSuccess(true);
-      setTimeout(() => navigate('/profile'), 2000);
     } catch {
       setError('Failed to change password. Old password may be incorrect.');
     } finally {

@@ -78,11 +78,7 @@ export default function LoginForm() {
             </div>
           </div>
 
-          <div className={styles.formOptions}>
-            <div className={styles.checkboxGroup}>
-              <input type="checkbox" id="rememberMe" className={styles.checkbox} />
-              <label htmlFor="rememberMe" className={styles.checkboxLabel}>Remember me</label>
-            </div>
+          <div className={styles.formOptions} style={{ justifyContent: 'flex-end' }}>
             <Link to="/contact" className={styles.forgotLink}>Forgot Password?</Link>
           </div>
           

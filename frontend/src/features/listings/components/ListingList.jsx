@@ -25,44 +25,35 @@ export default function ListingList() {
   const [listings, setListings] = useState([]);
   const [filter, setFilter] = useState({ title: '', minPrice: '', maxPrice: '' });
 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   useEffect(() => {
-    fetchListings();
+    const controller = new AbortController();
+    fetchListings(controller.signal);
+    return () => controller.abort();
   }, []);
 
-  const fetchListings = async () => {
+  const fetchListings = async (signal) => {
+    setLoading(true);
     try {
-      const data = await apiClient('/listings');
+      const data = await apiClient('/listings', signal ? { signal } : {});
       const approved = data.filter(l => l.status === 'APPROVED' || l.approved);
-      if (approved.length > 0) {
-        setListings(approved);
-      } else {
-        setListings(getMockListings());
-      }
+      setListings(approved);
+      setError(null);
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error("Failed to fetch listings:", err);
-      setListings(getMockListings());
+      setListings([]);
+      setError("Failed to load listings.");
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const getMockListings = () => [
-    { id: 1, title: 'Luxury Penthouse in Athens Center', address: 'Panepistimiou 15, Athens', bedrooms: 3, bathrooms: 2, sizeM2: 120, price: 1200, yearBuilt: 2018, propertyType: 'APARTMENT', rentalDuration: 'LONG_TERM', floor: 5, status: 'APPROVED' },
-    { id: 2, title: 'Modern Cozy Studio near Metro', address: 'Kifisias 88, Ampelokipoi', bedrooms: 1, bathrooms: 1, sizeM2: 45, price: 450, yearBuilt: 2020, propertyType: 'STUDIO', rentalDuration: 'SHORT_TERM', floor: 1, status: 'APPROVED' }
-  ];
-
-  const applyLocalFilter = () => {
-    const mocks = getMockListings();
-    const filtered = mocks.filter(l => {
-      let match = true;
-      if (filter.title && !l.title.toLowerCase().includes(filter.title.toLowerCase())) match = false;
-      if (filter.minPrice && l.price < Number(filter.minPrice)) match = false;
-      if (filter.maxPrice && l.price > Number(filter.maxPrice)) match = false;
-      return match;
-    });
-    setListings(filtered);
   };
 
   const handleFilterSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const params = new URLSearchParams();
       if (filter.title) params.append('title', filter.title);
@@ -71,18 +62,18 @@ export default function ListingList() {
       
       const data = await apiClient(`/listings/filter?${params.toString()}`);
       const approved = data.filter(l => l.status === 'APPROVED' || l.approved);
-      if (approved.length > 0) {
-        setListings(approved);
-      } else {
-        applyLocalFilter();
-      }
+      setListings(approved);
+      setError(null);
     } catch {
-      console.warn("Filter request failed. Using local filter.");
-      applyLocalFilter();
+      console.warn("Filter request failed.");
+      setListings([]);
+      setError("Filter request failed.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const isUserOnly = isAuthenticated && !roles.includes('ADMIN');
+  const isUserOnly = isAuthenticated && roles.includes('USER') && !roles.includes('OWNER') && !roles.includes('ADMIN');
 
   return (
     <div className={styles.container}>
@@ -154,7 +145,15 @@ export default function ListingList() {
       </div>
 
       {/* Listing Grid */}
-      {listings.length > 0 ? (
+      {loading ? (
+        <div className={styles.emptyState}>
+          <p>Loading apartments...</p>
+        </div>
+      ) : error ? (
+        <div className={styles.emptyState}>
+          <p style={{color: 'red'}}>{error}</p>
+        </div>
+      ) : listings.length > 0 ? (
         <div className={styles.grid}>
           {listings.map(l => (
             <div key={l.id} className={styles.card}>

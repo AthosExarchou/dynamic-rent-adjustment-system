@@ -5,41 +5,55 @@ import styles from './AdminDashboard.module.css';
 
 export default function PendingApprovals() {
   const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [actionLoading, setActionLoading] = useState(null);
 
   useEffect(() => {
-    fetchPendingListings();
+    const controller = new AbortController();
+    fetchPendingListings(controller.signal);
+    return () => controller.abort();
   }, []);
 
-  const fetchPendingListings = async () => {
+  const fetchPendingListings = async (signal) => {
+    setLoading(true);
     try {
-      const data = await apiClient('/listings/forapproval');
+      const data = await apiClient('/listings/forapproval', signal ? { signal } : {});
       setListings(data);
-    } catch {
-      setListings([
-        { id: 3, title: 'Unapproved Apartment near Stadium', address: 'Stadium St 4, Athens', price: 800, sizeM2: 90, bedrooms: 2, bathrooms: 1, floor: 2, yearBuilt: 2012 }
-      ]);
+      setError(null);
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+      console.error("Failed to fetch pending approvals:", err);
+      setListings([]);
+      setError("Failed to load pending approvals.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleApprove = async (id) => {
+    setActionLoading(id);
     try {
       await apiClient(`/listings/approve/${id}`, { method: 'POST' });
       alert('Listing approved successfully.');
-      fetchPendingListings();
+      await fetchPendingListings();
     } catch {
-      alert('Action completed.');
-      fetchPendingListings();
+      alert('Failed to approve listing.');
+    } finally {
+      setActionLoading(null);
     }
   };
 
   const handleReject = async (id) => {
+    setActionLoading(id);
     try {
       await apiClient(`/listings/reject/${id}`, { method: 'POST' });
       alert('Listing rejected.');
-      fetchPendingListings();
+      await fetchPendingListings();
     } catch {
-      alert('Action completed.');
-      fetchPendingListings();
+      alert('Failed to reject listing.');
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -64,13 +78,21 @@ export default function PendingApprovals() {
               </div>
 
               <div className={styles.actions}>
-                <button onClick={() => handleApprove(l.id)} className={styles.approveBtn}>Approve Listing</button>
-                <button onClick={() => handleReject(l.id)} className={styles.rejectBtn}>Reject Listing</button>
+                <button onClick={() => handleApprove(l.id)} disabled={actionLoading === l.id} className={styles.approveBtn}>
+                  {actionLoading === l.id ? 'Approving...' : 'Approve Listing'}
+                </button>
+                <button onClick={() => handleReject(l.id)} disabled={actionLoading === l.id} className={styles.rejectBtn}>
+                  {actionLoading === l.id ? 'Rejecting...' : 'Reject Listing'}
+                </button>
               </div>
             </div>
           </div>
         ))}
-        {listings.length === 0 && (
+        {loading ? (
+          <p className={styles.emptyState}>Loading pending approvals...</p>
+        ) : error ? (
+          <p className={styles.emptyState} style={{color: 'red'}}>{error}</p>
+        ) : listings.length === 0 && (
           <p className={styles.emptyState}>No listings pending approval at this moment.</p>
         )}
       </div>

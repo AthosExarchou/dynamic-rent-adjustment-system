@@ -5,38 +5,43 @@ import apiClient from '../../../shared/api/client';
 import styles from './MyListings.module.css';
 
 export default function MyListings() {
-  const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [listingToDelete, setListingToDelete] = useState(null);
 
   useEffect(() => {
-    fetchMyListings();
+    const controller = new AbortController();
+    fetchMyListings(controller.signal);
+    return () => controller.abort();
   }, []);
 
-  const fetchMyListings = async () => {
+  const fetchMyListings = async (signal) => {
+    setLoading(true);
     try {
-      const data = await apiClient('/listings/mylisting');
-      if (data.length > 0) {
-        setListings(data);
-      } else {
-        setListings(getMockListings());
-      }
+      const data = await apiClient('/listings/mylisting', signal ? { signal } : {});
+      setListings(data);
+      setError(null);
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error("Failed to fetch my listings:", err);
-      setListings(getMockListings());
+      setListings([]);
+      setError("Failed to load listings.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getMockListings = () => [
-    { id: 1, title: 'Luxury Penthouse in Athens Center', address: 'Panepistimiou 15, Athens', price: 1200, status: 'APPROVED', sizeM2: 120, rented: false },
-    { id: 3, title: 'Unapproved Apartment near Stadium', address: 'Stadium St 4, Athens', price: 800, status: 'PENDING', sizeM2: 90, rented: false }
-  ];
+  const confirmDelete = (id) => setListingToDelete(id);
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this listing?')) return;
+  const handleDelete = async () => {
+    if (!listingToDelete) return;
     try {
-      await apiClient(`/listings/delete/${id}`, { method: 'POST' });
+      await apiClient(`/listings/delete/${listingToDelete}`, { method: 'POST' });
       fetchMyListings();
+      setListingToDelete(null);
     } catch {
       alert('Failed to delete listing.');
+      setListingToDelete(null);
     }
   };
 
@@ -87,7 +92,7 @@ export default function MyListings() {
                   <Users size={16} /> Applications
                 </Link>
 
-                <button onClick={() => handleDelete(l.id)} className={`${styles.btn} ${styles.btnDanger}`}>
+                <button onClick={() => confirmDelete(l.id)} className={`${styles.btn} ${styles.btnDanger}`}>
                   <Trash2 size={16} /> Delete
                 </button>
               </div>
@@ -96,10 +101,32 @@ export default function MyListings() {
         ))}
       </div>
       
-      {listings.length === 0 && (
+      {loading ? (
+        <div className={styles.emptyState}>
+          <p>Loading your properties...</p>
+        </div>
+      ) : error ? (
+        <div className={styles.emptyState}>
+          <p style={{color: 'red'}}>{error}</p>
+        </div>
+      ) : listings.length === 0 && (
         <div className={styles.emptyState}>
           <p>You have not listed any properties yet.</p>
           <Link to="/listings/new" className={`${styles.btn} ${styles.btnSuccess}`}>Create New Apartment</Link>
+        </div>
+      )}
+
+      {listingToDelete && (
+        <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000}}>
+          <div style={{backgroundColor: 'white', padding: '2rem', borderRadius: '8px', maxWidth: '400px', color: '#333'}}>
+            <h3 style={{marginTop: 0}}>Confirm Deletion</h3>
+            <p>Are you sure you want to delete this listing? This action cannot be undone.</p>
+            <div style={{display: 'flex', gap: '1rem', marginTop: '1.5rem', justifyContent: 'flex-end'}}>
+              <button onClick={() => setListingToDelete(null)} className={styles.btn}>Cancel</button>
+              <button onClick={handleDelete} className={`${styles.btn} ${styles.btnDanger}`}>Confirm Delete</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -9,48 +9,49 @@ export default function ListingApplications() {
   const [listing, setListing] = useState(null);
   const [applicants, setApplicants] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const isMounted = React.useRef(true);
 
   useEffect(() => {
-    fetchApplications();
+    isMounted.current = true;
+    const controller = new AbortController();
+    fetchApplications(controller.signal);
+    return () => {
+      isMounted.current = false;
+      controller.abort();
+    };
   }, [listingId]);
 
-  const fetchApplications = async () => {
+  const fetchApplications = async (signal) => {
     try {
-      const data = await apiClient(`/listings/${listingId}/applications`);
+      const data = await apiClient(`/listings/${listingId}/applications`, signal ? { signal } : {});
+      if (!isMounted.current) return;
       setListing(data);
       if (data.applicants && data.applicants.length > 0) {
         setApplicants(data.applicants);
-      } else if (['1', '2', '3', '10', '11'].includes(String(listingId))) {
-        setApplicants(getMockApplicants());
       } else {
         setApplicants([]);
       }
+      setError(null);
     } catch (err) {
+      if (!isMounted.current || err.name === 'AbortError') return;
       console.error("Failed to fetch applications:", err);
-      // Mock listing fallback
-      if (['1', '2', '3', '10', '11'].includes(String(listingId))) {
-        setListing({ id: listingId, title: 'Luxury Penthouse in Athens Center', rented: false });
-        setApplicants(getMockApplicants());
-      } else {
-        setListing(null);
-        setApplicants([]);
-      }
+      setListing(null);
+      setApplicants([]);
+      setError("Failed to load applications.");
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
   };
-
-  const getMockApplicants = () => [
-    { id: 10, firstName: 'Nick', lastName: 'Papadopoulos', email: 'nick@example.com', phoneNumber: '+30 697 1111111' },
-    { id: 11, firstName: 'Maria', lastName: 'Georgiou', email: 'maria@example.com', phoneNumber: '+30 697 2222222' }
-  ];
 
   const handleApprove = async (tenantId) => {
     try {
       await apiClient(`/owner/listings/${listingId}/approveApplicant/${tenantId}`, { method: 'POST' });
+      if (!isMounted.current) return;
       alert('Application approved successfully!');
       fetchApplications();
     } catch (err) {
+      if (!isMounted.current) return;
       alert('Failed to approve application.');
     }
   };
@@ -58,9 +59,11 @@ export default function ListingApplications() {
   const handleReject = async (tenantId) => {
     try {
       await apiClient(`/owner/listings/${listingId}/rejectApplicant/${tenantId}`, { method: 'POST' });
+      if (!isMounted.current) return;
       alert('Application rejected.');
       fetchApplications();
     } catch (err) {
+      if (!isMounted.current) return;
       alert('Failed to reject application.');
     }
   };
@@ -83,11 +86,17 @@ export default function ListingApplications() {
       <div className={styles.header}>
         <h2 className={styles.title}>
           <Users className={styles.titleIcon} size={28} />
-          Applications for "{listing?.title}"
+          Applications for "{listing?.title || 'Property'}"
         </h2>
       </div>
 
       <hr className={styles.divider} />
+
+      {error && (
+        <div className={styles.errorState} style={{ color: 'red', textAlign: 'center', marginBottom: '1rem' }}>
+          <p>{error}</p>
+        </div>
+      )}
 
       <div className={styles.grid}>
         {applicants.map(a => (

@@ -29,12 +29,14 @@ export default function LandingPage() {
   const [featuredApartments, setFeaturedApartments] = useState([]);
 
   useEffect(() => {
-    fetchFeaturedListings();
+    const controller = new AbortController();
+    fetchFeaturedListings(controller.signal);
+    return () => controller.abort();
   }, []);
 
-  const fetchFeaturedListings = async () => {
+  const fetchFeaturedListings = async (signal) => {
     try {
-      const data = await apiClient('/listings');
+      const data = await apiClient('/listings', { signal });
       const approved = data.filter(l => l.status === 'APPROVED' || l.approved);
       if (approved.length > 0) {
         setFeaturedApartments(approved.slice(0, 3));
@@ -42,6 +44,7 @@ export default function LandingPage() {
         setFeaturedApartments(getFallbackMocks());
       }
     } catch (err) {
+      if (err.name === 'AbortError') return;
       console.error("Failed to fetch featured listings:", err);
       setFeaturedApartments(getFallbackMocks());
     }

@@ -92,28 +92,28 @@ export default function ContactPage() {
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.inputGroup}>
               <label htmlFor="name" className={styles.label}>Full Name</label>
-              <input type="text" id="name" required value={formData.name}
+              <input type="text" id="name" required maxLength={100} value={formData.name}
                      onChange={e => setFormData(
                          {...formData, name: e.target.value})} className={styles.input} placeholder="John Doe" />
             </div>
 
             <div className={styles.inputGroup}>
               <label htmlFor="email" className={styles.label}>Email Address</label>
-              <input type="email" id="email" required value={formData.email}
+              <input type="email" id="email" required maxLength={254} value={formData.email}
                      onChange={e => setFormData(
                          {...formData, email: e.target.value})} className={styles.input} placeholder="name@example.com" />
             </div>
 
             <div className={styles.inputGroup}>
               <label htmlFor="subject" className={styles.label}>Subject</label>
-              <input type="text" id="subject" required value={formData.subject}
+              <input type="text" id="subject" required maxLength={150} value={formData.subject}
                      onChange={e => setFormData(
                          {...formData, subject: e.target.value})} className={styles.input} placeholder="e.g., Property Inquiry" />
             </div>
 
             <div className={styles.inputGroup}>
               <label htmlFor="message" className={styles.label}>Message</label>
-              <textarea id="message" rows="5" required value={formData.message}
+              <textarea id="message" rows="5" required maxLength={2000} value={formData.message}
                         onChange={e => setFormData(
                             {...formData, message: e.target.value})} className={styles.textarea} placeholder="Your message here..."></textarea>
             </div>
@@ -137,7 +137,8 @@ export default function ContactPage() {
             width="100%"
             height="450"
             style={{ border: 0 }}
-            allowFullScreen=""
+            allowFullScreen
+            sandbox="allow-scripts allow-same-origin allow-popups"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
             title="Google Maps Location"

@@ -21,9 +21,6 @@ export default function DeleteAccountConfirm() {
     setError('');
     setLoading(true);
     try {
-      // BUG-F05 FIX: Explicitly pick only the fields the backend expects.
-      // Sending formData wholesale is brittle — any future fields added to the
-      // form state would be silently included in the payload.
       const payload = {
         confirmationPhrase: formData.confirmationPhrase,
         password: formData.password,
