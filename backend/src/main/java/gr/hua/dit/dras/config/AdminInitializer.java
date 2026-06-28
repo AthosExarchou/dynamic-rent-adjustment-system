@@ -11,6 +11,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
+import java.security.SecureRandom;
 import java.util.Optional;
 
 @Component
@@ -44,10 +45,18 @@ public class AdminInitializer {
         /* Create default admin user if not exists */
         log.warn("Default admin user not found. Creating default admin user.");
 
+        // BUG-B01 FIX: Generate a random secure password instead of the hardcoded "admin" default.
+        // The generated password is printed ONCE at WARN level. Change it immediately after first login.
+        String generatedPassword = generateSecurePassword(16);
+        log.warn("========================================================");
+        log.warn("  ADMIN INITIAL PASSWORD: {}", generatedPassword);
+        log.warn("  Change this password immediately after first login!");
+        log.warn("========================================================");
+
         User admin = new User(
                 "admin",
                 "admin@gmail.com",
-                passwordEncoder.encode("admin")
+                passwordEncoder.encode(generatedPassword)
         );
 
         Role adminRole = roleRepository.findByName("ADMIN")
@@ -62,6 +71,16 @@ public class AdminInitializer {
         userRepository.save(admin);
 
         log.info("Default admin user created.");
+    }
+
+    private String generateSecurePassword(int length) {
+        final String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 
 }

@@ -106,6 +106,19 @@ public class UserController {
             BindingResult bindingResult,
             HttpSession session
     ) {
+        // BUG-B04 FIX: Perform the authorization check FIRST, before any DB lookups.
+        // This prevents a non-admin user from probing username/email existence
+        // for arbitrary user IDs via the uniqueness-check queries below.
+        Authentication authEarly = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdminEarly = authEarly.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ADMIN"));
+        boolean isSelfEditEarly = userService.getCurrentUserId().equals(targetUserId);
+
+        if (!isAdminEarly && !isSelfEditEarly) {
+            return org.springframework.http.ResponseEntity.status(403)
+                    .body(java.util.Map.of("error", "Access denied."));
+        }
+
         if (userService.isUsernameTaken(request.getUsername(), targetUserId)) {
             bindingResult.rejectValue("username",
                     "error.userEditRequest", "This username is already taken.");

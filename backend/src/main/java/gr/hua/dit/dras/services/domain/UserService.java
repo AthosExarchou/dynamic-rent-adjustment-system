@@ -6,6 +6,7 @@ import gr.hua.dit.dras.repositories.RoleRepository;
 import gr.hua.dit.dras.repositories.UserRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -164,7 +165,9 @@ public class UserService implements UserDetailsService {
                 .anyMatch(r -> r.getName().equals("ADMIN"));
 
         if (isAdmin) {
-            throw new IllegalStateException("Administrator account cannot be modified.");
+            // BUG-B05 FIX: Throw AccessDeniedException so Spring Security maps this to
+            // HTTP 403 Forbidden instead of the previous IllegalStateException → HTTP 500.
+            throw new AccessDeniedException("Administrator account cannot be modified.");
         }
     }
 
