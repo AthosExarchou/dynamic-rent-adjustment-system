@@ -1,98 +1,201 @@
 .container {
-  max-width: 800px;
-  margin: 0 auto;
+  max-width: 1200px;
+  margin: 3rem auto;
+  padding: 0 1.5rem;
 }
 
-.title {
-  margin-bottom: var(--spacing-4);
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  color: var(--text-secondary);
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border-left-color: #0d6efd;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.topActions {
+  margin-bottom: 1.5rem;
 }
 
 .backLink {
-  display: inline-block;
-  margin-bottom: var(--spacing-8);
+  background: none;
+  border: none;
+  color: #0d6efd;
+  font-size: 1rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.backLink:hover {
+  color: #004aad;
+  text-decoration: underline;
+}
+
+.header {
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.titleIcon {
+  color: #0d6efd;
+}
+
+.divider {
+  border: 0;
+  border-top: 1px solid var(--border-color);
+  margin-bottom: 2rem;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--spacing-8);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
 }
 
 .card {
   background-color: var(--background-paper);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
+  border: none;
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
 }
 
-.cardContent {
-  padding: 1.5rem;
+.cardHover:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.cardHeader {
+  background-color: #f8f9fa;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .applicantName {
-  margin-bottom: 0.5rem;
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.iconPrimary {
+  color: #0d6efd;
+}
+
+.cardBody {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .contactInfo {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  margin-bottom: 0.3rem;
+  margin: 0 0 0.75rem 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
 }
 
-.phoneInfo {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.iconSecondary {
+  color: #6c757d;
 }
 
 .actions {
+  margin-top: auto;
+  padding-top: 1.5rem;
   display: flex;
-  gap: var(--spacing-4);
+  gap: 1rem;
 }
 
-.approveBtn {
-  flex: 1;
-  padding: 0.5rem;
-  background-color: var(--color-success);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-md);
-  font-weight: 600;
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 0.35rem;
+  text-decoration: none;
   cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.approveBtn:hover {
-  background-color: #059669;
-}
-
-.rejectBtn {
+  transition: all 0.2s ease-in-out;
+  border: 1px solid transparent;
   flex: 1;
-  padding: 0.5rem;
-  border: 1px solid var(--color-danger);
-  color: var(--color-danger);
-  background-color: transparent;
-  border-radius: var(--radius-md);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+.btnSuccess { background-color: #198754; color: #fff; }
+.btnSuccess:hover { filter: brightness(1.1); }
+
+.btnDanger { background-color: #dc3545; color: #fff; }
+.btnDanger:hover { filter: brightness(1.1); }
+
+.rentedNotice {
+  margin-top: auto;
+  padding-top: 1.5rem;
+  text-align: center;
+}
+
+.rentedBadge {
+  background-color: #e9ecef;
+  color: #6c757d;
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  font-size: 0.9rem;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  display: inline-block;
 }
 
-.rejectBtn:hover {
-  background-color: var(--color-danger);
-  color: #fff;
+.emptyState {
+  text-align: center;
+  padding: 5rem 2rem;
+  color: var(--text-muted);
+  font-size: 1.1rem;
 }
 
-.rentedText {
-  color: var(--color-success);
-  font-weight: bold;
+.emptyIcon {
+  color: var(--border-color);
+  margin-bottom: 1rem;
 }
