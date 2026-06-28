@@ -196,16 +196,8 @@ public class Listing {
         return id;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
     public Integer getVersion() {
         return version;
-    }
-
-    public void setVersion(Integer version) {
-        this.version = version;
     }
 
     public Instant getDateScraped() {
@@ -392,10 +384,6 @@ public class Listing {
         return createdAt;
     }
 
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
-    }
-
     public Instant getUpdatedAt() {
         return updatedAt;
     }
@@ -476,7 +464,7 @@ public class Listing {
         rejected.remove(winningTenant);
 
         // Sync inverse side: remove this listing from each applicant's appliedListings
-        for (Tenant applicant : this.applicants) {
+        for (Tenant applicant : new ArrayList<>(this.applicants)) {
             applicant.getAppliedListings().remove(this);
         }
         this.applicants.clear();

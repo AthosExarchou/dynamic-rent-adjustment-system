@@ -12,6 +12,8 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import java.util.List;
 
 @Configuration
@@ -35,6 +37,11 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    @Bean
+    public SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
     }
 
     @Bean
@@ -85,6 +92,11 @@ public class SecurityConfig {
                         .logoutSuccessUrl("/")
                         .invalidateHttpSession(true)
                         .permitAll()
+                )
+
+                .sessionManagement((session) -> session
+                        .maximumSessions(-1)
+                        .sessionRegistry(sessionRegistry())
                 );
 
         return http.build();

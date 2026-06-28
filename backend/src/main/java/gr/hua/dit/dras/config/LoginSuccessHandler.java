@@ -11,6 +11,8 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.time.LocalDateTime;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Component
 public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
@@ -21,6 +23,7 @@ public class LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
     }
 
     @Override
+    @Transactional
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException, ServletException {
