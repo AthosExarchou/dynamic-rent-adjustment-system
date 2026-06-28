@@ -19,12 +19,19 @@ export default function UserManagement() {
   const fetchUsersAndRoles = async () => {
     try {
       const usersData = await apiClient('/users');
-      setUsers(usersData);
-    } catch {
-      setUsers([
-        { id: 100, username: 'nick_papadopoulos', email: 'nick@example.com', roles: [{ id: 1, name: 'USER' }] },
-        { id: 101, username: 'maria_owner', email: 'maria@example.com', roles: [{ id: 1, name: 'USER' }, { id: 2, name: 'OWNER' }] }
+      if (usersData.length > 0) {
+        setUsers(usersData);
+      } else {
+        setUsers(getMockUsers());
+      }
+      setRoles([
+        { id: 1, name: 'USER' },
+        { id: 2, name: 'OWNER' },
+        { id: 3, name: 'TENANT' }
       ]);
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+      setUsers(getMockUsers());
       setRoles([
         { id: 1, name: 'USER' },
         { id: 2, name: 'OWNER' },
@@ -32,6 +39,11 @@ export default function UserManagement() {
       ]);
     }
   };
+
+  const getMockUsers = () => [
+    { id: 100, username: 'nick_papadopoulos', email: 'nick@example.com', roles: [{ id: 1, name: 'USER' }] },
+    { id: 101, username: 'maria_owner', email: 'maria@example.com', roles: [{ id: 1, name: 'USER' }, { id: 2, name: 'OWNER' }] }
+  ];
 
   const handleAddRole = async (userId, roleId) => {
     const role = roles.find(r => r.id === roleId);
@@ -43,13 +55,8 @@ export default function UserManagement() {
       if (err.message && err.message.includes('PROFILE_REQUIRED')) {
          setCreatingProfileFor({ userId, roleType: role.name });
       } else {
-         // Fallback for mocked behavior or other errors
-         const willMockProfile = confirm(`This user needs a ${role.name} profile first. Open creation form?`);
-         if (willMockProfile) {
-           setCreatingProfileFor({ userId, roleType: role.name });
-         } else {
-           fetchUsersAndRoles();
-         }
+         alert('Failed to add role. Please try again.');
+         fetchUsersAndRoles();
       }
     }
   };
@@ -58,8 +65,8 @@ export default function UserManagement() {
     try {
       await apiClient(`/user/role/delete/${userId}/${roleId}`, { method: 'POST' });
       fetchUsersAndRoles();
-    } catch {
-      alert('Role operation performed.');
+    } catch (err) {
+      alert('Failed to remove role.');
       fetchUsersAndRoles();
     }
   };
@@ -69,8 +76,8 @@ export default function UserManagement() {
     try {
       await apiClient(`/user/delete/${userId}`, { method: 'POST' });
       fetchUsersAndRoles();
-    } catch {
-      alert('User deleted.');
+    } catch (err) {
+      alert('Failed to delete user.');
       fetchUsersAndRoles();
     }
   };

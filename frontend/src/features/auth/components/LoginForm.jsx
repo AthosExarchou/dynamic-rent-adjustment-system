@@ -7,7 +7,7 @@ import styles from './AuthForm.module.css';
 export default function LoginForm() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -18,10 +18,10 @@ export default function LoginForm() {
     setLoading(true);
     setError('');
     try {
-      await login(email, password);
+      await login(username, password);
       navigate('/');
     } catch (err) {
-      setError('Invalid email or password.');
+      setError('Invalid username or password.');
     } finally {
       setLoading(false);
     }
@@ -29,21 +29,29 @@ export default function LoginForm() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.card}>
-        <h2 className={styles.title}>Sign In</h2>
-        {error && <div className={styles.errorAlert}>{error}</div>}
+      <div className={`${styles.card} ${styles.loginCard}`}>
+        <div className={styles.header}>
+          <h2 className={styles.gradientText}>DRAS</h2>
+          <h4 className={styles.subtitle}>Sign in to continue</h4>
+        </div>
+
+        {error && (
+          <div className={`${styles.alert} ${styles.alertDanger}`}>
+            {error}
+          </div>
+        )}
         
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.formGroup}>
-            <label htmlFor="loginEmail" className={styles.label}>Email Address</label>
+            <label htmlFor="loginUsername" className={styles.label}>Username</label>
             <input 
-              id="loginEmail"
-              type="email" 
+              id="loginUsername"
+              type="text" 
               required 
-              value={email} 
-              onChange={e => setEmail(e.target.value)} 
+              value={username} 
+              onChange={e => setUsername(e.target.value)} 
               className={styles.input} 
-              placeholder="Enter your email" 
+              placeholder="Enter your username" 
             />
           </div>
           
@@ -65,9 +73,17 @@ export default function LoginForm() {
                 className={styles.toggleBtn}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+          </div>
+
+          <div className={styles.formOptions}>
+            <div className={styles.checkboxGroup}>
+              <input type="checkbox" id="rememberMe" className={styles.checkbox} />
+              <label htmlFor="rememberMe" className={styles.checkboxLabel}>Remember me</label>
+            </div>
+            <Link to="/contact" className={styles.forgotLink}>Forgot Password?</Link>
           </div>
           
           <button type="submit" disabled={loading} className={styles.submitBtn}>

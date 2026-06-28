@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import apiClient from '../../../shared/api/client';
 
 /**
@@ -52,12 +52,12 @@ export function AuthProvider({ children }) {
     return () => { cancelled = true; };
   }, []);
 
-  const login = useCallback(async (email, password) => {
+  const login = useCallback(async (username, password) => {
     // TODO: Implement once backend exposes a REST login endpoint.
-    // Expected: POST /api/auth/login { email, password } -> User JSON + session cookie
+    // Expected: POST /api/auth/login { username, password } -> User JSON + session cookie
     const loggedInUser = await apiClient('/api/auth/login', {
       method: 'POST',
-      body: { email, password },
+      body: { username, password },
     });
     setUser(loggedInUser);
     return loggedInUser;
@@ -72,7 +72,13 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
-  const roles = user?.roles?.map((r) => (typeof r === 'string' ? r : r.name)) || [];
+  // BUG-F03 FIX: Memoize `roles` so it has a stable reference between renders.
+  // Without useMemo, a new array is created on every render, causing the
+  // useCallback below to always recreate `hasRole` regardless of memoization.
+  const roles = useMemo(
+    () => user?.roles?.map((r) => (typeof r === 'string' ? r : r.name)) || [],
+    [user]
+  );
 
   const hasRole = useCallback(
     (roleName) => roles.includes(roleName),

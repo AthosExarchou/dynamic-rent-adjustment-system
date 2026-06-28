@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { UserCheck, Phone, CheckCircle, ChevronRight, Briefcase } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
-import styles from './OwnerForm.module.css';
 import { useAuth } from '../../auth';
+import styles from './OwnerForm.module.css';
 
 export default function OwnerForm() {
   const navigate = useNavigate();
-  const { fetchUserRoles } = useAuth(); // Assume we have this, or we can just navigate to profile/dashboard
+  const { fetchUserRoles } = useAuth();
   const [formData, setFormData] = useState({ firstName: '', lastName: '', phoneNumber: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,36 +34,82 @@ export default function OwnerForm() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.card}>
-        <h2 className={styles.title}>Register as Owner</h2>
-        {error && <div className={styles.error}>{error}</div>}
+      <div className={`${styles.card} ${styles.cardHover}`}>
+        <div className={styles.header}>
+          <h3 className={styles.title}>
+            <Briefcase className={styles.titleIcon} size={28} />
+            Register as Owner
+          </h3>
+        </div>
         
-        <form onSubmit={handleSubmit}>
-          <div className={styles.formSection}>
-            <div>
-              <label htmlFor="ownerFirstName" className={styles.label}>First Name</label>
-              <input id="ownerFirstName" type="text" required value={formData.firstName}
-                     onChange={e => setFormData(
-                         {...formData, firstName: e.target.value})} className={styles.input} />
-            </div>
-            <div>
-              <label htmlFor="ownerLastName" className={styles.label}>Last Name</label>
-              <input id="ownerLastName" type="text" required value={formData.lastName}
-                     onChange={e => setFormData(
-                         {...formData, lastName: e.target.value})} className={styles.input} />
-            </div>
-            <div>
-              <label htmlFor="ownerPhone" className={styles.label}>Phone Number</label>
-              <input id="ownerPhone" type="text" required value={formData.phoneNumber}
-                     onChange={e => setFormData(
-                         {...formData, phoneNumber: e.target.value})} className={styles.input} placeholder="+30 210 1234567" />
-            </div>
+        <div className={styles.body}>
+          {error && <div className={`${styles.alert} ${styles.alertDanger}`}>{error}</div>}
+          
+          <div className={styles.sectionNotice}>
+            <p>Become a property owner on DRAS and start listing your apartments to thousands of verified tenants today.</p>
           </div>
+          
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <div className={styles.formGrid}>
+              <div className={styles.formGroup}>
+                <label htmlFor="ownerFirstName" className={styles.label}>First Name</label>
+                <input 
+                  id="ownerFirstName" 
+                  type="text" 
+                  required 
+                  value={formData.firstName}
+                  onChange={e => setFormData({...formData, firstName: e.target.value})} 
+                  className={styles.input} 
+                  placeholder="e.g. John" 
+                />
+              </div>
+              
+              <div className={styles.formGroup}>
+                <label htmlFor="ownerLastName" className={styles.label}>Last Name</label>
+                <input 
+                  id="ownerLastName" 
+                  type="text" 
+                  required 
+                  value={formData.lastName}
+                  onChange={e => setFormData({...formData, lastName: e.target.value})} 
+                  className={styles.input} 
+                  placeholder="e.g. Doe" 
+                />
+              </div>
+              
+              <div className={styles.formGroup}>
+                <label htmlFor="ownerPhone" className={styles.label}>
+                  <Phone size={16} /> Phone Number
+                </label>
+                <input 
+                  id="ownerPhone" 
+                  type="tel" 
+                  required 
+                  value={formData.phoneNumber}
+                  onChange={e => setFormData({...formData, phoneNumber: e.target.value})} 
+                  className={styles.input} 
+                  placeholder="+30 210 1234567" 
+                  pattern="^\+?[0-9. ()-]{7,25}$"
+                  title="Enter a valid phone number with 7-25 digits."
+                />
+              </div>
+            </div>
 
-          <button type="submit" disabled={loading} className={styles.submitBtn}>
-            {loading ? 'Submitting...' : 'Create Owner Profile'}
-          </button>
-        </form>
+            <hr className={styles.divider} />
+
+            <div className={styles.formActions}>
+              <button type="submit" disabled={loading} className={`${styles.btn} ${styles.btnSuccess}`}>
+                {loading ? (
+                  'Submitting...'
+                ) : (
+                  <>
+                    <CheckCircle size={20} /> Create Owner Profile <ChevronRight size={18} />
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
