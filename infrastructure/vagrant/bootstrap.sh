@@ -14,8 +14,8 @@ echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_COD
 apt-get update
 apt-get install -y temurin-21-jdk
 
-echo "Installing Node.js 18..."
-curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+echo "Installing Node.js 20..."
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
 apt-get install -y nodejs
 
 echo "Installing Docker..."
