@@ -32,8 +32,14 @@ public class HomeController {
         }
 
         try {
-            emailService.sendContactUsEmail(contactForm);
-            return ResponseEntity.ok().build();
+            boolean success = emailService.sendContactUsEmail(contactForm);
+            if (success) {
+                return ResponseEntity.ok().build();
+            } else {
+                return ResponseEntity.internalServerError().body(Map.of(
+                    "error", "Failed to send message. Please try again."
+                ));
+            }
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Map.of(
                 "error", "Failed to send message. Please try again."

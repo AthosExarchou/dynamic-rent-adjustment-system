@@ -16,6 +16,8 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.session.SessionInformation;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,19 +31,22 @@ public class UserController {
     private final RoleRepository roleRepository;
     private final EmailService emailService;
     private final UserApplicationService userApplicationService;
+    private final SessionRegistry sessionRegistry;
 
     public UserController(
             UserRepository userRepository,
             UserService userService,
             RoleRepository roleRepository,
             EmailService emailService,
-            UserApplicationService userApplicationService
+            UserApplicationService userApplicationService,
+            SessionRegistry sessionRegistry
     ) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.roleRepository = roleRepository;
         this.emailService = emailService;
         this.userApplicationService = userApplicationService;
+        this.sessionRegistry = sessionRegistry;
     }
 
     @PostMapping("/saveUser")
@@ -50,6 +55,12 @@ public class UserController {
             @Valid @ModelAttribute User user,
             BindingResult bindingResult
     ) {
+        if (bindingResult.hasErrors()) {
+            return org.springframework.http.ResponseEntity.badRequest().body(
+                    java.util.Map.of("error", "Validation failed", "details", bindingResult.getAllErrors())
+            );
+        }
+
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             return org.springframework.http.ResponseEntity.badRequest().body(
                     java.util.Map.of("error", "Username already taken!")
@@ -59,12 +70,6 @@ public class UserController {
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
             return org.springframework.http.ResponseEntity.badRequest().body(
                     java.util.Map.of("error", "Email already registered!")
-            );
-        }
-
-        if (bindingResult.hasErrors()) {
-            return org.springframework.http.ResponseEntity.badRequest().body(
-                    java.util.Map.of("error", "Validation failed", "details", bindingResult.getAllErrors())
             );
         }
 
@@ -148,6 +153,24 @@ public class UserController {
             return org.springframework.http.ResponseEntity.ok(
                     java.util.Map.of("message", "Profile updated. Please log in again.", "requiresLogin", true)
             );
+        } else if (isAdmin && !isSelfEdit) {
+            User targetUser = userService.getUser(targetUserId);
+            for (Object principal : sessionRegistry.getAllPrincipals()) {
+                if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
+                    org.springframework.security.core.userdetails.UserDetails userDetails = (org.springframework.security.core.userdetails.UserDetails) principal;
+                    if (userDetails.getUsername().equals(targetUser.getEmail())) {
+                        for (SessionInformation info : sessionRegistry.getAllSessions(principal, false)) {
+                            info.expireNow();
+                        }
+                    }
+                } else if (principal instanceof String) {
+                    if (principal.equals(targetUser.getEmail())) {
+                        for (SessionInformation info : sessionRegistry.getAllSessions(principal, false)) {
+                            info.expireNow();
+                        }
+                    }
+                }
+            }
         }
 
         return org.springframework.http.ResponseEntity.ok().build();

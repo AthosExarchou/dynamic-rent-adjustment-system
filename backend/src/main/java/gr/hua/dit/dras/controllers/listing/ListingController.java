@@ -50,8 +50,8 @@ public class ListingController {
         map.put("price", l.getPrice());
         map.put("pricePerM2", l.getPricePerM2());
         map.put("address", l.getAddress());
-        map.put("propertyType", l.getPropertyType().name());
-        map.put("rentalDuration", l.getRentalDuration().name());
+        map.put("propertyType", l.getPropertyType() != null ? l.getPropertyType().name() : null);
+        map.put("rentalDuration", l.getRentalDuration() != null ? l.getRentalDuration().name() : null);
         map.put("yearBuilt", l.getYearBuilt());
         map.put("sizeM2", l.getSizeM2());
         map.put("status", l.getStatus().name());
@@ -92,9 +92,9 @@ public class ListingController {
     }
 
     /* Save new listing */
-    @PreAuthorize("hasAuthority('USER') and !hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('USER')")
     @PostMapping("/new")
-    public ResponseEntity<?> saveListing(@Valid @ModelAttribute Listing listing,
+    public ResponseEntity<?> saveListing(@Valid @ModelAttribute gr.hua.dit.dras.dto.ListingCreateDTO listingDTO,
                               BindingResult bindingResult,
                               @RequestParam(value = "owner_id", required = false) Integer ownerId,
                               @RequestParam(value = "firstName", required = false) String firstName,
@@ -105,6 +105,18 @@ public class ListingController {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Validation failed", "details", bindingResult.getAllErrors()));
         }
+
+        Listing listing = new Listing();
+        listing.setTitle(listingDTO.getTitle());
+        listing.setSubtitle(listingDTO.getSubtitle());
+        listing.setDescription(listingDTO.getDescription());
+        listing.setPrice(listingDTO.getPrice());
+        listing.setPricePerM2(listingDTO.getPricePerM2());
+        listing.setAddress(listingDTO.getAddress());
+        listing.setPropertyType(listingDTO.getPropertyType());
+        listing.setRentalDuration(listingDTO.getRentalDuration());
+        listing.setYearBuilt(listingDTO.getYearBuilt());
+        listing.setSizeM2(listingDTO.getSizeM2());
 
         listingApplicationService.createListing(
                 listing, ownerId, firstName, lastName, phoneNumber, session

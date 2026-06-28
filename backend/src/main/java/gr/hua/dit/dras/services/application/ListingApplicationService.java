@@ -129,7 +129,6 @@ public class ListingApplicationService {
                         "Your OWNER role has been revoked by the Administrator.");
             }
 
-            assignOwnerRoleIfFirstListing(owner, session);
 
         } else {
             if (ownerId == null) {
@@ -146,6 +145,8 @@ public class ListingApplicationService {
         listing.setStatus(ListingStatus.PENDING);
         listing.setTenant(null);
         listing.setExternal(false);
+
+        assignOwnerRoleIfFirstListing(owner, session);
 
         listingService.saveListing(listing);
         ownerService.assignOwnerToListing(listing.getId(), owner);
@@ -258,6 +259,10 @@ public class ListingApplicationService {
         User user = requireUser();
         Listing listing = requireListing(listingId);
         validateModificationRights(listing, user);
+        
+        if (listing.getTenant() != null) {
+            throw new IllegalStateException("Cannot unassign owner from a rented listing.");
+        }
 
         ownerService.unassignOwnerFromListing(listingId);
     }

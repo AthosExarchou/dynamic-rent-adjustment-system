@@ -134,20 +134,16 @@ public class OwnerService {
 
         listing.setOwner(owner);
 
-        Integer currentUserId = userService.getCurrentUserId();
-        User currentUser = userRepository.findById(currentUserId)
-                .orElseThrow(() ->
-                        new IllegalStateException("User not found")
-                );
+        User ownerUser = owner.getUser();
 
         Role ownerRole = roleRepository.findByName("OWNER")
                 .orElseThrow(() ->
                         new IllegalStateException("OWNER role not found in database")
                 );
 
-        if (!currentUser.getRoles().contains(ownerRole)) {
-            currentUser.getRoles().add(ownerRole);
-            userService.updateUser(currentUser); // saves the user
+        if (!ownerUser.getRoles().contains(ownerRole)) {
+            ownerUser.getRoles().add(ownerRole);
+            userService.updateUser(ownerUser); // saves the user
         }
         listingRepository.save(listing);
     }

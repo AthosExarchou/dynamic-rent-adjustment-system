@@ -108,7 +108,9 @@ public class ListingService {
         List<Listing> listings = new ArrayList<>(owner.getListings());
 
         for (Listing listing : listings) {
-            deleteListing(listing.getId());
+            if (!listing.isExternal()) {
+                deleteListing(listing.getId());
+            }
         }
     }
 

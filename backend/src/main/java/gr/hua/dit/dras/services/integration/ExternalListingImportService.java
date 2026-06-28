@@ -101,7 +101,9 @@ public class ExternalListingImportService {
                 /* Marks as externally sourced and auto-approved */
                 listing.setExternal(true);
                 listing.setOwner(systemOwner);
-                listing.setStatus(ListingStatus.APPROVED);
+                if (listing.isPending()) {
+                    listing.approve();
+                }
                 listing.setDateScraped(Instant.now());
 
                 /* Replaces images if valid image URLs are provided */

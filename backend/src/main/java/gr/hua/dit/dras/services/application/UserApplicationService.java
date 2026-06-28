@@ -12,8 +12,11 @@ import gr.hua.dit.dras.services.domain.UserService;
 import gr.hua.dit.dras.services.infrastructure.EmailService;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Service;
 
 /**
  * Application service responsible for orchestrating user-related account workflows.
@@ -107,12 +110,17 @@ public class UserApplicationService {
         }
 
         /* Send Email */
-        try {
-            emailService.sendAccountDeletionEmail(actorEmail, currentUser);
-        } catch (Exception e) {
-            log.error("SECURITY_AUDIT | event=SELF_DELETE | result=EMAIL_FAILED | actorId={} | actorEmail={}",
-                    actorId, actorEmail, e);
-        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    emailService.sendAccountDeletionEmail(actorEmail, currentUser);
+                } catch (Exception e) {
+                    log.error("SECURITY_AUDIT | event=SELF_DELETE | result=EMAIL_FAILED | actorId={} | actorEmail={}",
+                            actorId, actorEmail, e);
+                }
+            }
+        });
     }
 
     @Transactional
@@ -159,13 +167,18 @@ public class UserApplicationService {
         }
 
         /* Send Email */
-        try {
-            emailService.sendAccountDeletionEmail(targetUser.getEmail(), targetUser);
-        } catch (Exception e) {
-            log.error("SECURITY_AUDIT | event=ADMIN_DELETE | result=EMAIL_FAILED | actorId={} " +
-                            "| actorEmail={} | targetId={} | targetEmail={}",
-                    actorId, actorEmail, targetId, targetEmail, e);
-        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                try {
+                    emailService.sendAccountDeletionEmail(targetUser.getEmail(), targetUser);
+                } catch (Exception e) {
+                    log.error("SECURITY_AUDIT | event=ADMIN_DELETE | result=EMAIL_FAILED | actorId={} " +
+                                    "| actorEmail={} | targetId={} | targetEmail={}",
+                            actorId, actorEmail, targetId, targetEmail, e);
+                }
+            }
+        });
     }
 
     @Transactional
@@ -244,7 +257,7 @@ public class UserApplicationService {
             } else {
                 /* Notify current email of username change */
                 emailService.sendUserDetailsChangedEmail(targetUser.getEmail(), targetUser.getUsername(),
-                        targetUser.getEmail(), oldUsername, oldEmail, true, false);
+                        targetUser.getEmail(), oldUsername, oldEmail, usernameChanged, false);
             }
         } catch (Exception e) {
             log.error("SECURITY_AUDIT | event=PROFILE_EDIT | result=EMAIL_FAILED | actorId={} " +

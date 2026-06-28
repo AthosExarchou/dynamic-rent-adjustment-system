@@ -95,9 +95,6 @@ public class UserService implements UserDetailsService {
     @Transactional(readOnly = true)
     public boolean isUserOwner() {
         Integer currentUserId = getCurrentUserId();
-        if (currentUserId == null) {
-            throw new IllegalStateException("User id must not be null");
-        }
         User currentUser = getUser(currentUserId);
         for (Role role : currentUser.getRoles()) {
             if ("OWNER".equals(role.getName())) {
@@ -137,10 +134,6 @@ public class UserService implements UserDetailsService {
     @Transactional(readOnly = true)
     public boolean currentUserHasRole(String roleName) {
         Integer currentUserId = getCurrentUserId();
-        if (currentUserId == null) {
-            return false;
-        }
-
         User currentUser = getUser(currentUserId);
         return currentUser.getRoles().stream()
                 .anyMatch(r -> r.getName().equals(roleName));

@@ -175,7 +175,7 @@ public class EmailService {
         );
     }
 
-    public void sendContactUsEmail(ContactForm contactForm) {
+    public boolean sendContactUsEmail(ContactForm contactForm) {
 
         String to = "realestate2025project@gmail.com";
 
@@ -199,16 +199,21 @@ public class EmailService {
                     "email/contact-us.html", context);
 
             helper.setTo(to);
-            helper.setSubject("Contact Form: " + contactForm.getSubject());
+            String sanitizedSubject = contactForm.getSubject() != null ? contactForm.getSubject().replaceAll("[\\r\\n]", "") : "";
+            helper.setSubject("Contact Form: " + sanitizedSubject);
             helper.setText(htmlContent, true); // HTML content
-            helper.setReplyTo(contactForm.getEmail()); // reply directly to sender
+            if (contactForm.getEmail() != null && !contactForm.getEmail().trim().isEmpty()) {
+                helper.setReplyTo(contactForm.getEmail().replaceAll("[\\r\\n]", "")); // reply directly to sender
+            }
 
             mailSender.send(mimeMessage);
 
             log.info("Email sent successfully [type={}] to [{}]", "contactForm", to);
+            return true;
         } catch (MessagingException | MailException e) {
             log.warn("Failed to send email [type={}] to [{}]: {}",
                     "contactForm", to, e.getMessage(), e);
+            return false;
         }
     }
 
