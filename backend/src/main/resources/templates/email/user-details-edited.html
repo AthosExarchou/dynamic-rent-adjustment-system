@@ -4,35 +4,93 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 40px 0;
     }
-    .container {
-      padding: 20px; background-color: #f9f9f9; border-radius: 10px;
+    .email-wrapper {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }
-    .header {
-      font-size: 20px; font-weight: bold; color: #0d6efd;
+    .email-header {
+      background: linear-gradient(135deg, #0062ff 0%, #004aad 100%);
+      padding: 30px 20px;
+      text-align: center;
+      color: #ffffff;
     }
-    .footer {
-      margin-top: 30px; font-size: 12px; color: gray;
+    .email-header h1 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: 1px;
+    }
+    .email-body {
+      padding: 30px;
+      color: #333333;
+      line-height: 1.6;
+    }
+    .email-footer {
+      background-color: #f8f9fa;
+      padding: 20px;
+      text-align: center;
+      font-size: 13px;
+      color: #6c757d;
+      border-top: 1px solid #eeeeee;
+    }
+    .listing-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      background-color: #f8f9fa;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .listing-table th, .listing-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #eeeeee;
+      text-align: left;
+      font-size: 14px;
+    }
+    .listing-table th {
+      width: 35%;
+      color: #555555;
+      font-weight: 600;
+    }
+    .listing-table tr:last-child th, .listing-table tr:last-child td {
+      border-bottom: none;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #0062ff;
+      color: #ffffff !important;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 600;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">Security Alert: Account Details Updated</div>
-  <p>Hello,</p>
-  <p>We wanted to let you know that details on your Dynamic Rent Adjustment System account have been updated:</p>
-  <ul>
-    <li th:if="${usernameChanged}">Username changed from <strong th:text="${oldUsername}">old</strong> to
-      <strong th:text="${newUsername}">new</strong></li>
-    <li th:if="${emailChanged}">Email changed from <strong th:text="${oldEmail}">old</strong> to
-      <strong th:text="${newEmail}">new</strong></li>
-  </ul>
-  <p>If you made these changes, no further action is required.</p>
-  <p>If you did not make these changes, please contact support immediately.</p>
-  <br>
-  <p>Best regards,<br>The DRAS Team</p>
-  <div class="footer">Contact support at realestate2025project@gmail.com</div>
-</div>
+  <div class="email-wrapper">
+    <div class="email-header">
+      <h1>Profile Update Successful</h1>
+    </div>
+    <div class="email-body">
+      <p>Dear <strong th:text="${username}">User</strong>,</p>
+      <p>Your profile information has been successfully updated on the Dynamic Rent Adjustment System.</p>
+      <p>If you did not make this change, please contact our support team immediately to secure your account.</p>
+      <a href="http://localhost/profile" class="btn">Review Your Profile</a>
+    </div>
+    <div class="email-footer">
+      <p>&copy; 2025 Dynamic Rent Adjustment System (DRAS). All rights reserved.</p>
+      <p>If you have any questions, contact support at <a href="mailto:realestate2025project@gmail.com" style="color: #0062ff;">realestate2025project@gmail.com</a></p>
+    </div>
+  </div>
 </body>
 </html>
