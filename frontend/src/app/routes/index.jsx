@@ -50,8 +50,12 @@ const GlobalErrorBoundary = () => {
   const error = useRouteError();
   
   if (error && error.message && error.message.includes('Failed to fetch dynamically imported module')) {
-    window.location.reload();
-    return <PageLoader />;
+    const reloadCount = parseInt(sessionStorage.getItem('chunk_reload_count') || '0', 10);
+    if (reloadCount < 2) {
+      sessionStorage.setItem('chunk_reload_count', String(reloadCount + 1));
+      window.location.reload();
+      return <PageLoader />;
+    }
   }
 
   return (

@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': {
+      '^/(api|listings|user|owner|tenant|contact|admin)': {
         target: 'http://localhost:8080',
         changeOrigin: true,
         secure: false,

@@ -34,17 +34,26 @@ async function apiClient(endpoint, options = {}) {
     headers['Content-Type'] = 'application/json';
   }
 
-  const config = {
+  // BUG-F21: Extract CSRF token and append it
+  const method = (restOptions.method || 'GET').toUpperCase();
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+    const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]*)/);
+    if (match && match[1]) {
+      headers['X-XSRF-TOKEN'] = decodeURIComponent(match[1]);
+    }
+  }
+
+  const fetchConfig = {
     ...restOptions,
     headers,
     credentials: 'include', // send session cookies cross-origin
   };
 
   if (body) {
-    config.body = typeof body === 'string' ? body : JSON.stringify(body);
+    fetchConfig.body = typeof body === 'string' ? body : JSON.stringify(body);
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchConfig);
 
   if (!response.ok) {
     let errorMessage = `API Error: ${response.status} ${response.statusText}`;

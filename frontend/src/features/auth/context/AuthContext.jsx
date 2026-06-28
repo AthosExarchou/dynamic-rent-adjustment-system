@@ -18,6 +18,7 @@ import apiClient from '../../../shared/api/client';
  * - `login(email, password)` - Authenticates and sets user state.
  * - `logout()`   - Ends session and clears user state.
  * - `hasRole(roleName)` - Check if user has a specific role.
+ * - `refreshUser()` - Reload the user state from the server.
  */
 
 const AuthContext = createContext(null);
@@ -26,34 +27,35 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const checkSession = useCallback(async (cancelled = false) => {
+    try {
+      const currentUser = await apiClient('/api/auth/me');
+      if (!cancelled) {
+        setUser(currentUser);
+      }
+    } catch {
+      if (!cancelled) {
+        setUser(null);
+      }
+    } finally {
+      if (!cancelled) {
+        setIsLoading(false);
+      }
+    }
+  }, []);
+
   /* Check if user has an active session on mount */
   useEffect(() => {
     let cancelled = false;
-
-    async function checkSession() {
-      try {
-        const currentUser = await apiClient('/api/auth/me');
-        if (!cancelled) {
-          setUser(currentUser);
-        }
-      } catch {
-        /* Not authenticated - expected on first visit */
-        if (!cancelled) {
-          setUser(null);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    checkSession();
+    checkSession(cancelled);
     return () => { cancelled = true; };
-  }, []);
+  }, [checkSession]);
+
+  const refreshUser = useCallback(async () => {
+    await checkSession(false);
+  }, [checkSession]);
 
   const login = useCallback(async (username, password) => {
-    // TODO: Implement once backend exposes a REST login endpoint.
     // Expected: POST /api/auth/login { username, password } -> User JSON + session cookie
     const loggedInUser = await apiClient('/api/auth/login', {
       method: 'POST',
@@ -73,8 +75,6 @@ export function AuthProvider({ children }) {
   }, []);
 
   // BUG-F03 FIX: Memoize `roles` so it has a stable reference between renders.
-  // Without useMemo, a new array is created on every render, causing the
-  // useCallback below to always recreate `hasRole` regardless of memoization.
   const roles = useMemo(
     () => user?.roles?.map((r) => (typeof r === 'string' ? r : r.name)) || [],
     [user]
@@ -93,6 +93,7 @@ export function AuthProvider({ children }) {
     login,
     logout,
     hasRole,
+    refreshUser,
   };
 
   return (
