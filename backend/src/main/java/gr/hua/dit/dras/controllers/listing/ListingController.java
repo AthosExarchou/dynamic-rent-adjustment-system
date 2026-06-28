@@ -2,6 +2,7 @@ package gr.hua.dit.dras.controllers.listing;
 
 /* imports */
 import gr.hua.dit.dras.dto.ListingFilterDTO;
+import gr.hua.dit.dras.dto.ListingCreateDTO;
 import gr.hua.dit.dras.entities.*;
 import gr.hua.dit.dras.services.domain.*;
 import gr.hua.dit.dras.services.application.ListingApplicationService;
@@ -94,7 +95,7 @@ public class ListingController {
     /* Save new listing */
     @PreAuthorize("hasAuthority('USER')")
     @PostMapping("/new")
-    public ResponseEntity<?> saveListing(@Valid @ModelAttribute gr.hua.dit.dras.dto.ListingCreateDTO listingDTO,
+    public ResponseEntity<?> saveListing(@Valid @ModelAttribute ListingCreateDTO listingDTO,
                               BindingResult bindingResult,
                               @RequestParam(value = "owner_id", required = false) Integer ownerId,
                               @RequestParam(value = "firstName", required = false) String firstName,

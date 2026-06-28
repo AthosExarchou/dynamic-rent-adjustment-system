@@ -41,8 +41,7 @@ public class OwnerController {
         String phoneNumber = payload.get("phoneNumber");
         Integer userId;
 
-        // BUG-B03 FIX: Only ADMINs are allowed to specify an arbitrary userId.
-        // Regular USERs are always forced to use their own ID to prevent IDOR.
+        // Regular USERs are always forced to use their own ID to prevent IDOR
         boolean isAdmin = userService.currentUserHasRole("ADMIN");
         if (isAdmin && payload.containsKey("userId") && payload.get("userId") != null) {
             userId = Integer.parseInt(payload.get("userId").toString());

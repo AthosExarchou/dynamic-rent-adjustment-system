@@ -29,33 +29,73 @@ public class ListingCreateDTO {
     @Positive
     private Integer sizeM2;
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public String getTitle() {
+        return title;
+    }
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-    public String getSubtitle() { return subtitle; }
-    public void setSubtitle(String subtitle) { this.subtitle = subtitle; }
+    public String getSubtitle() {
+        return subtitle;
+    }
+    public void setSubtitle(String subtitle) {
+        this.subtitle = subtitle;
+    }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public String getDescription() {
+        return description;
+    }
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-    public Integer getPrice() { return price; }
-    public void setPrice(Integer price) { this.price = price; }
+    public Integer getPrice() {
+        return price;
+    }
+    public void setPrice(Integer price) {
+        this.price = price;
+    }
 
-    public Integer getPricePerM2() { return pricePerM2; }
-    public void setPricePerM2(Integer pricePerM2) { this.pricePerM2 = pricePerM2; }
+    public Integer getPricePerM2() {
+        return pricePerM2;
+    }
+    public void setPricePerM2(Integer pricePerM2) {
+        this.pricePerM2 = pricePerM2;
+    }
 
-    public String getAddress() { return address; }
-    public void setAddress(String address) { this.address = address; }
+    public String getAddress() {
+        return address;
+    }
+    public void setAddress(String address) {
+        this.address = address;
+    }
 
-    public PropertyType getPropertyType() { return propertyType; }
-    public void setPropertyType(PropertyType propertyType) { this.propertyType = propertyType; }
+    public PropertyType getPropertyType() {
+        return propertyType;
+    }
+    public void setPropertyType(PropertyType propertyType) {
+        this.propertyType = propertyType;
+    }
 
-    public RentalDuration getRentalDuration() { return rentalDuration; }
-    public void setRentalDuration(RentalDuration rentalDuration) { this.rentalDuration = rentalDuration; }
+    public RentalDuration getRentalDuration() {
+        return rentalDuration;
+    }
+    public void setRentalDuration(RentalDuration rentalDuration) {
+        this.rentalDuration = rentalDuration;
+    }
 
-    public Integer getYearBuilt() { return yearBuilt; }
-    public void setYearBuilt(Integer yearBuilt) { this.yearBuilt = yearBuilt; }
+    public Integer getYearBuilt() {
+        return yearBuilt;
+    }
+    public void setYearBuilt(Integer yearBuilt) {
+        this.yearBuilt = yearBuilt;
+    }
 
-    public Integer getSizeM2() { return sizeM2; }
-    public void setSizeM2(Integer sizeM2) { this.sizeM2 = sizeM2; }
+    public Integer getSizeM2() {
+        return sizeM2;
+    }
+    public void setSizeM2(Integer sizeM2) {
+        this.sizeM2 = sizeM2;
+    }
 }

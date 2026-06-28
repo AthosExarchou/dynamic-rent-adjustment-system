@@ -275,9 +275,6 @@ public class ListingApplicationService {
 
         validateModificationRights(listing, user); // validates permissions
 
-        // BUG-B06 FIX: Use the listing's actual tenant ID, not the calling user's tenant ID.
-        // The caller is the OWNER; calling getTenantIdForCurrentUser() on the owner would crash
-        // with IllegalStateException if the owner has no tenant profile.
         if (listing.getTenant() == null) {
             throw new IllegalStateException("This listing has no tenant assigned.");
         }

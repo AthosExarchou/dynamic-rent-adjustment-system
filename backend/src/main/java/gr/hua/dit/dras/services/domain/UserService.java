@@ -158,8 +158,6 @@ public class UserService implements UserDetailsService {
                 .anyMatch(r -> r.getName().equals("ADMIN"));
 
         if (isAdmin) {
-            // BUG-B05 FIX: Throw AccessDeniedException so Spring Security maps this to
-            // HTTP 403 Forbidden instead of the previous IllegalStateException → HTTP 500.
             throw new AccessDeniedException("Administrator account cannot be modified.");
         }
     }

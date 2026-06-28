@@ -45,8 +45,6 @@ public class AdminInitializer {
         /* Create default admin user if not exists */
         log.warn("Default admin user not found. Creating default admin user.");
 
-        // BUG-B01 FIX: Generate a random secure password instead of the hardcoded "admin" default.
-        // The generated password is printed ONCE at WARN level. Change it immediately after first login.
         String generatedPassword = generateSecurePassword(16);
         log.warn("========================================================");
         log.warn("  ADMIN INITIAL PASSWORD: {}", generatedPassword);

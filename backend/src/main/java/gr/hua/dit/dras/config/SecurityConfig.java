@@ -73,10 +73,6 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                /* BUG-B02 FIX: CSRF is now disabled only for the specific REST auth
-                 * endpoints (/api/auth/login, /api/auth/logout) that are called by the SPA
-                 * before a session is established. All other /api/** endpoints retain full
-                 * CSRF protection, because this app uses session-based authentication. */
                 .csrf((csrf) -> csrf
                         .ignoringRequestMatchers("/api/auth/login", "/api/auth/logout")
                 )

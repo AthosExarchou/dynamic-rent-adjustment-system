@@ -34,7 +34,7 @@ async function apiClient(endpoint, options = {}) {
     headers['Content-Type'] = 'application/json';
   }
 
-  // BUG-F21: Extract CSRF token and append it
+  // Extract CSRF token and append it
   const method = (restOptions.method || 'GET').toUpperCase();
   if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
     const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]*)/);

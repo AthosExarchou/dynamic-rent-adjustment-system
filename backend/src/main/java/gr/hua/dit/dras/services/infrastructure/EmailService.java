@@ -199,11 +199,14 @@ public class EmailService {
                     "email/contact-us.html", context);
 
             helper.setTo(to);
-            String sanitizedSubject = contactForm.getSubject() != null ? contactForm.getSubject().replaceAll("[\\r\\n]", "") : "";
+            String sanitizedSubject = contactForm.getSubject() != null ?
+                    contactForm.getSubject().replaceAll("[\\r\\n]", "") : "";
             helper.setSubject("Contact Form: " + sanitizedSubject);
             helper.setText(htmlContent, true); // HTML content
             if (contactForm.getEmail() != null && !contactForm.getEmail().trim().isEmpty()) {
-                helper.setReplyTo(contactForm.getEmail().replaceAll("[\\r\\n]", "")); // reply directly to sender
+                helper.setReplyTo(
+                        contactForm.getEmail().replaceAll("[\\r\\n]", "")
+                ); // reply directly to sender
             }
 
             mailSender.send(mimeMessage);

@@ -3,6 +3,7 @@ package gr.hua.dit.dras.controllers.user;
 /* imports */
 import gr.hua.dit.dras.dto.AccountDeletionRequest;
 import gr.hua.dit.dras.dto.UserEditRequest;
+import gr.hua.dit.dras.dto.UserDTO;
 import gr.hua.dit.dras.entities.Role;
 import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.repositories.UserRepository;
@@ -12,12 +13,14 @@ import gr.hua.dit.dras.services.infrastructure.EmailService;
 import gr.hua.dit.dras.services.domain.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,24 +54,24 @@ public class UserController {
 
     @PostMapping("/saveUser")
     @ResponseBody
-    public org.springframework.http.ResponseEntity<?> saveUser(
+    public ResponseEntity<?> saveUser(
             @Valid @ModelAttribute User user,
             BindingResult bindingResult
     ) {
         if (bindingResult.hasErrors()) {
-            return org.springframework.http.ResponseEntity.badRequest().body(
+            return ResponseEntity.badRequest().body(
                     java.util.Map.of("error", "Validation failed", "details", bindingResult.getAllErrors())
             );
         }
 
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
-            return org.springframework.http.ResponseEntity.badRequest().body(
+            return ResponseEntity.badRequest().body(
                     java.util.Map.of("error", "Username already taken!")
             );
         }
 
         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-            return org.springframework.http.ResponseEntity.badRequest().body(
+            return ResponseEntity.badRequest().body(
                     java.util.Map.of("error", "Email already registered!")
             );
         }
@@ -81,46 +84,43 @@ public class UserController {
             // Log it, but user is saved
         }
 
-        return org.springframework.http.ResponseEntity.ok().build();
+        return ResponseEntity.ok().build();
     }
 
     @Secured("ADMIN")
     @GetMapping("/users")
     @ResponseBody
-    public List<gr.hua.dit.dras.dto.UserDTO> showUsers() {
+    public List<UserDTO> showUsers() {
         return userService.getUsers().stream()
-                .map(gr.hua.dit.dras.dto.UserDTO::new)
+                .map(UserDTO::new)
                 .collect(java.util.stream.Collectors.toList());
     }
 
     @PreAuthorize("hasAuthority('ADMIN') or @userService.getCurrentUserId() == #user_id")
     @GetMapping("/user/{user_id}")
     @ResponseBody
-    public gr.hua.dit.dras.dto.UserDTO showUser(@PathVariable Integer user_id) {
+    public UserDTO showUser(@PathVariable Integer user_id) {
         User user = userService.getUser(user_id);
         userService.assertNotAdmin(user);
-        return new gr.hua.dit.dras.dto.UserDTO(user);
+        return new UserDTO(user);
     }
 
     @Secured("USER")
     @PostMapping("/user/{user_id}")
     @ResponseBody
-    public org.springframework.http.ResponseEntity<?> editUser(
+    public ResponseEntity<?> editUser(
             @PathVariable("user_id") Integer targetUserId,
             @Valid @ModelAttribute("userEditRequest") UserEditRequest request,
             BindingResult bindingResult,
             HttpSession session
     ) {
-        // BUG-B04 FIX: Perform the authorization check FIRST, before any DB lookups.
-        // This prevents a non-admin user from probing username/email existence
-        // for arbitrary user IDs via the uniqueness-check queries below.
         Authentication authEarly = SecurityContextHolder.getContext().getAuthentication();
         boolean isAdminEarly = authEarly.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ADMIN"));
         boolean isSelfEditEarly = userService.getCurrentUserId().equals(targetUserId);
 
         if (!isAdminEarly && !isSelfEditEarly) {
-            return org.springframework.http.ResponseEntity.status(403)
+            return ResponseEntity.status(403)
                     .body(java.util.Map.of("error", "Access denied."));
         }
 
@@ -135,7 +135,7 @@ public class UserController {
         }
 
         if (bindingResult.hasErrors()) {
-            return org.springframework.http.ResponseEntity.badRequest().body(
+            return ResponseEntity.badRequest().body(
                     java.util.Map.of("error", "Validation failed", "details", bindingResult.getAllErrors())
             );
         }
@@ -150,14 +150,14 @@ public class UserController {
         /* Handle Session Invalidation */
         if (!isAdmin && isSelfEdit) {
             session.invalidate();
-            return org.springframework.http.ResponseEntity.ok(
+            return ResponseEntity.ok(
                     java.util.Map.of("message", "Profile updated. Please log in again.", "requiresLogin", true)
             );
         } else if (isAdmin && !isSelfEdit) {
             User targetUser = userService.getUser(targetUserId);
             for (Object principal : sessionRegistry.getAllPrincipals()) {
-                if (principal instanceof org.springframework.security.core.userdetails.UserDetails) {
-                    org.springframework.security.core.userdetails.UserDetails userDetails = (org.springframework.security.core.userdetails.UserDetails) principal;
+                if (principal instanceof UserDetails) {
+                    UserDetails userDetails = (UserDetails) principal;
                     if (userDetails.getUsername().equals(targetUser.getEmail())) {
                         for (SessionInformation info : sessionRegistry.getAllSessions(principal, false)) {
                             info.expireNow();
@@ -173,13 +173,13 @@ public class UserController {
             }
         }
 
-        return org.springframework.http.ResponseEntity.ok().build();
+        return ResponseEntity.ok().build();
     }
 
     @Secured("ADMIN")
     @PostMapping("/user/role/delete/{user_id}/{role_id}")
     @ResponseBody
-    public org.springframework.http.ResponseEntity<?> deleteRolefromUser(
+    public ResponseEntity<?> deleteRolefromUser(
             @PathVariable Integer user_id,
             @PathVariable Integer role_id
     ) {
@@ -192,13 +192,13 @@ public class UserController {
         user.getRoles().remove(role);
         userService.updateUser(user);
 
-        return org.springframework.http.ResponseEntity.ok().build();
+        return ResponseEntity.ok().build();
     }
 
     @Secured("ADMIN")
     @PostMapping("/user/role/add/{user_id}/{role_id}")
     @ResponseBody
-    public org.springframework.http.ResponseEntity<?> addRoletoUser(
+    public ResponseEntity<?> addRoletoUser(
             @PathVariable Integer user_id,
             @PathVariable Integer role_id
     ) {
@@ -215,24 +215,24 @@ public class UserController {
             case "OWNER":
                 if (user.getOwner() != null) {
                     assignRole(user, "OWNER");
-                    return org.springframework.http.ResponseEntity.ok().build();
+                    return ResponseEntity.ok().build();
                 }
-                return org.springframework.http.ResponseEntity.badRequest().body(
+                return ResponseEntity.badRequest().body(
                         java.util.Map.of("message", "OWNER_PROFILE_REQUIRED")
                 );
 
             case "TENANT":
                 if (user.getTenant() != null) {
                     assignRole(user, "TENANT");
-                    return org.springframework.http.ResponseEntity.ok().build();
+                    return ResponseEntity.ok().build();
                 }
-                return org.springframework.http.ResponseEntity.badRequest().body(
+                return ResponseEntity.badRequest().body(
                         java.util.Map.of("message", "TENANT_PROFILE_REQUIRED")
                 );
 
             case "USER":
                 assignRole(user, "USER");
-                return org.springframework.http.ResponseEntity.ok().build();
+                return ResponseEntity.ok().build();
 
             default:
                 throw new IllegalStateException("Unhandled role type: " + role.getName());
@@ -254,11 +254,11 @@ public class UserController {
     @Secured("ADMIN")
     @PostMapping("/user/delete/{user_id}")
     @ResponseBody
-    public org.springframework.http.ResponseEntity<?> deleteUser(@PathVariable Integer user_id) {
+    public ResponseEntity<?> deleteUser(@PathVariable Integer user_id) {
 
         userApplicationService.deleteUserAsAdmin(user_id);
 
-        return org.springframework.http.ResponseEntity.ok().build();
+        return ResponseEntity.ok().build();
     }
 
 
@@ -267,13 +267,13 @@ public class UserController {
     @Secured("USER")
     @PostMapping("/user/delete/self")
     @ResponseBody
-    public org.springframework.http.ResponseEntity<?> deleteOwnAccount(
+    public ResponseEntity<?> deleteOwnAccount(
             @Valid @ModelAttribute("deletionRequest") AccountDeletionRequest request,
             BindingResult bindingResult,
             HttpSession session
     ) {
         if (bindingResult.hasErrors()) {
-            return org.springframework.http.ResponseEntity.badRequest().body(
+            return ResponseEntity.badRequest().body(
                     java.util.Map.of("error", "Please fill out all required fields.")
             );
         }
@@ -281,7 +281,7 @@ public class UserController {
         userApplicationService.deleteCurrentUserAccount(request);
         session.invalidate(); // force logout
 
-        return org.springframework.http.ResponseEntity.ok().build();
+        return ResponseEntity.ok().build();
     }
 
 }
