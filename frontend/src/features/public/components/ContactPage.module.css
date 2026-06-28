@@ -1,87 +1,222 @@
-.container {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: var(--spacing-8) 0;
+.pageContainer {
+  max-width: 1200px;
+  margin: 3rem auto;
+  padding: 0 1.5rem;
 }
 
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.gradientText {
+  font-size: 3.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #66b3ff 0%, #004aad 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: 1px;
+}
+
+.leadText {
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+  max-width: 850px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Grid Layout */
+.gridContainer {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin-bottom: 4rem;
+}
+
+@media (min-width: 992px) {
+  .gridContainer {
+    grid-template-columns: 5fr 7fr;
+  }
+}
+
+/* Cards */
 .card {
   background-color: var(--background-paper);
-  padding: 2.5rem;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
-.title {
-  font-size: 2rem;
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
   margin-bottom: 1.5rem;
-  text-align: center;
   color: var(--text-primary);
 }
 
-.success {
-  background-color: #f0fdf4;
-  color: var(--color-success);
-  padding: 1rem;
-  border-radius: var(--radius-md);
-  margin-bottom: 1rem;
-  border: 1px solid #bbf7d0;
+/* Contact Info Card */
+.contactInfoCard {
+  padding: 2rem;
+  border-left: 4px solid #004aad;
 }
 
-.error {
-  background-color: #fdf2f2;
-  color: var(--color-danger);
-  padding: 1rem;
-  border-radius: var(--radius-md);
-  margin-bottom: 1rem;
-  border: 1px solid #fbd5d5;
+.contactItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 2rem;
 }
 
-.formGroup {
-  margin-bottom: 1.25rem;
+.contactItem:last-child {
+  margin-bottom: 0;
 }
 
-.formGroupLarge {
-  margin-bottom: 1.5rem;
+.contactIcon {
+  color: #004aad;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.contactText {
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.contactLink {
+  color: #004aad;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.contactLink:hover {
+  color: #00367f;
+  text-decoration: underline;
+}
+
+/* Contact Form Card */
+.formCard {
+  padding: 2.5rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .label {
-  display: block;
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin-bottom: 0.4rem;
+  font-weight: 500;
   color: var(--text-primary);
 }
 
-.input {
+.input, .textarea {
   width: 100%;
-  padding: 0.6rem 0.8rem;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  background-color: rgba(128, 128, 128, 0.05);
+  color: var(--text-primary);
+  font-family: inherit;
   font-size: 1rem;
-  background-color: var(--background-paper);
-  color: var(--text-primary);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-.input:focus {
+.input:focus, .textarea:focus {
   outline: none;
-  border-color: var(--color-primary-500);
-  box-shadow: 0 0 0 3px var(--color-primary-100);
+  border-color: #004aad;
+  box-shadow: 0 0 0 0.2rem rgba(0, 74, 173, 0.25);
+  background-color: var(--background-paper);
 }
 
-.btn {
-  width: 100%;
-  padding: 0.8rem;
-  background-color: var(--color-primary-600);
+.textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.submitWrapper {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.submitBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, #66b3ff, #004aad);
   color: #fff;
   border: none;
-  border-radius: var(--radius-md);
-  font-size: 1rem;
+  border-radius: 0.5rem;
+  padding: 0.75rem 2rem;
+  font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.3s ease-in-out;
 }
 
-.btn:hover {
-  background-color: var(--color-primary-500);
+.submitBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 74, 173, 0.3);
+}
+
+.submitBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Alerts */
+.alertSuccess {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.alertError {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Map Section */
+.mapSection {
+  margin-top: 4rem;
+}
+
+.mapTitle {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+  color: var(--text-primary);
+}
+
+.mapContainer {
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }

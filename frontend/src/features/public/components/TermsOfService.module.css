@@ -1,0 +1,122 @@
+.container {
+  max-width: 1200px;
+  margin: 3rem auto;
+  padding: 0 1.5rem;
+}
+
+.header {
+  text-align: center;
+  padding-bottom: 4rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 3rem;
+}
+
+.title {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  color: var(--text-secondary);
+}
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+@media (min-width: 992px) {
+  .layout {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+.sidebar {
+  flex: 0 0 25%;
+  position: sticky;
+  top: 5rem;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--background-paper);
+  border-radius: var(--radius-lg);
+  padding: 1rem 0;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-color);
+}
+
+.navLink {
+  padding: 0.75rem 1.5rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.navLink:hover {
+  background-color: rgba(128, 128, 128, 0.05);
+  color: var(--text-primary);
+}
+
+.navLink.active {
+  color: #004aad;
+  background-color: rgba(0, 74, 173, 0.05);
+  border-left-color: #004aad;
+}
+
+.mainContent {
+  flex: 1;
+}
+
+.section {
+  padding-top: 5rem; /* Offset for anchor jumps */
+  margin-top: -4rem;
+  margin-bottom: 3rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.sectionTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+}
+
+.list {
+  padding-left: 1.5rem;
+  margin-top: 1rem;
+}
+
+.list li {
+  margin-bottom: 0.5rem;
+}
+
+.link {
+  color: #004aad;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.link:hover {
+  color: #00367f;
+  text-decoration: underline;
+}
+
+.footer {
+  margin-top: 4rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+  color: rgba(128, 128, 128, 0.7);
+  font-size: 0.9rem;
+}
