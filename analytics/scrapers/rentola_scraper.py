@@ -1,6 +1,6 @@
 """
-Dynamic Rent Adjustment System (DRAS) – Rentola Web Scraper
------------------------------------------------------------
+# Dynamic Rent Adjustment System (DRAS) - Rentola Web Scraper
+# -----------------------------------------------------------
 This script automates the collection of residential rental listings from the
 Rentola (rentola.gr) website for the Athens area. It navigates paginated search
 results, handles cookie consent prompts, extracts structured and semi-structured
@@ -65,7 +65,11 @@ import urllib
 import hashlib
 import json
 import os
+import sys
 import argparse
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from constants import PPM2_MIN, PPM2_MAX
 
 # CONFIG
 DATA_DIR = Path("data")
@@ -242,6 +246,8 @@ def download_image(img_url: str, folder: Path, user_agent: str, referer_url: str
 
         if not resp or resp.status_code != 200:
             print(f"    [Image] non-200 {resp.status_code} for {img_url}")
+            if resp:
+                resp.close()
             return None
 
         # Writes to disk in chunks
@@ -310,7 +316,10 @@ def parse_property_page(html_content):
             # Fallback for mobile view
             mob_price = soup.select_one("p.mb-4.font-bold.md\\:text-lg")
             if mob_price:
-                raw_price_text = " ".join(price_element.stripped_strings)
+                # BUG-P03 FIX: Use mob_price (the fallback element), not price_element
+                # (which is None at this point). The original code always produced
+                # raw_price_text=None for mobile-only listings.
+                raw_price_text = " ".join(mob_price.stripped_strings)
 
         property_data["price"] = parse_money_to_float(raw_price_text)
 
@@ -342,7 +351,7 @@ def parse_property_page(html_content):
 
             # Filter for absurd €/m_2 values
             ppm2 = property_data["price_per_m2"]
-            if ppm2 and (ppm2 < 2 or ppm2 > 80):
+            if ppm2 and (ppm2 < PPM2_MIN or ppm2 > PPM2_MAX):
                 property_data["price_per_m2"] = None
 
         except Exception as e:
@@ -475,8 +484,10 @@ def push_to_backend(
         print(f"CRITICAL: Failed to connect to the backend API: {e}")
 
 
+driver = None
+
 # Main Scraper Pipeline
-def run_scraper(MAX_PAGES, image_download=False, mode="normal"):
+def run_scraper(max_pages, image_download=False, mode="normal"):
     """
     Executes the full web scraping pipeline for Rentola Athens listings.
 
@@ -527,6 +538,7 @@ def run_scraper(MAX_PAGES, image_download=False, mode="normal"):
 
     print("Initializing the WebDriver...")
     service = Service(ChromeDriverManager().install())
+    global driver
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
     # Hides "navigator.webdriver"
@@ -540,15 +552,16 @@ def run_scraper(MAX_PAGES, image_download=False, mode="normal"):
 
     # 2. Loop through result pages for Rentola Athens
     base_search_url = "https://rentola.gr/pros-enoikiasi/athina?page={}"
-    print(f"Opening {driver.current_url}")
     all_property_urls: List[str] = []
     cookies_accepted = False
 
     # 3. Load listings
-    for page_num in range(1, MAX_PAGES + 1):
+    for page_num in range(1, max_pages + 1):
         url = base_search_url.format(page_num)
-        print(f"\nScraping page [{page_num}/{MAX_PAGES}]: {url}")
+        print(f"\nScraping page [{page_num}/{max_pages}]: {url}")
         driver.get(url)
+        if page_num == 1:
+            print(f"Opened {driver.current_url}")
 
         time.sleep(random.uniform(2, 5))  # delay
 
@@ -565,7 +578,7 @@ def run_scraper(MAX_PAGES, image_download=False, mode="normal"):
                     cookie_btn.click()
                     cookie_dismissed = True
                     print("Cookie banner dismissed via ID.")
-                except:
+                except Exception:
                     # Tries visible text
                     possible_texts = ["Αποδοχή όλων", "Accept all"]
                     buttons = driver.find_elements(By.TAG_NAME, "button")
@@ -619,7 +632,7 @@ def run_scraper(MAX_PAGES, image_download=False, mode="normal"):
         try:
             wait.until(EC.presence_of_all_elements_located(
                 (By.CSS_SELECTOR, "div[data-testid='propertyTile']")))
-        except:
+        except Exception:
             print("No listings found, reached last page or timed out.")
             break
 
@@ -688,42 +701,43 @@ def run_scraper(MAX_PAGES, image_download=False, mode="normal"):
         print("\tNo URLs found. Check selectors for Step 1.")
     else:
         print("\nStarting Step 2: Processing listings...")
-        for i, url in enumerate(all_property_urls):
-            print(f"Scraping [{i + 1}/{len(all_property_urls)}]: {url}")
+        try:
+            for i, url in enumerate(all_property_urls):
+                print(f"Scraping [{i + 1}/{len(all_property_urls)}]: {url}")
 
-            # Every 10 listings, pauses for 20-50 seconds
-            if i > 0 and i % 10 == 0:
-                print("Taking a short break...")
-                time.sleep(random.uniform(20, 50))
+                # Every 10 listings, pauses for 20-50 seconds
+                if i > 0 and i % 10 == 0:
+                    print("Taking a short break...")
+                    time.sleep(random.uniform(20, 50))
 
-            try:
-                driver.get(url)
-                time.sleep(random.uniform(2, 6))
+                try:
+                    driver.get(url)
+                    time.sleep(random.uniform(2, 6))
 
-                # Waits for a key element from the detail page to be present
-                wait.until(EC.presence_of_element_located(
-                    (By.XPATH, "//h4[contains(text(), 'Λεπτομέρειες')]")
-                ))
-                time.sleep(random.uniform(0.5, 1.5))  # pause for JS to finish
+                    # Waits for a key element from the detail page to be present
+                    wait.until(EC.presence_of_element_located(
+                        (By.XPATH, "//h4[contains(text(), 'Λεπτομέρειες')]")
+                    ))
+                    time.sleep(random.uniform(0.5, 1.5))  # pause for JS to finish
 
-                # Passes the loaded page's HTML to the parser function
-                detail_html = driver.page_source
-                data = parse_property_page(detail_html)
-                data['url'] = url
-                data['date_scraped'] = dt.datetime.today().strftime("%Y-%m-%d")
+                    # Passes the loaded page's HTML to the parser function
+                    detail_html = driver.page_source
+                    data = parse_property_page(detail_html)
+                    data['url'] = url
+                    data['date_scraped'] = dt.datetime.today().strftime("%Y-%m-%d")
 
-                # Removes invalid formats before saving to CSV
-                if "images" in data and isinstance(data["images"], list):
-                    data["images"] = [u for u in data["images"] if is_valid_image_url(u)]
+                    # Removes invalid formats before saving to CSV
+                    if "images" in data and isinstance(data["images"], list):
+                        data["images"] = [u for u in data["images"] if is_valid_image_url(u)]
 
-                all_property_data.append(data)
+                    all_property_data.append(data)
 
-            except Exception as e:
-                print(f"    [Failed to scrape {url}: {e}]")
-                continue  # skips to the next URL
-
-    print("\nDetail scraping complete.")
-    driver.quit()  # closes browser after scraping is finished
+                except Exception as e:
+                    print(f"    [Failed to scrape {url}: {e}]")
+                    continue  # skips to the next URL
+        finally:
+            print("\nDetail scraping complete.")
+            driver.quit()  # closes browser after scraping is finished
 
     # 7. Save to CSV
     if all_property_data:
@@ -925,8 +939,8 @@ def run_scraper(MAX_PAGES, image_download=False, mode="normal"):
             df = df[
                 (df["area_numeric"] >= 30) &
                 (df["area_numeric"] <= 250) &
-                (df["price_per_m2"] >= 4) &
-                (df["price_per_m2"] <= 40)
+                (df["price_per_m2"] >= PPM2_MIN) &
+                (df["price_per_m2"] <= PPM2_MAX)
                 ]
 
             # Computes weighted mean on cleaned data
@@ -994,4 +1008,11 @@ if __name__ == "__main__":
 
     print(f"MODE: {MODE.upper()}")
 
-    run_scraper(MAX_PAGES, image_download=IMAGE_DOWNLOAD, mode=MODE)
+    try:
+        run_scraper(MAX_PAGES, image_download=IMAGE_DOWNLOAD, mode=MODE)
+    finally:
+        if 'driver' in globals() and driver is not None:
+            try:
+                driver.quit()
+            except Exception as e:
+                print(f"Warning: error closing browser: {e}")

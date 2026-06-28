@@ -33,7 +33,7 @@ def setup_chrome():
     options.add_argument("--disable-notifications")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
-    driver = uc.Chrome(options=options, version_main=147)
+    driver = uc.Chrome(options=options)
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
     return driver
 
@@ -65,87 +65,95 @@ def get_population():
     seen_urls = set()
     cookies_accepted = False
 
-    for page in range(1, MAX_PAGES + 1):
-        url = base_url.format(page)
-        print(f"Scraping Page {page}/{MAX_PAGES}...")
+    try:
+        for page in range(1, MAX_PAGES + 1):
+            url = base_url.format(page)
+            print(f"Scraping Page {page}/{MAX_PAGES}...")
 
+            try:
+                driver.get(url)
+                time.sleep(random.uniform(4, 7))
+
+                BLOCK_SIGNALS = ["access denied", "security", "just a moment"]
+                if any(s in driver.title.lower() for s in BLOCK_SIGNALS):
+                    print("Blocked by Datadome. Saving and aborting...")
+                    break
+
+                if not cookies_accepted:
+                    try:
+                        btn = WebDriverWait(driver, 3).until(
+                            EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'ΣΥΜΦΩΝΩ')]")))
+                        driver.execute_script("arguments[0].click();", btn)
+                        cookies_accepted = True
+                        time.sleep(1)
+                    except Exception:
+                        pass
+
+                # Scroll down slowly to trigger lazy loading
+                scroll_height = random.uniform(0.4, 0.8)
+                driver.execute_script(f"window.scrollTo(0, document.body.scrollHeight * {scroll_height});")
+                time.sleep(random.uniform(2, 6))
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(random.uniform(2, 6))
+
+                soup = BeautifulSoup(driver.page_source, "html.parser")
+                articles = soup.find_all("article", class_="ordered-element")
+
+                if not articles:
+                    print("No more listings found. Reached end of market.")
+                    break
+
+                for article in articles:
+                    link_tag = article.select_one("a.tile__link")
+                    if not link_tag: continue
+
+                    l_url = urljoin("https://www.spitogatos.gr", link_tag["href"])
+                    if l_url in seen_urls: continue
+                    seen_urls.add(l_url)
+
+                    title = article.select_one("h3.tile__title").get_text(strip=True) if article.select_one(
+                        "h3.tile__title") else ""
+
+                    # Extract Size
+                    size_m2 = None
+                    size_match = re.search(r"(\d+(?:[.,]\d+)?)\s*τ\.μ\.", title)
+                    if size_match:
+                        size_m2 = float(size_match.group(1).replace(",", "."))
+                        
+                    if not size_m2 or size_m2 == 0:
+                        continue
+
+                    # Extract Price
+                    price_tag = article.select_one(".price__text")
+                    price_val = parse_money(price_tag.get_text()) if price_tag else None
+
+                    # Calculate PPM2
+                    ppm2 = round(price_val / size_m2, 2) if price_val and size_m2 else None
+                    if ppm2 and (ppm2 < 2 or ppm2 > 80):
+                        ppm2 = None
+
+                    all_data.append({
+                        "url": l_url,
+                        "price": price_val,
+                        "Μέγεθος": size_m2,
+                        "price_per_m2": ppm2
+                    })
+
+                time.sleep(random.uniform(5, 10))
+
+                if page % 10 == 0:
+                    print("Taking a 45-second break...")
+                    time.sleep(random.uniform(40, 55))
+
+            except Exception as e:
+                print(f"Error on page {page}: {e}")
+                continue
+
+    finally:
         try:
-            driver.get(url)
-            time.sleep(random.uniform(4, 7))
-
-            BLOCK_SIGNALS = ["access denied", "security", "just a moment"]
-            if any(s in driver.title.lower() for s in BLOCK_SIGNALS):
-                print("Blocked by Datadome. Saving and aborting...")
-                break
-
-            if not cookies_accepted:
-                try:
-                    btn = WebDriverWait(driver, 3).until(
-                        EC.element_to_be_clickable((By.XPATH, "//button[contains(., 'ΣΥΜΦΩΝΩ')]")))
-                    driver.execute_script("arguments[0].click();", btn)
-                    cookies_accepted = True
-                    time.sleep(1)
-                except:
-                    pass
-
-            # Scroll down slowly to trigger lazy loading
-            scroll_height = random.uniform(0.4, 0.8)
-            driver.execute_script(f"window.scrollTo(0, document.body.scrollHeight * {scroll_height});")
-            time.sleep(random.uniform(2, 6))
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(random.uniform(2, 6))
-
-            soup = BeautifulSoup(driver.page_source, "html.parser")
-            articles = soup.find_all("article", class_="ordered-element")
-
-            if not articles:
-                print("No more listings found. Reached end of market.")
-                break
-
-            for article in articles:
-                link_tag = article.select_one("a.tile__link")
-                if not link_tag: continue
-
-                l_url = urljoin("https://www.spitogatos.gr", link_tag["href"])
-                if l_url in seen_urls: continue
-                seen_urls.add(l_url)
-
-                title = article.select_one("h3.tile__title").get_text(strip=True) if article.select_one(
-                    "h3.tile__title") else ""
-
-                # Extract Size
-                size_m2 = None
-                size_match = re.search(r"(\d+(?:[.,]\d+)?)\s*τ\.μ\.", title)
-                if size_match:
-                    size_m2 = float(size_match.group(1).replace(",", "."))
-
-                # Extract Price
-                price_tag = article.select_one(".price__text")
-                price_val = parse_money(price_tag.get_text()) if price_tag else None
-
-                # Calculate PPM2
-                ppm2 = round(price_val / size_m2, 2) if price_val and size_m2 else None
-                if ppm2 and (ppm2 < 2 or ppm2 > 80):
-                    ppm2 = None
-
-                all_data.append({
-                    "url": l_url,
-                    "price": price_val,
-                    "Μέγεθος": size_m2,
-                    "price_per_m2": ppm2
-                })
-
-            time.sleep(random.uniform(5, 10))
-
-            if page % 10 == 0:
-                print("Taking a 45-second break...")
-                time.sleep(random.uniform(40, 55))
-
-        except Exception as e:
-            print(f"Error on page {page}: {e}")
-            break
-
-    driver.quit()
+            driver.quit()
+        except Exception as quit_err:
+            print(f"Warning: error closing browser: {quit_err}")
 
     if all_data:
         df = pd.DataFrame(all_data)

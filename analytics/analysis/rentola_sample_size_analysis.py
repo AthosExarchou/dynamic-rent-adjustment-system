@@ -1,9 +1,14 @@
 # Imported Libraries
+import sys
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import re
 from pathlib import Path
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from constants import PPM2_MIN, PPM2_MAX
 
 # Configuration
 POPULATION_CSV = Path("data/rentola_population.csv")
@@ -16,7 +21,7 @@ RANDOM_SEED = 42
 
 # Validation Rules
 MIN_SIZE, MAX_SIZE = 30, 250
-MIN_PPM2, MAX_PPM2 = 2, 80
+MIN_PPM2, MAX_PPM2 = PPM2_MIN, PPM2_MAX
 
 # Helpers
 def parse_numeric(x):
@@ -62,10 +67,9 @@ def main():
     df_pop["price_per_m2"] = pd.to_numeric(df_pop["price_per_m2"], errors="coerce")
     df_pop["area_numeric"] = df_pop["Μέγεθος"].apply(parse_numeric)
 
-    df_pop = df_pop.dropna(subset=["price_per_m2", "area_numeric"])
-    # Apply Strict Scraper Validation Bounds
     initial_len = len(df_pop)
     df_pop = df_pop.dropna(subset=["price_per_m2", "area_numeric"])
+    # Apply Strict Scraper Validation Bounds
     df_pop = df_pop[
         (df_pop["area_numeric"] >= MIN_SIZE) &
         (df_pop["area_numeric"] <= MAX_SIZE) &
@@ -86,7 +90,7 @@ def main():
     print(f"True weighted mean: {true_mean:.4f} €/m²")
 
     # Dynamic sample sizes
-    small = np.arange(20, 200, 20)
+    small = np.arange(50, 200, 20)
     medium = np.arange(200, 600, 50)
     large = np.arange(600, max_available + 1, 100)
 
@@ -175,11 +179,14 @@ def main():
         print("\nNo stable sample size found under tolerance criterion.")
 
     # SE Decay Exponent (log-log)
-    log_n = np.log(results["sample_size"])
-    log_se = np.log(results["std_error"])
-
-    slope, _ = np.polyfit(log_n, log_se, 1)
-    print(f"Empirical SE decay exponent: {slope:.3f} (ideal ≈ -0.5)")
+    valid_se_mask = ~np.isnan(results["std_error"]) & (np.array(results["std_error"]) > 0)
+    if valid_se_mask.any():
+        log_n = np.log(np.array(results["sample_size"])[valid_se_mask])
+        log_se = np.log(np.array(results["std_error"])[valid_se_mask])
+        slope, _ = np.polyfit(log_n, log_se, 1)
+        print(f"Empirical SE decay exponent: {slope:.3f} (ideal ≈ -0.5)")
+    else:
+        print("Not enough valid SE values to calculate empirical SE decay exponent.")
 
     # Visualization
     print("\nGenerating plots...")

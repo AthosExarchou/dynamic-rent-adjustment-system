@@ -98,6 +98,7 @@ import random
 import re
 import os
 import shutil
+from constants import PPM2_MIN, PPM2_MAX
 import json
 import hashlib
 import argparse
@@ -149,7 +150,7 @@ RETRY_DELAY = 2
 VALIDATION_RULES = {
     "price": {"min": 100, "max": 20000},
     "size": {"min": 20, "max": 500},
-    "price_per_m2": {"min": 2, "max": 80},
+    "price_per_m2": {"min": PPM2_MIN, "max": PPM2_MAX},
     "floor": {"min": -3, "max": 100},
     "yearBuilt": {"min": 1800, "max": dt.datetime.now().year + 5},
     "bedrooms": {"min": 0, "max": 10},
@@ -222,7 +223,7 @@ def ensure_list(x):
         try:
             parsed = ast.literal_eval(x)
             return parsed if isinstance(parsed, list) else []
-        except:
+        except Exception:
             return []
     return []
 
@@ -329,7 +330,6 @@ def parse_floor(floor_str) -> int | None:
 
     # Ground floor
     ground_patterns = [
-        "ισ",
         "ισ.",
         "ισογ",
         "ισόγ",
@@ -476,7 +476,8 @@ def download_image(img_url: str, folder: Path, user_agent: str, referer_url: str
                 time.sleep(random.uniform(2, 6))
 
         if not resp or resp.status_code != 200:
-            logger.warning("Image non-200 response | status=%d | url=%s", resp.status_code, img_url)
+            status = resp.status_code if resp else "N/A"
+            logger.warning("Image non-200 response | status=%s | url=%s", status, img_url)
             return None
 
         # Writes to disk in chunks
@@ -548,7 +549,8 @@ def parse_property_page(html_content: str) -> Dict[str, Any]:
                     key = dt_el.get_text(strip=True).lower()
                     val = dd_el.get_text(strip=True)
                     characteristics[key] = val
-            else:
+            elif dts or dds:
+                logger.warning("Mismatch in <dl> row counts: %d dts vs %d dds", len(dts), len(dds))
                 for row in dl.select("div, li"):
                     text = row.get_text(separator=":", strip=True)
                     if ":" in text:
@@ -874,7 +876,7 @@ def safe_get(driver, url, retries=3):
     return False
 
 
-def rotate_session(old_driver):
+def rotate_session(old_driver, display=None):
     """Dynamically rotates the session."""
     logger.info("Rotating session...")
     try:
@@ -884,11 +886,18 @@ def rotate_session(old_driver):
 
     time.sleep(random.uniform(5, 10))
 
-    fresh_options = setup_chrome_options()  # new ChromeOptions object
-    new_driver = init_driver(fresh_options)
-    new_agent = new_driver.execute_script("return navigator.userAgent;")
-
-    return new_driver, new_agent
+    try:
+        fresh_options = setup_chrome_options()  # new ChromeOptions object
+        new_driver = init_driver(fresh_options)
+        new_agent = new_driver.execute_script("return navigator.userAgent;")
+        return new_driver, new_agent
+    except Exception:
+        if display:
+            try:
+                display.stop()
+            except Exception:
+                pass
+        raise
 
 
 # Display & Stealth Configurations
@@ -1237,7 +1246,7 @@ def run_scraper(config: ScraperConfig):
                 if not safe_get(driver, url):
                     logger.warning(
                         "Hard block on search page | page=%d | rotating session", page_num)
-                    driver, dynamic_user_agent = rotate_session(driver)
+                    driver, dynamic_user_agent = rotate_session(driver, display)
 
                     cookies_accepted = False
                     fresh_session = True
@@ -1273,15 +1282,8 @@ def run_scraper(config: ScraperConfig):
                 articles = soup.find_all("article", class_="ordered-element")
 
                 if len(articles) < 5:
-                    if page_num == 1:
-                        driver, dynamic_user_agent = rotate_session(driver)
-                        cookies_accepted = False
-                        wait = WebDriverWait(driver, WAIT_SECONDS)
-                        continue
-                    else:
-                        logger.warning("Suspiciously low article count (%d) on page %d - likely blocked",
-                                       len(articles), page_num)
-                        break
+                    logger.warning("Suspiciously low article count (%d) on page %d - likely blocked", len(articles), page_num)
+                    break
 
                 if not articles:
                     logger.warning("No listings found on page | page=%d | url=%s", page_num, url)
@@ -1322,7 +1324,7 @@ def run_scraper(config: ScraperConfig):
 
                         # Calculate PPM2
                         ppm2 = round(price_val / size_m2, 2) if price_val and size_m2 else None
-                        if ppm2 and (ppm2 < 2 or ppm2 > 80):
+                        if ppm2 and (ppm2 < PPM2_MIN or ppm2 > PPM2_MAX):
                             ppm2 = None
 
                         # Attributes
@@ -1358,7 +1360,7 @@ def run_scraper(config: ScraperConfig):
                 if page_num % 20 == 0:
                     logger.info("Deep sleep for IP cooldown | page=%d | duration=5-10 min", page_num)
                     time.sleep(random.uniform(300, 600))  # 5 to 10 minutes
-                    driver, dynamic_user_agent = rotate_session(driver)
+                    driver, dynamic_user_agent = rotate_session(driver, display)
                     cookies_accepted = False
                     fresh_session = True
                     wait = WebDriverWait(driver, WAIT_SECONDS)
@@ -1369,11 +1371,14 @@ def run_scraper(config: ScraperConfig):
                 # Save state after each page
                 state["last_page"] = page_num
                 state["all_property_data"] = all_property_data
-                try:
-                    with open(state_file, "w", encoding="utf-8") as f:
-                        json.dump(state, f, ensure_ascii=False)
-                except Exception as e:
-                    logger.warning("Failed to save state: %s", e)
+                if page_num % 10 == 0:
+                    try:
+                        temp_file = state_file.with_suffix(".tmp")
+                        with open(temp_file, "w", encoding="utf-8") as f:
+                            json.dump(state, f, ensure_ascii=False)
+                        temp_file.replace(state_file)
+                    except Exception as e:
+                        logger.warning("Failed to save state: %s", e)
 
             except Exception:
                 logger.exception("Error scraping search page | page=%d | url=%s", page_num, url)
@@ -1403,7 +1408,7 @@ def run_scraper(config: ScraperConfig):
                 if details_processed > 0 and details_processed % 100 == 0:
                     logger.info("Deep sleep for IP cooldown | listing=%d | duration=5-10 min", i)
                     time.sleep(random.uniform(300, 600))  # 5 to 10 minutes
-                    driver, dynamic_user_agent = rotate_session(driver)
+                    driver, dynamic_user_agent = rotate_session(driver, display)
 
                     cookies_accepted = False
                     fresh_session = True
@@ -1413,7 +1418,7 @@ def run_scraper(config: ScraperConfig):
                 if not safe_get(driver, url, retries=2):
                     logger.warning("Block on detail page | listing=%d/%d | url=%s | rotating session",
                                    i + 1, len(all_property_data), url)
-                    driver, dynamic_user_agent = rotate_session(driver)
+                    driver, dynamic_user_agent = rotate_session(driver, display)
 
                     cookies_accepted = False
                     fresh_session = True
@@ -1450,11 +1455,14 @@ def run_scraper(config: ScraperConfig):
                 # Save state after each detail page
                 state["last_detail_index"] = i
                 state["all_property_data"] = all_property_data
-                try:
-                    with open(state_file, "w", encoding="utf-8") as f:
-                        json.dump(state, f, ensure_ascii=False)
-                except Exception:
-                    pass
+                if details_processed % 10 == 0:
+                    try:
+                        temp_file = state_file.with_suffix(".tmp")
+                        with open(temp_file, "w", encoding="utf-8") as f:
+                            json.dump(state, f, ensure_ascii=False)
+                        temp_file.replace(state_file)
+                    except Exception:
+                        pass
 
                 details_processed += 1
 
@@ -1502,7 +1510,8 @@ def run_scraper(config: ScraperConfig):
         current_ids = set()
 
         for idx, row in df.iterrows():
-
+            if pd.isna(row.get('url')):
+                continue
             lid = name_for_path(row['url'].split("/")[-1])
             current_ids.add(lid)
             meta_path = IMAGES_DIR / lid / "meta.json"
@@ -1613,8 +1622,8 @@ def run_scraper(config: ScraperConfig):
             df_calc = df_calc[
                 (df_calc["area_numeric"] >= 30) &
                 (df_calc["area_numeric"] <= 250) &
-                (df_calc["price_per_m2"] >= 2) &
-                (df_calc["price_per_m2"] <= 80)
+                (df_calc["price_per_m2"] >= PPM2_MIN) &
+                (df_calc["price_per_m2"] <= PPM2_MAX)
                 ]
 
             # Effective sample size
