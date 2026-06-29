@@ -5,6 +5,8 @@ import gr.hua.dit.dras.model.enums.RentalDuration;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+import java.util.List;
 
 public class ListingCreateDTO {
     @NotBlank
@@ -28,6 +30,8 @@ public class ListingCreateDTO {
     @NotNull
     @Positive
     private Integer sizeM2;
+    @Size(max = 10, message = "You can upload a maximum of 10 images")
+    private List<String> images;
 
     public String getTitle() {
         return title;
@@ -97,5 +101,12 @@ public class ListingCreateDTO {
     }
     public void setSizeM2(Integer sizeM2) {
         this.sizeM2 = sizeM2;
+    }
+
+    public List<String> getImages() {
+        return images;
+    }
+    public void setImages(List<String> images) {
+        this.images = images;
     }
 }

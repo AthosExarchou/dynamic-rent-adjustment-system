@@ -118,6 +118,9 @@ public class ListingController {
         listing.setRentalDuration(listingDTO.getRentalDuration());
         listing.setYearBuilt(listingDTO.getYearBuilt());
         listing.setSizeM2(listingDTO.getSizeM2());
+        if (listingDTO.getImages() != null) {
+            listing.setImages(listingDTO.getImages());
+        }
 
         listingApplicationService.createListing(
                 listing, ownerId, firstName, lastName, phoneNumber, session

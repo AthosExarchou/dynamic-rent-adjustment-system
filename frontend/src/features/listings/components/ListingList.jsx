@@ -157,6 +157,15 @@ export default function ListingList() {
         <div className={styles.grid}>
           {listings.map(l => (
             <div key={l.id} className={styles.card}>
+              {l.images && l.images.length > 0 && (
+                <img 
+                  src={l.images[0]} 
+                  alt={l.title} 
+                  style={{ width: '100%', height: '180px', objectFit: 'cover',
+                    borderTopLeftRadius: '12px', borderTopRightRadius: '12px', display: 'block' }}
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              )}
               <div className={styles.cardContent}>
                 <div className={styles.cardTop}>
                   <h5 className={styles.cardTitle}>

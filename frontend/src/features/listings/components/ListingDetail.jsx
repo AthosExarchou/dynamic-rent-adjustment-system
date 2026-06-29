@@ -106,6 +106,23 @@ export default function ListingDetail() {
 
           <hr className={styles.divider} />
 
+          {listing.images && listing.images.length > 0 && (
+            <div className={styles.imageGallery}
+                 style={{display: 'flex', gap: '10px', overflowX: 'auto',
+                   marginBottom: '1.5rem', padding: '10px 0', scrollbarWidth: 'thin' }}>
+              {listing.images.map((imgUrl, idx) => (
+                <img 
+                  key={idx} 
+                  src={imgUrl} 
+                  alt={`Listing view ${idx + 1}`} 
+                  style={{ height: '300px', objectFit: 'cover',
+                    borderRadius: '8px', flexShrink: 0, border: '1px solid #eaeaea' }}
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              ))}
+            </div>
+          )}
+
           <div className={styles.descriptionSection}>
             <h5 className={styles.sectionHeading}>Description</h5>
             <p className={styles.descriptionText}>{listing.description}</p>

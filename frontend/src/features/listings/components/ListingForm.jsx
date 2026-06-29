@@ -14,6 +14,8 @@ export default function ListingForm() {
     floor: '', yearBuilt: '', bedrooms: '', bathrooms: '',
     firstName: '', lastName: '', phoneNumber: ''
   });
+  const [images, setImages] = useState(['']);
+  const maxImages = 10;
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -23,6 +25,14 @@ export default function ListingForm() {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    const validUrlRegex = /^(https?:\/\/)/;
+    const invalidImage = images.find(url => url.trim() && !validUrlRegex.test(url.trim()));
+    if (invalidImage) {
+      setError('One or more image URLs are invalid. They must start with http:// or https://');
+      setLoading(false);
+      return;
+    }
 
     // Prepare parameters for API matching MultiPart / URLParams in MVC controller
     const params = new URLSearchParams({
@@ -46,6 +56,13 @@ export default function ListingForm() {
       params.append('lastName', formData.lastName);
       params.append('phoneNumber', formData.phoneNumber);
     }
+
+    images.forEach(url => {
+      const trimmed = url.trim();
+      if (trimmed) {
+        params.append('images', trimmed);
+      }
+    });
 
     try {
       await apiClient('/listings/new', {
@@ -198,6 +215,50 @@ export default function ListingForm() {
               </div>
             </div>
           )}
+
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Property Images (URLs)</label>
+            {images.map((url, index) => (
+              <div key={index} className={styles.imageInputRow}
+                   style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <input
+                  type="url"
+                  placeholder="https://example.com/image.jpg"
+                  value={url}
+                  onChange={(e) => {
+                    const newImages = [...images];
+                    newImages[index] = e.target.value;
+                    setImages(newImages);
+                  }}
+                  className={styles.input}
+                  style={{ flex: 1 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newImages = images.filter((_, i) => i !== index);
+                    setImages(newImages.length ? newImages : ['']);
+                  }}
+                  className={styles.removeBtn}
+                  style={{ padding: '0 1rem', background: 'var(--color-danger, #e74c3c)',
+                    color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                  X
+                </button>
+              </div>
+            ))}
+            {images.length < maxImages && (
+              <button
+                type="button"
+                onClick={() => setImages([...images, ''])}
+                className={styles.addBtn}
+                style={{ padding: '0.5rem 1rem', background: 'var(--color-secondary, #3498db)',
+                  color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginTop: '0.5rem' }}
+              >
+                + Add Another Image
+              </button>
+            )}
+          </div>
 
           <button type="submit" disabled={loading} className={styles.submitBtn}>
             {loading ? 'Submitting...' : 'Submit Property'}
