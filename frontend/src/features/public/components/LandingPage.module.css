@@ -24,6 +24,16 @@
   color: var(--text-primary);
 }
 
+/* Make all favicons/lucide icons glow purple on hover in the Home Page */
+.pageWrapper svg {
+  transition: all 0.3s ease;
+}
+
+.pageWrapper svg:hover {
+  color: #a855f7 !important;
+  filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.5));
+}
+
 /* Hero Section */
 .heroSection {
   position: relative;

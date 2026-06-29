@@ -68,9 +68,12 @@ export default function MainLayout() {
             <button 
               className={styles.mobileToggle} 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-expanded={isMobileMenuOpen}
               aria-label="Toggle navigation"
             >
-              {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+              <span className={`${styles.togglerBar} ${styles.bar1}`}></span>
+              <span className={`${styles.togglerBar} ${styles.bar2}`}></span>
+              <span className={`${styles.togglerBar} ${styles.bar3}`}></span>
             </button>
 
             {/* Main Navigation */}
