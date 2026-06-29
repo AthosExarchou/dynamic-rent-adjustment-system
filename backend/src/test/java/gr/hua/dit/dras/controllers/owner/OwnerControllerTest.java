@@ -1,6 +1,5 @@
 package gr.hua.dit.dras.controllers.owner;
 
-import gr.hua.dit.dras.dto.OwnerCreateRequest;
 import gr.hua.dit.dras.entities.Listing;
 import gr.hua.dit.dras.entities.Owner;
 import gr.hua.dit.dras.entities.User;
@@ -17,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -45,15 +45,15 @@ class OwnerControllerTest {
     @BeforeEach
     void setUp() {
         testUser = new User();
-        testUser.setId(1);
+        ReflectionTestUtils.setField(testUser, "id", 1);
         testUser.setUsername("testuser");
 
         testOwner = new Owner();
-        testOwner.setId(10);
+        ReflectionTestUtils.setField(testOwner, "id", 10);
         testOwner.setUser(testUser);
 
         testListing = new Listing();
-        testListing.setId(100);
+        ReflectionTestUtils.setField(testListing, "id", 100);
         testListing.setTitle("Test Listing");
         testListing.setStatus(ListingStatus.APPROVED);
         testListing.setExternal(false);
@@ -79,18 +79,18 @@ class OwnerControllerTest {
     @DisplayName("Should filter external and non-approved listings")
     void showListings_FiltersExternalAndNonApprovedListings() {
         Listing approvedLocal = new Listing();
-        approvedLocal.setId(1);
+        ReflectionTestUtils.setField(approvedLocal, "id", 1);
         approvedLocal.setTitle("Approved Local");
         approvedLocal.setStatus(ListingStatus.APPROVED);
         approvedLocal.setExternal(false);
 
         Listing pendingLocal = new Listing();
-        pendingLocal.setId(2);
+        ReflectionTestUtils.setField(pendingLocal, "id", 2);
         pendingLocal.setStatus(ListingStatus.PENDING);
         pendingLocal.setExternal(false);
 
         Listing externalListing = new Listing();
-        externalListing.setId(3);
+        ReflectionTestUtils.setField(externalListing, "id", 3);
         externalListing.setStatus(ListingStatus.APPROVED);
         externalListing.setExternal(true);
 
@@ -115,6 +115,8 @@ class OwnerControllerTest {
         request.put("firstName", "John");
         request.put("lastName", "Doe");
         request.put("phoneNumber", "123");
+
+        when(userService.getCurrentUserId()).thenReturn(1);
 
         ResponseEntity<?> response = ownerController.createOwner(request);
 

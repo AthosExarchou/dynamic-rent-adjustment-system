@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.validation.BindingResult;
 
 import java.util.ArrayList;
@@ -56,7 +57,7 @@ public class UserControllerTest {
     @BeforeEach
     void setUp() {
         user = new User();
-        user.setId(1);
+        ReflectionTestUtils.setField(user, "id", 1);
         user.setUsername("testuser");
         user.setEmail("test@example.com");
     }
@@ -129,6 +130,15 @@ public class UserControllerTest {
         when(userService.isUsernameTaken(request.getUsername(), 1)).thenReturn(true);
         when(bindingResult.hasErrors()).thenReturn(true);
 
+        org.springframework.security.core.context.SecurityContextHolder.setContext(
+            mock(org.springframework.security.core.context.SecurityContext.class)
+        );
+        org.springframework.security.core.Authentication auth = mock(org.springframework.security.core.Authentication.class);
+        when(org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication()).thenReturn(auth);
+        doReturn(java.util.Collections.singletonList(
+                new org.springframework.security.core.authority.SimpleGrantedAuthority("USER"))).when(auth).getAuthorities();
+        when(userService.getCurrentUserId()).thenReturn(1);
+
         ResponseEntity<?> response = userController.editUser(1, request, bindingResult, session);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
@@ -138,7 +148,7 @@ public class UserControllerTest {
     @Test
     void deleteRolefromUser_Success() {
         Role role = new Role();
-        role.setId(2);
+        ReflectionTestUtils.setField(role, "id", 2);
         role.setName("USER");
         Set<Role> roles = new java.util.HashSet<>();
         roles.add(role);
@@ -157,7 +167,7 @@ public class UserControllerTest {
     @Test
     void addRoletoUser_UserRole_Success() {
         Role role = new Role();
-        role.setId(2);
+        ReflectionTestUtils.setField(role, "id", 2);
         role.setName("USER");
 
         when(userService.getUser(1)).thenReturn(user);
@@ -175,7 +185,7 @@ public class UserControllerTest {
     @Test
     void addRoletoUser_Owner_WithoutOwnerProfile() {
         Role role = new Role();
-        role.setId(3);
+        ReflectionTestUtils.setField(role, "id", 3);
         role.setName("OWNER");
 
         when(userService.getUser(1)).thenReturn(user);

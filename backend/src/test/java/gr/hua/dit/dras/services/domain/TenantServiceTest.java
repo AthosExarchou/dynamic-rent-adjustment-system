@@ -17,6 +17,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 import org.junit.jupiter.api.DisplayName;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import java.util.Set;
 import java.util.HashSet;
 
@@ -48,7 +50,7 @@ public class TenantServiceTest {
     @Test
     void getTenant_withId_shouldReturnTenant() {
         Tenant tenant = new Tenant();
-        tenant.setId(1);
+        ReflectionTestUtils.setField(tenant, "id", 1);
         when(tenantRepository.findById(1)).thenReturn(Optional.of(tenant));
 
         Tenant result = tenantService.getTenant(1);
@@ -61,7 +63,7 @@ public class TenantServiceTest {
     @Test
     void getTenant_withoutId_shouldReturnTenantForCurrentUser() {
         Tenant tenant = new Tenant();
-        tenant.setId(2);
+        ReflectionTestUtils.setField(tenant, "id", 2);
         when(userService.getCurrentUserId()).thenReturn(10);
         when(tenantRepository.findByUserId(10)).thenReturn(Optional.of(tenant));
 
@@ -76,7 +78,7 @@ public class TenantServiceTest {
     @Test
     void createTenantForUser_shouldCreateAndReturnTenant() {
         User user = new User();
-        user.setId(1);
+        ReflectionTestUtils.setField(user, "id", 1);
         user.setRoles(new HashSet<>());
         
         Role role = new Role();
@@ -87,7 +89,7 @@ public class TenantServiceTest {
         when(roleRepository.findByName("TENANT")).thenReturn(Optional.of(role));
         when(tenantRepository.save(any(Tenant.class))).thenAnswer(invocation -> {
             Tenant t = invocation.getArgument(0);
-            t.setId(100);
+            ReflectionTestUtils.setField(t, "id", 100);
             return t;
         });
 
@@ -110,11 +112,11 @@ public class TenantServiceTest {
     @Test
     void submitApplication_shouldApplyToListing() {
         Tenant tenant = new Tenant();
-        tenant.setId(1);
+        ReflectionTestUtils.setField(tenant, "id", 1);
         tenant.setListing(null);
 
         Listing listing = new Listing();
-        listing.setId(10);
+        ReflectionTestUtils.setField(listing, "id", 10);
         listing.setApplicants(new HashSet<>());
 
         when(userService.getCurrentUserId()).thenReturn(5);
@@ -134,10 +136,10 @@ public class TenantServiceTest {
     @Test
     void unassignTenantFromListing_shouldUnassign() {
         Tenant tenant = new Tenant();
-        tenant.setId(1);
+        ReflectionTestUtils.setField(tenant, "id", 1);
         
         Listing listing = new Listing();
-        listing.setId(10);
+        ReflectionTestUtils.setField(listing, "id", 10);
         listing.setTenant(tenant);
         
         when(listingRepository.findById(10)).thenReturn(Optional.of(listing));
@@ -197,7 +199,7 @@ public class TenantServiceTest {
     @Test
     void validateRentalApplicationRights_shouldThrowWhenUserIsOwner() {
         User user = new User();
-        user.setId(1);
+        ReflectionTestUtils.setField(user, "id", 1);
         Listing listing = new Listing();
         listing.setStatus(gr.hua.dit.dras.model.enums.ListingStatus.APPROVED);
         Owner owner = new Owner();
@@ -214,7 +216,7 @@ public class TenantServiceTest {
     @DisplayName("Should throw IllegalStateException when creating duplicate tenant profile")
     void shouldThrowWhenCreatingDuplicateTenantProfile() {
         User user = new User();
-        user.setId(1);
+        ReflectionTestUtils.setField(user, "id", 1);
         when(userService.getUser(1)).thenReturn(user);
         when(tenantRepository.findByUserId(1)).thenReturn(Optional.of(new Tenant()));
 
@@ -228,10 +230,10 @@ public class TenantServiceTest {
     @DisplayName("Should return true when tenant already applied for listing")
     void shouldReturnTrueWhenTenantAlreadyApplied() {
         Tenant tenant = new Tenant();
-        tenant.setId(1);
+        ReflectionTestUtils.setField(tenant, "id", 1);
 
         Listing listing = new Listing();
-        listing.setId(10);
+        ReflectionTestUtils.setField(listing, "id", 10);
         
         Set<Tenant> applicants = new HashSet<>();
         applicants.add(tenant);
@@ -252,11 +254,11 @@ public class TenantServiceTest {
     @DisplayName("Should throw IllegalStateException when tenant already renting on submit application")
     void shouldThrowWhenTenantAlreadyRentingOnSubmitApplication() {
         Tenant tenant = new Tenant();
-        tenant.setId(1);
+        ReflectionTestUtils.setField(tenant, "id", 1);
         tenant.setListing(new Listing()); // already renting
 
         Listing listing = new Listing();
-        listing.setId(10);
+        ReflectionTestUtils.setField(listing, "id", 10);
         listing.setApplicants(new HashSet<>());
 
         when(userService.getCurrentUserId()).thenReturn(5);
@@ -284,10 +286,10 @@ public class TenantServiceTest {
     @DisplayName("Should pass validation for APPROVED listing with non-owner user")
     void shouldPassValidationForApprovedListingWithNonOwnerUser() {
         User user = new User();
-        user.setId(1);
+        ReflectionTestUtils.setField(user, "id", 1);
 
         User ownerUser = new User();
-        ownerUser.setId(2);
+        ReflectionTestUtils.setField(ownerUser, "id", 2);
         
         Owner owner = new Owner();
         owner.setUser(ownerUser);

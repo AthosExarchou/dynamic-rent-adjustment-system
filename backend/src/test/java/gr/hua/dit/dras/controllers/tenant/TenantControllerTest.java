@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
 
@@ -24,7 +25,6 @@ import java.util.Set;
 import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,10 +49,10 @@ public class TenantControllerTest {
     @BeforeEach
     void setUp() {
         currentUser = new User();
-        currentUser.setId(1);
+        ReflectionTestUtils.setField(currentUser, "id", 1);
 
         listing = new Listing();
-        listing.setId(10);
+        ReflectionTestUtils.setField(listing, "id", 10);
     }
 
     @Test

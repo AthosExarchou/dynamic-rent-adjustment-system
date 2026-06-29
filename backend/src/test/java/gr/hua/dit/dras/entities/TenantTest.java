@@ -4,6 +4,7 @@ package gr.hua.dit.dras.entities;
 import gr.hua.dit.dras.model.enums.RentalStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -17,13 +18,13 @@ class TenantTest {
     @BeforeEach
     void setUp() {
         tenant = new Tenant("John", "Doe", "+1234567890");
-        tenant.setId(1);
+        ReflectionTestUtils.setField(tenant, "id", 1);
 
         listing1 = new Listing();
-        listing1.setId(1);
+        ReflectionTestUtils.setField(listing1, "id", 1);
 
         listing2 = new Listing();
-        listing2.setId(2);
+        ReflectionTestUtils.setField(listing2, "id", 2);
     }
 
     @Test
@@ -88,13 +89,13 @@ class TenantTest {
     @Test
     void testEqualsAndHashCode() {
         Tenant tenant1 = new Tenant();
-        tenant1.setId(1);
+        ReflectionTestUtils.setField(tenant1, "id", 1);
 
         Tenant tenant2 = new Tenant();
-        tenant2.setId(1);
+        ReflectionTestUtils.setField(tenant2, "id", 1);
 
         Tenant tenant3 = new Tenant();
-        tenant3.setId(2);
+        ReflectionTestUtils.setField(tenant3, "id", 2);
 
         assertThat(tenant1).isEqualTo(tenant2);
         assertThat(tenant1).isNotEqualTo(tenant3);

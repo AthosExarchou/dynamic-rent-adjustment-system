@@ -6,6 +6,7 @@ import gr.hua.dit.dras.model.enums.RentalStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
@@ -21,14 +22,14 @@ class ListingTest {
     @BeforeEach
     void setUp() {
         listing = new Listing();
-        listing.setId(1);
+        ReflectionTestUtils.setField(listing, "id", 1);
         listing.setStatus(ListingStatus.PENDING);
 
         tenant1 = new Tenant();
-        tenant1.setId(1);
+        ReflectionTestUtils.setField(tenant1, "id", 1);
 
         tenant2 = new Tenant();
-        tenant2.setId(2);
+        ReflectionTestUtils.setField(tenant2, "id", 2);
     }
 
     @Test
@@ -134,13 +135,13 @@ class ListingTest {
     @Test
     void testEqualsAndHashCode() {
         Listing listing1 = new Listing();
-        listing1.setId(1);
+        ReflectionTestUtils.setField(listing1, "id", 1);
 
         Listing listing2 = new Listing();
-        listing2.setId(1);
+        ReflectionTestUtils.setField(listing2, "id", 1);
 
         Listing listing3 = new Listing();
-        listing3.setId(2);
+        ReflectionTestUtils.setField(listing3, "id", 2);
 
         assertThat(listing1).isEqualTo(listing2);
         assertThat(listing1).isNotEqualTo(listing3);

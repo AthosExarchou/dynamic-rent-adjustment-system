@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
@@ -49,17 +50,17 @@ class OwnerServiceTest {
     @BeforeEach
     void setUp() {
         testUser = new User();
-        testUser.setId(1);
+        ReflectionTestUtils.setField(testUser, "id", 1);
         testUser.setUsername("testuser");
 
         testOwner = new Owner();
-        testOwner.setId(10);
+        ReflectionTestUtils.setField(testOwner, "id", 10);
         testOwner.setUser(testUser);
         
         ownerRole = new Role("OWNER");
         
         testListing = new Listing();
-        testListing.setId(100);
+        ReflectionTestUtils.setField(testListing, "id", 100);
     }
 
     @Test
@@ -95,7 +96,7 @@ class OwnerServiceTest {
         when(ownerRepository.findByUserId(1)).thenReturn(Optional.empty());
         when(ownerRepository.save(any(Owner.class))).thenAnswer(i -> {
             Owner o = i.getArgument(0);
-            o.setId(20);
+            ReflectionTestUtils.setField(o, "id", 20);
             return o;
         });
         when(roleRepository.findByName("OWNER")).thenReturn(Optional.of(ownerRole));
@@ -129,8 +130,7 @@ class OwnerServiceTest {
     @DisplayName("Should assign Owner to Listing and ensure user has role")
     void shouldAssignOwnerToListing() {
         when(listingRepository.findById(100)).thenReturn(Optional.of(testListing));
-        when(userService.getCurrentUserId()).thenReturn(1);
-        when(userRepository.findById(1)).thenReturn(Optional.of(testUser));
+
         when(roleRepository.findByName("OWNER")).thenReturn(Optional.of(ownerRole));
 
         ownerService.assignOwnerToListing(100, testOwner);

@@ -4,6 +4,7 @@ package gr.hua.dit.dras.web.exception;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -87,9 +88,9 @@ public class MvcExceptionHandler {
      * Catches optimistic locking failures like race conditions where
      * two users try to rent the same listing at the exact same time.
      */
-    @ExceptionHandler(org.springframework.dao.OptimisticLockingFailureException.class)
+    @ExceptionHandler(OptimisticLockingFailureException.class)
     public String handleOptimisticLockingFailure(
-            org.springframework.dao.OptimisticLockingFailureException ex,
+            OptimisticLockingFailureException ex,
             HttpServletRequest request,
             RedirectAttributes redirectAttributes
     ) {

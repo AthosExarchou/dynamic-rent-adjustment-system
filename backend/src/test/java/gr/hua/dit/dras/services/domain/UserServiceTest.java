@@ -13,12 +13,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -52,7 +54,7 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         testUser = new User();
-        testUser.setId(1);
+        ReflectionTestUtils.setField(testUser, "id", 1);
         testUser.setEmail("test@test.com");
         testUser.setUsername("testuser");
         testUser.setPassword("rawpassword");
@@ -174,7 +176,7 @@ class UserServiceTest {
         testUser.setRoles(Set.of(adminRole));
 
         assertThatThrownBy(() -> userService.assertNotAdmin(testUser))
-                .isInstanceOf(IllegalStateException.class)
+                .isInstanceOf(AccessDeniedException.class)
                 .hasMessageContaining("Administrator account cannot be modified");
     }
 
@@ -207,7 +209,7 @@ class UserServiceTest {
     @DisplayName("Should check if username is taken by another user")
     void shouldCheckIfUsernameTaken() {
         User otherUser = new User();
-        otherUser.setId(2);
+        ReflectionTestUtils.setField(otherUser, "id", 2);
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(otherUser));
 
         boolean taken = userService.isUsernameTaken("testuser", 1);
@@ -229,7 +231,7 @@ class UserServiceTest {
     @DisplayName("Should check if email is taken by another user")
     void shouldCheckIfEmailTakenByAnotherUser() {
         User otherUser = new User();
-        otherUser.setId(2);
+        ReflectionTestUtils.setField(otherUser, "id", 2);
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(otherUser));
 
         boolean taken = userService.isEmailTaken("test@test.com", 1);

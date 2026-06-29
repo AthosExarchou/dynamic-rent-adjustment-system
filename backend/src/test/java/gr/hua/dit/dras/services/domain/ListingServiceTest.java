@@ -28,6 +28,8 @@ import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.entities.Role;
 import gr.hua.dit.dras.entities.User;
 import org.junit.jupiter.api.DisplayName;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import java.util.Set;
 import java.util.HashSet;
 
@@ -49,7 +51,7 @@ public class ListingServiceTest {
     @Test
     void getListing_shouldReturnListing() {
         Listing listing = new Listing();
-        listing.setId(1);
+        ReflectionTestUtils.setField(listing, "id", 1);
         when(listingRepository.findById(1)).thenReturn(Optional.of(listing));
 
         Listing result = listingService.getListing(1);
@@ -94,7 +96,7 @@ public class ListingServiceTest {
     @Test
     void deleteListing_shouldThrowIfExternal() {
         Listing listing = new Listing();
-        listing.setId(1);
+        ReflectionTestUtils.setField(listing, "id", 1);
         listing.setExternal(true);
         when(listingRepository.findById(1)).thenReturn(Optional.of(listing));
 
@@ -106,15 +108,15 @@ public class ListingServiceTest {
     @Test
     void deleteListing_shouldDeleteAndUnassign() {
         Listing listing = new Listing();
-        listing.setId(1);
+        ReflectionTestUtils.setField(listing, "id", 1);
         listing.setExternal(false);
         
         Tenant tenant = new Tenant();
-        tenant.setId(10);
+        ReflectionTestUtils.setField(tenant, "id", 10);
         listing.setTenant(tenant);
         
         Owner owner = new Owner();
-        owner.setId(20);
+        ReflectionTestUtils.setField(owner, "id", 20);
         listing.setOwner(owner);
 
         when(listingRepository.findById(1)).thenReturn(Optional.of(listing));
@@ -170,7 +172,7 @@ public class ListingServiceTest {
     @DisplayName("Should approve listing")
     void shouldApproveListing() {
         Listing listing = new Listing();
-        listing.setId(1);
+        ReflectionTestUtils.setField(listing, "id", 1);
         listing.setStatus(ListingStatus.PENDING);
         
         when(listingRepository.findById(1)).thenReturn(Optional.of(listing));
@@ -185,7 +187,7 @@ public class ListingServiceTest {
     @DisplayName("Should reject listing")
     void shouldRejectListing() {
         Listing listing = new Listing();
-        listing.setId(1);
+        ReflectionTestUtils.setField(listing, "id", 1);
         listing.setStatus(ListingStatus.PENDING);
         
         when(listingRepository.findById(1)).thenReturn(Optional.of(listing));
@@ -210,7 +212,7 @@ public class ListingServiceTest {
     @DisplayName("Should allow listing owner to modify available listing")
     void shouldAllowOwnerToModifyOwnAvailableListing() {
         User ownerUser = new User();
-        ownerUser.setId(1);
+        ReflectionTestUtils.setField(ownerUser, "id", 1);
         ownerUser.setRoles(Set.of(new Role("OWNER")));
 
         Owner owner = new Owner();
@@ -239,7 +241,7 @@ public class ListingServiceTest {
     @DisplayName("Should throw when modifying rented listing")
     void shouldThrowWhenModifyingRentedListing() {
         User ownerUser = new User();
-        ownerUser.setId(1);
+        ReflectionTestUtils.setField(ownerUser, "id", 1);
         ownerUser.setRoles(Set.of(new Role("OWNER")));
         
         Owner owner = new Owner();
@@ -259,7 +261,7 @@ public class ListingServiceTest {
     void shouldRejectApplicant() {
         Listing listing = new Listing();
         Tenant tenant = new Tenant();
-        tenant.setId(1);
+        ReflectionTestUtils.setField(tenant, "id", 1);
         
         listing.setApplicants(new HashSet<>());
         listing.addApplicant(tenant);
@@ -287,7 +289,7 @@ public class ListingServiceTest {
     @DisplayName("Should delete listing with no tenant and no owner")
     void shouldDeleteListingWithNoTenantAndNoOwner() {
         Listing listing = new Listing();
-        listing.setId(1);
+        ReflectionTestUtils.setField(listing, "id", 1);
         listing.setExternal(false);
         listing.setTenant(null);
         listing.setOwner(null);

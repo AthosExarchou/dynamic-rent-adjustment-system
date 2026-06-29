@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 import java.util.HashSet;
@@ -49,24 +50,24 @@ class ListingApplicationServiceTest {
     @BeforeEach
     void setUp() {
         testUser = new User();
-        testUser.setId(1);
+        ReflectionTestUtils.setField(testUser, "id", 1);
         testUser.setEmail("test@test.com");
         testUser.setRoles(new HashSet<>());
 
         testOwner = new Owner();
-        testOwner.setId(10);
+        ReflectionTestUtils.setField(testOwner, "id", 10);
         testOwner.setUser(testUser);
         testOwner.setFirstName("Owner");
         testOwner.setLastName("Name");
 
         testListing = new Listing();
-        testListing.setId(100);
+        ReflectionTestUtils.setField(testListing, "id", 100);
         testListing.setStatus(ListingStatus.PENDING);
         testListing.setOwner(testOwner);
         testListing.setApplicants(new HashSet<>());
 
         testTenant = new Tenant();
-        testTenant.setId(5);
+        ReflectionTestUtils.setField(testTenant, "id", 5);
         testTenant.setUser(testUser);
         testTenant.setFirstName("Tenant");
         testTenant.setLastName("Name");
@@ -100,31 +101,31 @@ class ListingApplicationServiceTest {
     @DisplayName("Should approve tenant application, reject other applicants, grant role, and notify")
     void shouldApproveTenantApplication() {
         User ownerUser = new User();
-        ownerUser.setId(1);
+        ReflectionTestUtils.setField(ownerUser, "id", 1);
         ownerUser.setRoles(Set.of(new Role("OWNER")));
 
         User tenantUser = new User();
-        tenantUser.setId(2);
+        ReflectionTestUtils.setField(tenantUser, "id", 2);
         tenantUser.setEmail("tenant@test.com");
         tenantUser.setRoles(new HashSet<>());
 
         User rejectedUser = new User();
-        rejectedUser.setId(3);
+        ReflectionTestUtils.setField(rejectedUser, "id", 3);
         rejectedUser.setEmail("rejected@test.com");
 
         Owner owner = new Owner();
         owner.setUser(ownerUser);
 
         Tenant approvedTenant = new Tenant("Approved", "Tenant", "1234567890");
-        approvedTenant.setId(5);
+        ReflectionTestUtils.setField(approvedTenant, "id", 5);
         approvedTenant.setUser(tenantUser);
 
         Tenant rejectedTenant = new Tenant("Rejected", "Tenant", "1234567891");
-        rejectedTenant.setId(6);
+        ReflectionTestUtils.setField(rejectedTenant, "id", 6);
         rejectedTenant.setUser(rejectedUser);
 
         Listing listing = new Listing();
-        listing.setId(100);
+        ReflectionTestUtils.setField(listing, "id", 100);
         listing.setStatus(ListingStatus.APPROVED);
         listing.setOwner(owner);
         listing.addApplicant(approvedTenant);
