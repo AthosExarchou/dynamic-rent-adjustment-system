@@ -6,13 +6,11 @@
 [![](https://img.shields.io/badge/status-active-brightgreen?style=for-the-badge)]()
 [![](https://img.shields.io/github/license/AthosExarchou/dynamic-rent-adjustment-system.svg?style=for-the-badge)](https://github.com/AthosExarchou/dynamic-rent-adjustment-system/blob/master/LICENSE)
 
-Welcome to the **Dynamic Rent Adjustment System (DRAS)**, a full-stack web platform designed to streamline real estate
-property management, connect property owners with prospective tenants, and dynamically handle rental applications.
+Welcome to the **Dynamic Rent Adjustment System (DRAS)**, a web application for real estate property management, connecting owners with tenants, and processing rental applications.
 
 > **Academic Project:** This project is being developed as an undergraduate thesis in the
 [Department of Informatics and Telecommunications at Harokopio University of Athens](https://dit.hua.gr).
-While created in an academic context, it follows modern software engineering practices, including a layered backend
-architecture, feature-based frontend architecture, RESTful APIs, role-based access control, and professional development workflows.
+It follows a layered backend architecture, feature-based frontend architecture, RESTful APIs, and role-based access control.
 
 ## Contents
 - [Overview](#overview)
@@ -30,41 +28,38 @@ architecture, feature-based frontend architecture, RESTful APIs, role-based acce
 
 ## Overview
 DRAS is a full-stack rental management platform developed as an undergraduate thesis project.
-It serves as a practical implementation of modern software engineering principles for managing rental properties,
-tenant applications, and administrative workflows.
+It manages rental properties, tenant applications, and administrative workflows.
 
 ## Academic Context
 
 The Dynamic Rent Adjustment System (DRAS) is the implementation component of an undergraduate diploma thesis.
 
-The objective of the project is to design and develop a modern rental management platform that demonstrates the
-application of contemporary software engineering principles, including:
+The objective of the project is to design and develop a modern rental management platform that
+demonstrates the application of contemporary software engineering principles, including:
 
 - Layered backend architecture
 - RESTful API design
 - Role-based access control (RBAC)
 - Feature-based React architecture
 - Relational database design
-- Secure authentication and authorization
+- Authentication and authorization
 - External data integration
-- Clean code and maintainable software design
 
-The project is intended both as an academic research contribution and as a practical demonstration
-of building a scalable full-stack web application.
+The project is an academic research contribution and a demonstration of building a full-stack web application.
 
 ## System Architecture
 
 The project consists of two distinct applications communicating over HTTP via a RESTful API:
 
-1. **[Backend (Spring Boot API)](./backend)**: A secure Java REST API handling data persistence, authentication, role-based authorization, and business logic.
-2. **[Frontend (React SPA)](./frontend)**: A responsive Single Page Application built with Vite and React, offering a component-driven and dynamic user interface.
+1. **[Backend (Spring Boot API)](./backend)**: Java REST API handling data persistence, authentication, role-based authorization, and business logic.
+2. **[Frontend (React SPA)](./frontend)**: Single Page Application built with Vite and React.
 
 ## Core Features
-- **Listing Management**: Owners can create, update, and track real estate properties with detailed metrics (price per m², property type, amenities).
+- **Listing Management**: Owners can create, update, and track real estate properties with metrics (price per m², property type, amenities).
 - **Application Workflow**: Tenants can apply for properties, and owners can review these applications.
 - **Dynamic Roles**: Automatic role assignment (Owner, Tenant) based on user activity and profile creation.
-- **Admin Oversight**: Dedicated administrative workflows for user management and manual listing approvals.
-- **Responsive UI**: A responsive frontend compatible with desktop, tablet, and mobile devices.
+- **Admin Oversight**: Administrative workflows for user management and manual listing approvals.
+- **Frontend UI**: User interface compatible with desktop, tablet, and mobile devices.
 
 ## Role Management
 

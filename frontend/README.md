@@ -34,7 +34,7 @@ The frontend is responsible for presenting rental listings, user dashboards, app
 
 ## System Architecture
 
-The frontend follows a feature-based architecture inspired by Domain-Driven Design (DDD), where source code is organized around business capabilities rather than technical layers. The codebase is organized by business domains:
+The frontend follows a feature-based architecture, where source code is organized by business domains:
 - **Admin**: System-wide administrative workflows (approvals, users, external imports).
 - **Auth**: Authentication context, session management, and login/registration workflows.
 - **Listings**: Property listings, filtering, and application logic.
@@ -101,7 +101,7 @@ See the root project README for full backend installation instructions.
 
 ## Configuration
 
-The application uses Vite environment variables. Copy the `.env.example` file to `.env.local` to safely customize the backend API URL:
+The application uses Vite environment variables. Copy the `.env.example` file to `.env.local` to customize the backend API URL:
 
 ```bash
 cp .env.example .env.local

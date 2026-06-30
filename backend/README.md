@@ -41,10 +41,10 @@ The backend follows a layered architecture that separates presentation, business
 
 ## Security & Authentication
 
-- **Role-Based Access Control (RBAC)**: Method-level security (`@Secured`, `@PreAuthorize`) protects critical endpoints based on strict role requirements (`USER`, `OWNER`, `TENANT`, `ADMIN`).
+- **Role-Based Access Control (RBAC)**: Method-level security (`@Secured`, `@PreAuthorize`) controls access to endpoints based on role requirements (`USER`, `OWNER`, `TENANT`, `ADMIN`).
 - **API Security**: Endpoints under `/api/**` bypass CSRF for stateless frontend integration.
-- **CORS Configuration**: Explicitly configured to accept requests from the frontend client (default `http://localhost:5173`).
-- **Error Handling**: Graceful exception interception mapping errors to standard JSON HTTP responses (e.g., 400, 401, 403, 404, 500).
+- **CORS Configuration**: Configured to accept requests from the frontend client (default `http://localhost:5173`).
+- **Error Handling**: Exception interception mapping errors to JSON HTTP responses (e.g., 400, 401, 403, 404, 500).
 
 ## Requirements
 Ensure you have the following installed to build and run the backend:
