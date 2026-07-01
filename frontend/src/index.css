@@ -104,3 +104,23 @@ button {
   padding-left: var(--spacing-4);
   padding-right: var(--spacing-4);
 }
+
+/* NProgress Overrides */
+#nprogress .bar {
+  background: #a855f7;
+}
+
+#nprogress .peg {
+  position: absolute;
+  right: 0;
+  width: 100px;
+  height: 100%;
+  box-shadow: 0 0 10px #a855f7, 0 0 5px #a855f7;
+  opacity: 1;
+  transform: rotate(3deg) translateY(-4px);
+}
+
+#nprogress .spinner-icon {
+  border-top-color: #a855f7;
+  border-left-color: #a855f7;
+}

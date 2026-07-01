@@ -7,6 +7,12 @@
  */
 
 import config from '../../config';
+import NProgress from 'nprogress';
+import 'nprogress/nprogress.css';
+
+NProgress.configure({ showSpinner: true });
+
+let activeRequests = 0;
 
 const API_BASE_URL = config.apiBaseUrl;
 
@@ -53,34 +59,46 @@ async function apiClient(endpoint, options = {}) {
     fetchConfig.body = typeof body === 'string' ? body : JSON.stringify(body);
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchConfig);
+  activeRequests++;
+  if (activeRequests === 1) {
+    NProgress.start();
+  }
 
-  if (!response.ok) {
-    let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchConfig);
 
-    try {
-      const errorBody = await response.json();
-      errorMessage = errorBody.message || errorBody.error || errorMessage;
-    } catch {
-      /* Response body is not JSON - use default message */
+    if (!response.ok) {
+      let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+
+      try {
+        const errorBody = await response.json();
+        errorMessage = errorBody.message || errorBody.error || errorMessage;
+      } catch {
+        /* Response body is not JSON - use default message */
+      }
+
+      const error = new Error(errorMessage);
+      error.status = response.status;
+      throw error;
     }
 
-    const error = new Error(errorMessage);
-    error.status = response.status;
-    throw error;
-  }
+    /* Handle 204 No Content */
+    if (response.status === 204) {
+      return null;
+    }
 
-  /* Handle 204 No Content */
-  if (response.status === 204) {
-    return null;
-  }
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return response.json();
+    }
 
-  const contentType = response.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    return response.json();
+    return response.text();
+  } finally {
+    activeRequests--;
+    if (activeRequests === 0) {
+      NProgress.done();
+    }
   }
-
-  return response.text();
 }
 
 export default apiClient;
