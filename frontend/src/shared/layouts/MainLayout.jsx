@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
-import { Sun, Moon, UserCircle, LogIn, UserPlus, LogOut, Building2 } from 'lucide-react';
+import { NavLink, Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
+import { Sun, Moon, UserCircle, LogIn, UserPlus, LogOut, Building2, ChevronRight, Search, Bell } from 'lucide-react';
 import { useAuth } from '../../features/auth';
+import apiClient from '../api/client';
 import Sidebar from './Sidebar';
 import styles from './MainLayout.module.css';
 
@@ -19,13 +20,20 @@ export default function MainLayout() {
   }, [theme]);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const notifRef = useRef(null);
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setIsNotifOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -49,7 +57,95 @@ export default function MainLayout() {
   const isOwner = roles.includes('OWNER');
   const isUser = isAuthenticated;
 
+  const location = useLocation();
+  const pathnames = location.pathname.split('/').filter(x => x);
+
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/listings?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchNotifications();
+    }
+  }, [isAuthenticated]);
+
+  const fetchNotifications = async () => {
+    try {
+      const data = await apiClient('/api/notifications');
+      setNotifications(data || []);
+      setUnreadCount((data || []).filter(n => !n.read).length);
+    } catch (error) {
+      console.error("Failed to fetch notifications", error);
+    }
+  };
+
+  const handleMarkAsRead = async (id, currentReadStatus) => {
+    if (currentReadStatus) return; // Already read
+    try {
+      await apiClient(`/api/notifications/${id}/read`, { method: 'PUT' });
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (error) {
+      console.error("Failed to mark as read", error);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await apiClient('/api/notifications/read-all', { method: 'PUT' });
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Failed to mark all as read", error);
+    }
+  };
+
+  const formatTimeAgo = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const diffInSeconds = Math.floor((new Date() - date) / 1000);
+    if (diffInSeconds < 60) return 'Just now';
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `${diffInMinutes} min ago`;
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+  };
+
+  const generateBreadcrumbs = () => {
+    if (pathnames.length === 0) return <span className={styles.breadcrumbActive}>Home</span>;
+    return (
+      <nav className={styles.breadcrumbs} aria-label="breadcrumb">
+        <Link to="/" className={styles.breadcrumbLink}>Home</Link>
+        {pathnames.map((value, index) => {
+          const last = index === pathnames.length - 1;
+          const to = `/${pathnames.slice(0, index + 1).join('/')}`;
+          const title = value.charAt(0).toUpperCase() + value.slice(1).replace(/-/g, ' ');
+          
+          return (
+            <React.Fragment key={to}>
+              <ChevronRight size={14} className={styles.breadcrumbSeparator} />
+              {last ? (
+                <span className={styles.breadcrumbActive}>{title}</span>
+              ) : (
+                <Link to={to} className={styles.breadcrumbLink}>{title}</Link>
+              )}
+            </React.Fragment>
+          );
+        })}
+      </nav>
+    );
+  };
 
   const navLinkClassName = ({ isActive }) => 
     isActive ? `${styles.navLink} ${styles.active}` : styles.navLink;
@@ -80,9 +176,70 @@ export default function MainLayout() {
                 <Link to="/" className={styles.mobileBrand} onClick={closeMobileMenu}>
                   <Building2 size={24} /> DRAS
                 </Link>
+
+                {/* Desktop Breadcrumbs */}
+                <div className={styles.desktopBreadcrumbs}>
+                  {generateBreadcrumbs()}
+                </div>
+              </div>
+
+              {/* Center Search Bar */}
+              <div className={styles.topbarCenter}>
+                <form className={styles.searchContainer} onSubmit={handleSearchSubmit}>
+                  <Search className={styles.searchIcon} size={16} />
+                  <input 
+                    type="text" 
+                    placeholder="Search apartments..." 
+                    className={styles.searchInput} 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </form>
               </div>
 
               <div className={styles.navActions}>
+                {/* Notification Bell */}
+                <div className={styles.dropdown} ref={notifRef}>
+                  <button 
+                    className={styles.iconBtn} 
+                    aria-label="Notifications"
+                    onClick={() => setIsNotifOpen(!isNotifOpen)}
+                  >
+                    <Bell size={20} />
+                    {unreadCount > 0 && <span className={styles.notificationDot}></span>}
+                  </button>
+
+                  {isNotifOpen && (
+                    <div className={styles.notifDropdownMenu}>
+                      <div className={styles.notifHeader}>
+                        <h6 className={styles.notifTitle}>Notifications</h6>
+                        {unreadCount > 0 && (
+                          <button className={styles.notifClearBtn} onClick={handleMarkAllAsRead}>
+                            Mark all as read
+                          </button>
+                        )}
+                      </div>
+                      <div className={styles.notifBody}>
+                        {notifications.length === 0 ? (
+                          <div className={styles.notifEmpty}>No new notifications</div>
+                        ) : (
+                          notifications.map(notif => (
+                            <div 
+                              key={notif.id} 
+                              className={`${styles.notifItem} ${!notif.read ? styles.unread : ''}`}
+                              onClick={() => handleMarkAsRead(notif.id, notif.read)}
+                            >
+                              <div className={styles.notifItemTitle}>{notif.title}</div>
+                              <div className={styles.notifItemMsg}>{notif.message}</div>
+                              <div className={styles.notifItemTime}>{formatTimeAgo(notif.createdAt)}</div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <button 
                   onClick={toggleTheme} 
                   className={styles.themeToggle} 
