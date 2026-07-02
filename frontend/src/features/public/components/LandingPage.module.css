@@ -73,6 +73,10 @@
   font-size: 3.5rem;
   font-weight: 800;
   margin-bottom: 1.5rem;
+  background: linear-gradient(90deg, #3b82f6, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .heroSubtitle {
@@ -158,6 +162,14 @@
   flex-direction: column;
 }
 
+.apartmentCard::before {
+  content: '';
+  height: 4px;
+  width: 100%;
+  background: linear-gradient(90deg, #3b82f6, #a855f7);
+  display: block;
+}
+
 .apartmentCard:hover {
   transform: translateY(-5px);
   box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
@@ -208,6 +220,7 @@
 .badgeSecondary { background-color: #6c757d; color: #fff; }
 .badgeInfo { background-color: #0dcaf0; color: #000; }
 .badgeLight { background-color: #f8f9fa; color: #000; border: 1px solid #dee2e6; }
+.badgePremium { background: linear-gradient(90deg, #3b82f6, #a855f7); color: #fff; border: none; }
 
 .apartmentPrice {
   font-size: 1.25rem;
@@ -273,6 +286,15 @@
 
 .btn:active {
   transform: translateY(0);
+}
+
+.btnGradient {
+  background: linear-gradient(90deg, #3b82f6, #a855f7);
+  color: #fff !important;
+  border: none;
+}
+.btnGradient:hover {
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
 }
 
 .btnSuccess {

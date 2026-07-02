@@ -149,6 +149,9 @@ export default function LandingPage() {
                     <p className={styles.apartmentLocation}>{apt.address}</p>
 
                     <div className={styles.badgesWrapper}>
+                      <span className={`${styles.badge} ${styles.badgePremium}`}>
+                        Featured
+                      </span>
                       <span className={`${styles.badge} ${styles.badgePrimary}`}>
                         <Bed size={14} /> {apt.bedrooms} Beds
                       </span>
@@ -185,7 +188,7 @@ export default function LandingPage() {
             <div className={styles.ctaWrapper}>
               <p className={styles.ctaDesc}>Sign up today to find the perfect apartment or list your own property.</p>
               <div className={styles.ctaButtons}>
-                <Link to="/register" className={`${styles.btn} ${styles.btnSuccess}`}>
+                <Link to="/register" className={`${styles.btn} ${styles.btnGradient}`}>
                   <UserPlus size={20} /> Create an Account
                 </Link>
                 <Link to="/login" className={`${styles.btn} ${styles.btnOutline}`}>
