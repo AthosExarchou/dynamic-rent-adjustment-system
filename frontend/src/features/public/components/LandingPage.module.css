@@ -30,8 +30,8 @@
 }
 
 .pageWrapper svg:hover {
-  color: #a855f7 !important;
-  filter: drop-shadow(0 0 4px rgba(168, 85, 247, 0.5));
+  color: #3b82f6 !important;
+  filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.6));
 }
 
 /* Hero Section */

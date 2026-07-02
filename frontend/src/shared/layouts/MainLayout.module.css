@@ -51,8 +51,10 @@
 }
 
 .mobileBrand:hover {
-  color: #a855f7;
-  text-shadow: 0 0 4px rgba(168, 85, 247, 0.5);
+  background: linear-gradient(90deg, #3b82f6, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 
@@ -100,7 +102,115 @@
   transform: rotate(-45deg) translateY(-7px);
 }
 
+/* Breadcrumbs */
+.desktopBreadcrumbs {
+  display: flex;
+  align-items: center;
+}
 
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+}
+
+.breadcrumbLink {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+  font-weight: 500;
+}
+
+.breadcrumbLink:hover {
+  color: #3b82f6;
+}
+
+.breadcrumbSeparator {
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+.breadcrumbActive {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Center Search */
+.topbarCenter {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  padding: 0 2rem;
+}
+
+.searchContainer {
+  display: flex;
+  align-items: center;
+  background: var(--background-default);
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 0.4rem 1rem;
+  width: 100%;
+  max-width: 450px;
+  transition: all 0.3s ease;
+}
+
+.searchContainer:focus-within {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
+}
+
+.searchIcon {
+  color: var(--text-secondary);
+  margin-right: 0.5rem;
+}
+
+.searchInput {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.searchInput::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+/* Icon Buttons (Notifications, Theme) */
+.iconBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.iconBtn:hover {
+  background-color: var(--background-default);
+  color: #3b82f6;
+}
+
+.notificationDot {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  background: linear-gradient(135deg, #ef4444, #f59e0b);
+  border-radius: 50%;
+  border: 2px solid var(--background-paper);
+}
 
 .navActions {
   display: flex;
@@ -171,6 +281,104 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* Notification Dropdown */
+.notifDropdownMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background-color: var(--background-paper);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  width: 320px;
+  max-width: 90vw;
+  z-index: 1000;
+  animation: dropdownFade 0.2s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.notifHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--background-default);
+}
+
+.notifTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.notifClearBtn {
+  background: transparent;
+  border: none;
+  color: #3b82f6;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.notifClearBtn:hover {
+  text-decoration: underline;
+}
+
+.notifBody {
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.notifEmpty {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.notifItem {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.notifItem:last-child {
+  border-bottom: none;
+}
+
+.notifItem:hover {
+  background-color: var(--background-default);
+}
+
+.notifItem.unread {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.notifItemTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.notifItemMsg {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.notifItemTime {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+
 .dropdownItem {
   display: flex;
   align-items: center;
@@ -229,11 +437,14 @@
   margin-bottom: 1rem;
   font-size: 1.25rem;
   transition: all 0.3s ease;
+  background: linear-gradient(90deg, #3b82f6, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .footerBrand:hover {
-  color: #a855f7;
-  text-shadow: 0 0 4px rgba(168, 85, 247, 0.5);
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.4));
 }
 
 .footerTitle {
@@ -284,8 +495,10 @@
 }
 
 .footerLink:hover {
-  color: #a855f7;
-  text-shadow: 0 0 4px rgba(168, 85, 247, 0.5);
+  background: linear-gradient(90deg, #3b82f6, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .footerDivider {
@@ -333,8 +546,10 @@
 }
 
 .socialLink:hover {
-  color: #a855f7;
-  text-shadow: 0 0 4px rgba(168, 85, 247, 0.5);
+  background: linear-gradient(90deg, #3b82f6, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 /* Mobile Responsive */
@@ -345,6 +560,10 @@
   
   .mobileBrand {
     display: flex;
+  }
+
+  .desktopBreadcrumbs, .topbarCenter {
+    display: none;
   }
 
   .navActions {
