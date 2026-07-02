@@ -10,7 +10,7 @@ export default function NotFoundPage() {
         <div className={styles.iconWrapper}>
           <SearchX className={styles.icon} size={64} />
         </div>
-        <h1 className={styles.gradientText}>404 - Page Not Found</h1>
+        <h1 className={styles.titleText}>404 - Page Not Found</h1>
         <p className={styles.description}>
           The resource you are looking for no longer exists or has been moved. 
           Please check the URL or try returning to the home page.

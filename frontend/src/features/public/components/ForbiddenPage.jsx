@@ -10,7 +10,7 @@ export default function ForbiddenPage() {
         <div className={styles.iconWrapper}>
           <ShieldAlert className={`${styles.icon} ${styles.iconWarning}`} size={64} />
         </div>
-        <h1 className={styles.gradientText}>403 - Access Denied</h1>
+        <h1 className={styles.titleText}>403 - Access Denied</h1>
         <p className={styles.description}>
           You do not have permission to view this page. If you believe this is a mistake, 
           please contact an administrator or sign in with an authorized account.

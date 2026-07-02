@@ -31,7 +31,7 @@ export default function LoginForm() {
     <div className={styles.container}>
       <div className={`${styles.card} ${styles.loginCard}`}>
         <div className={styles.header}>
-          <h2 className={styles.gradientText}>DRAS</h2>
+          <h2 className={styles.titleText}>DRAS</h2>
           <h4 className={styles.subtitle}>Sign in to continue</h4>
         </div>
 

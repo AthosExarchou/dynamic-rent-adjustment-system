@@ -107,7 +107,7 @@ button {
 
 /* NProgress Overrides */
 #nprogress .bar {
-  background: #a855f7;
+  background: linear-gradient(90deg, #3b82f6, #a855f7) !important;
 }
 
 #nprogress .peg {

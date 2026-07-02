@@ -35,7 +35,7 @@ export default function RegisterForm() {
     <div className={styles.container}>
       <div className={`${styles.card} ${styles.registerCard}`}>
         <div className={styles.header}>
-          <h2 className={styles.gradientText}>DRAS</h2>
+          <h2 className={styles.titleText}>DRAS</h2>
           <h4 className={styles.subtitle}>Create an Account</h4>
           <p className={styles.subtext}>Join the DRAS platform today!</p>
         </div>

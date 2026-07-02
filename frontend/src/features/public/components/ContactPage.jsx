@@ -30,7 +30,7 @@ export default function ContactPage() {
   return (
     <div className={styles.pageContainer}>
       <div className={styles.header}>
-        <h1 className={styles.gradientText}>Get in Touch</h1>
+        <h1 className={styles.titleText}>Get in Touch</h1>
         <p className={styles.leadText}>
           We're here to help with all your real estate needs - property inquiries, valuations,
           or just advice about the market. Reach out and our team will get back to you promptly.

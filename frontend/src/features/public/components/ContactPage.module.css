@@ -10,15 +10,11 @@
   margin-bottom: 4rem;
 }
 
-.gradientText {
+.titleText {
   font-size: 3.5rem;
   font-weight: 800;
   margin-bottom: 1rem;
-  background: linear-gradient(135deg, #66b3ff 0%, #004aad 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  color: transparent;
+  color: var(--color-primary-600);
   letter-spacing: 1px;
 }
 
