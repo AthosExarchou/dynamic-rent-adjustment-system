@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom';
-import { Sun, Moon, UserCircle, LogIn, UserPlus, LogOut, Globe, MessageCircle, Share2, Code, Menu, X, Building2 } from 'lucide-react';
+import { Sun, Moon, UserCircle, LogIn, UserPlus, LogOut, Building2 } from 'lucide-react';
 import { useAuth } from '../../features/auth';
+import Sidebar from './Sidebar';
 import styles from './MainLayout.module.css';
 
 export default function MainLayout() {
@@ -54,59 +55,32 @@ export default function MainLayout() {
     isActive ? `${styles.navLink} ${styles.active}` : styles.navLink;
 
   return (
-    <div className={styles.layout}>
-      {/* Header */}
-      <header className={styles.header}>
-        <div className={styles.container}>
-          <nav className={styles.navbar}>
-            
-            <Link to="/" className={styles.brand} onClick={closeMobileMenu}>
-              <Building2 size={24} /> DRAS
-            </Link>
+    <div className={styles.appContainer}>
+      <Sidebar isOpen={isMobileMenuOpen} onClose={closeMobileMenu} />
 
-            {/* Mobile Menu Toggle */}
-            <button 
-              className={styles.mobileToggle} 
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-expanded={isMobileMenuOpen}
-              aria-label="Toggle navigation"
-            >
-              <span className={`${styles.togglerBar} ${styles.bar1}`}></span>
-              <span className={`${styles.togglerBar} ${styles.bar2}`}></span>
-              <span className={`${styles.togglerBar} ${styles.bar3}`}></span>
-            </button>
-
-            {/* Main Navigation */}
-            <div className={`${styles.navCollapse} ${isMobileMenuOpen ? styles.show : ''}`}>
-              <ul className={styles.navbarNav}>
-                <li className={styles.navItem}>
-                  <NavLink to="/" className={navLinkClassName} onClick={closeMobileMenu} end>Home</NavLink>
-                </li>
-                <li className={styles.navItem}>
-                  <NavLink to="/listings" className={navLinkClassName} onClick={closeMobileMenu}>Apartments</NavLink>
-                </li>
-                {isOwner && (
-                  <li className={styles.navItem}>
-                    <NavLink to="/my-listings" className={navLinkClassName} onClick={closeMobileMenu}>My Apartments</NavLink>
-                  </li>
-                )}
-                {isAdmin && (
-                  <>
-                    <li className={styles.navItem}>
-                      <NavLink to="/admin/approvals" className={navLinkClassName} onClick={closeMobileMenu}>Approval Queue</NavLink>
-                    </li>
-                    <li className={styles.navItem}>
-                      <NavLink to="/admin/users" className={navLinkClassName} onClick={closeMobileMenu}>Users</NavLink>
-                    </li>
-                  </>
-                )}
-                <li className={styles.navItem}>
-                  <NavLink to="/about" className={navLinkClassName} onClick={closeMobileMenu}>About Us</NavLink>
-                </li>
-                <li className={styles.navItem}>
-                  <NavLink to="/contact" className={navLinkClassName} onClick={closeMobileMenu}>Contact Us</NavLink>
-                </li>
-              </ul>
+      <div className={styles.mainWrapper}>
+        {/* Header */}
+        <header className={styles.header}>
+          <div className={styles.container}>
+            <div className={styles.topbar}>
+              <div className={styles.topbarLeft}>
+                {/* Mobile Menu Toggle */}
+                <button 
+                  className={styles.mobileToggle} 
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  aria-expanded={isMobileMenuOpen}
+                  aria-label="Toggle navigation"
+                >
+                  <span className={`${styles.togglerBar} ${styles.bar1}`}></span>
+                  <span className={`${styles.togglerBar} ${styles.bar2}`}></span>
+                  <span className={`${styles.togglerBar} ${styles.bar3}`}></span>
+                </button>
+                
+                {/* Brand is visible on mobile only since desktop has sidebar */}
+                <Link to="/" className={styles.mobileBrand} onClick={closeMobileMenu}>
+                  <Building2 size={24} /> DRAS
+                </Link>
+              </div>
 
               <div className={styles.navActions}>
                 <button 
@@ -160,9 +134,8 @@ export default function MainLayout() {
                 </div>
               </div>
             </div>
-          </nav>
-        </div>
-      </header>
+          </div>
+        </header>
 
       {/* Main Content Area */}
       <main className={styles.mainContent}>
@@ -227,6 +200,7 @@ export default function MainLayout() {
           </div>
         </div>
       </footer>
+      </div>
     </div>
   );
 }
