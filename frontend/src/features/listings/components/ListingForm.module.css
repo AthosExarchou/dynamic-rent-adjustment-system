@@ -91,18 +91,19 @@
 .submitBtn {
   width: 100%;
   padding: 0.8rem;
-  background-color: var(--color-success);
+  background: linear-gradient(90deg, #3b82f6, #a855f7);
   color: #fff;
   border: none;
   border-radius: var(--radius-md);
   font-size: 1.05rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.3s ease;
 }
 
-.submitBtn:hover {
-  background-color: #059669;
+.submitBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
 }
 
 .submitBtn:disabled {
