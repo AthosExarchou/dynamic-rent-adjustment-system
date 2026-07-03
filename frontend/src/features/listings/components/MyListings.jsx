@@ -5,6 +5,7 @@ import apiClient from '../../../shared/api/client';
 import styles from './MyListings.module.css';
 
 export default function MyListings() {
+  const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [listingToDelete, setListingToDelete] = useState(null);
