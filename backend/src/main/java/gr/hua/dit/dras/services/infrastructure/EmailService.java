@@ -14,19 +14,24 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.thymeleaf.context.Context;
+import gr.hua.dit.dras.services.domain.NotificationService;
+import org.springframework.context.annotation.Lazy;
 
 @Service
 public class EmailService {
 
     private final JavaMailSender mailSender;
     private final SpringTemplateEngine templateEngine;
+    private final NotificationService notificationService;
 
     public EmailService(
             JavaMailSender mailSender,
-            SpringTemplateEngine templateEngine
+            SpringTemplateEngine templateEngine,
+            @Lazy NotificationService notificationService
     ) {
         this.mailSender = mailSender;
         this.templateEngine = templateEngine;
+        this.notificationService = notificationService;
     }
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
@@ -54,6 +59,26 @@ public class EmailService {
             mailSender.send(mimeMessage);
 
             log.info("Email sent successfully [type={}] to [{}]", emailType, to);
+
+            // Mirror email as an in-app notification
+            try {
+                String notifMessage;
+                if (emailType.equals("welcome")) notifMessage = "Welcome to Dynamic Rent Adjustment System!";
+                else if (emailType.equals("tenantApproval")) notifMessage = "Your listing application has been approved.";
+                else if (emailType.equals("ownerCreated")) notifMessage = "Your new listing was successfully created and is now pending admin approval.";
+                else if (emailType.equals("adminApproved")) notifMessage = "Great news! Your listing has been approved by the administrator and is now live.";
+                else if (emailType.equals("adminRejected")) notifMessage = "Unfortunately, your listing has been rejected by the administrator.";
+                else if (emailType.equals("ownerRejectedApplication")) notifMessage = "Your application has been rejected by the listing owner.";
+                else if (emailType.equals("listingDeleted")) notifMessage = "Your listing has been successfully deleted.";
+                else if (emailType.equals("listingRentedToSomeoneElse")) notifMessage = "A listing you applied for has been rented to someone else.";
+                else if (emailType.equals("userDetailsChanged")) notifMessage = "Your account details have been updated successfully.";
+                else if (emailType.equals("accountDeleted")) notifMessage = "Your account has been deleted. We hope to see you again.";
+                else notifMessage = subject;
+
+                notificationService.createNotificationByEmail(to, subject, notifMessage);
+            } catch (Exception notifEx) {
+                log.warn("Failed to create in-app notification [type={}] to [{}]: {}", emailType, to, notifEx.getMessage());
+            }
 
         } catch (MailException | MessagingException e) {
             log.warn("Failed to send email [type={}] to [{}]: {}",
