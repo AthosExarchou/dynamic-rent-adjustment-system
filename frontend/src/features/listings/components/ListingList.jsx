@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { 
   Building2, 
   MapPin, 
@@ -22,16 +22,25 @@ import styles from './ListingList.module.css';
 
 export default function ListingList() {
   const { isAuthenticated, roles } = useAuth();
+  const [searchParams] = useSearchParams();
   const [listings, setListings] = useState([]);
   const [filter, setFilter] = useState({ title: '', minPrice: '', maxPrice: '' });
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // On mount: if the header search bar navigated here with ?search=... or ?title=..., auto-apply it
   useEffect(() => {
     const controller = new AbortController();
-    fetchListings(controller.signal);
+    const searchTerm = searchParams.get('search') || searchParams.get('title') || '';
+    if (searchTerm) {
+      setFilter(f => ({ ...f, title: searchTerm }));
+      applyFilter({ title: searchTerm, minPrice: '', maxPrice: '' }, controller.signal);
+    } else {
+      fetchListings(controller.signal);
+    }
     return () => controller.abort();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchListings = async (signal) => {
@@ -51,26 +60,31 @@ export default function ListingList() {
     }
   };
 
-  const handleFilterSubmit = async (e) => {
-    e.preventDefault();
+  const applyFilter = async (filterValues, signal) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filter.title) params.append('title', filter.title);
-      if (filter.minPrice) params.append('minPrice', filter.minPrice);
-      if (filter.maxPrice) params.append('maxPrice', filter.maxPrice);
-      
-      const data = await apiClient(`/listings/filter?${params.toString()}`);
+      if (filterValues.title) params.append('title', filterValues.title);
+      if (filterValues.minPrice) params.append('minPrice', filterValues.minPrice);
+      if (filterValues.maxPrice) params.append('maxPrice', filterValues.maxPrice);
+
+      const data = await apiClient(`/listings/filter?${params.toString()}`, signal ? { signal } : {});
       const approved = data.filter(l => l.status === 'APPROVED' || l.approved);
       setListings(approved);
       setError(null);
-    } catch {
+    } catch (err) {
+      if (err.name === 'AbortError') return;
       console.warn("Filter request failed.");
       setListings([]);
       setError("Filter request failed.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleFilterSubmit = async (e) => {
+    e.preventDefault();
+    await applyFilter(filter);
   };
 
   const isUserOnly = isAuthenticated && roles.includes('USER') && !roles.includes('OWNER') && !roles.includes('ADMIN');
