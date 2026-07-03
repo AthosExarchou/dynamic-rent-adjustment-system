@@ -198,47 +198,49 @@ export default function MainLayout() {
               </div>
 
               <div className={styles.navActions}>
-                {/* Notification Bell */}
-                <div className={styles.dropdown} ref={notifRef}>
-                  <button 
-                    className={styles.iconBtn} 
-                    aria-label="Notifications"
-                    onClick={() => setIsNotifOpen(!isNotifOpen)}
-                  >
-                    <Bell size={20} />
-                    {unreadCount > 0 && <span className={styles.notificationDot}></span>}
-                  </button>
+                {/* Notification Bell — only for authenticated users */}
+                {isAuthenticated && (
+                  <div className={styles.dropdown} ref={notifRef}>
+                    <button 
+                      className={styles.iconBtn} 
+                      aria-label="Notifications"
+                      onClick={() => setIsNotifOpen(!isNotifOpen)}
+                    >
+                      <Bell size={20} />
+                      {unreadCount > 0 && <span className={styles.notificationDot}></span>}
+                    </button>
 
-                  {isNotifOpen && (
-                    <div className={styles.notifDropdownMenu}>
-                      <div className={styles.notifHeader}>
-                        <h6 className={styles.notifTitle}>Notifications</h6>
-                        {unreadCount > 0 && (
-                          <button className={styles.notifClearBtn} onClick={handleMarkAllAsRead}>
-                            Mark all as read
-                          </button>
-                        )}
+                    {isNotifOpen && (
+                      <div className={styles.notifDropdownMenu}>
+                        <div className={styles.notifHeader}>
+                          <h6 className={styles.notifTitle}>Notifications</h6>
+                          {unreadCount > 0 && (
+                            <button className={styles.notifClearBtn} onClick={handleMarkAllAsRead}>
+                              Mark all as read
+                            </button>
+                          )}
+                        </div>
+                        <div className={styles.notifBody}>
+                          {notifications.length === 0 ? (
+                            <div className={styles.notifEmpty}>No new notifications</div>
+                          ) : (
+                            notifications.map(notif => (
+                              <div 
+                                key={notif.id} 
+                                className={`${styles.notifItem} ${!notif.read ? styles.unread : ''}`}
+                                onClick={() => handleMarkAsRead(notif.id, notif.read)}
+                              >
+                                <div className={styles.notifItemTitle}>{notif.title}</div>
+                                <div className={styles.notifItemMsg}>{notif.message}</div>
+                                <div className={styles.notifItemTime}>{formatTimeAgo(notif.createdAt)}</div>
+                              </div>
+                            ))
+                          )}
+                        </div>
                       </div>
-                      <div className={styles.notifBody}>
-                        {notifications.length === 0 ? (
-                          <div className={styles.notifEmpty}>No new notifications</div>
-                        ) : (
-                          notifications.map(notif => (
-                            <div 
-                              key={notif.id} 
-                              className={`${styles.notifItem} ${!notif.read ? styles.unread : ''}`}
-                              onClick={() => handleMarkAsRead(notif.id, notif.read)}
-                            >
-                              <div className={styles.notifItemTitle}>{notif.title}</div>
-                              <div className={styles.notifItemMsg}>{notif.message}</div>
-                              <div className={styles.notifItemTime}>{formatTimeAgo(notif.createdAt)}</div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
 
                 <button 
                   onClick={toggleTheme} 
@@ -293,6 +295,7 @@ export default function MainLayout() {
             </div>
           </div>
         </header>
+
 
       {/* Main Content Area */}
       <main className={styles.mainContent}>

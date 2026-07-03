@@ -41,7 +41,7 @@ export default function TermsOfService() {
     <div className={styles.container}>
       <header className={styles.header}>
         <h1 className={styles.title}>Terms of Service</h1>
-        <p className={styles.subtitle}>Last Updated: September 20, 2025</p>
+        <p className={styles.subtitle}>Last Updated: June 20, 2026</p>
       </header>
 
       <div className={styles.layout}>

@@ -23,15 +23,17 @@
 .sidebarLogo {
   font-size: 1.6rem;
   font-weight: 800;
-  color: #fff;
   letter-spacing: 1px;
-  transition: all 0.3s ease;
+  background: linear-gradient(90deg, #3b82f6, #a855f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  transition: filter 0.3s ease;
   cursor: default;
 }
 
 .sidebarLogo:hover {
-  color: #a855f7;
-  text-shadow: 0 0 4px rgba(168, 85, 247, 0.5);
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.4));
 }
 
 .closeBtn {
@@ -68,9 +70,21 @@
 }
 
 .sidebarLink.active {
-  background: linear-gradient(135deg, #0075ff 0%, #003f9a 100%);
+  background: rgba(59, 130, 246, 0.06);
   color: white;
-  box-shadow: 0 0 18px rgba(0, 98, 255, 0.35);
+  position: relative;
+}
+
+/* Accent strip for active link */
+.sidebarLink.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 15%;
+  bottom: 15%;
+  width: 4px;
+  background: linear-gradient(180deg, #3b82f6, #a855f7);
+  border-radius: 4px;
 }
 
 .divider {
