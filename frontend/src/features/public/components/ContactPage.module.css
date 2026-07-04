@@ -172,6 +172,7 @@
 .submitBtn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 74, 173, 0.3);
+  color: #fff;
 }
 
 .submitBtn:disabled {

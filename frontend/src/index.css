@@ -47,6 +47,7 @@
   --background-paper: #ffffff;
   --text-primary: var(--color-neutral-900);
   --text-secondary: #64748b;
+  --text-muted: #94a3b8;
   --border-color: #e2e8f0;
 }
 
@@ -55,6 +56,7 @@
   --background-paper: #1e1e1e;
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
+  --text-muted: #64748b;
   --border-color: #2d2d2d;
 }
 

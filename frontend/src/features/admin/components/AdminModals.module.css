@@ -135,6 +135,7 @@
 
 .saveBtn:hover {
   background-color: var(--color-primary-500);
+  color: #fff;
 }
 
 .saveBtn:disabled {

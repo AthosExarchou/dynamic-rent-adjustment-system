@@ -166,11 +166,23 @@
   box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
 }
 
-.btnSuccess { background-color: #198754; color: #fff; }
-.btnSuccess:hover { filter: brightness(1.1); }
+.btnSuccess {
+  background-color: #198754;
+  color: #fff;
+}
+.btnSuccess:hover {
+  filter: brightness(1.1);
+  color: #fff;
+}
 
-.btnDanger { background-color: #dc3545; color: #fff; }
-.btnDanger:hover { filter: brightness(1.1); }
+.btnDanger {
+  background-color: #dc3545;
+  color: #fff;
+}
+.btnDanger:hover {
+  filter: brightness(1.1);
+  color: #fff;
+}
 
 .rentedNotice {
   margin-top: auto;

@@ -63,6 +63,7 @@
 
 .approveBtn:hover {
   background-color: #059669;
+  color: #fff;
 }
 
 .rejectBtn {
@@ -78,6 +79,7 @@
 
 .rejectBtn:hover {
   background-color: #b91c1c;
+  color: #fff;
 }
 
 .emptyState {

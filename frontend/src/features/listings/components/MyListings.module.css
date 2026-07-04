@@ -154,16 +154,16 @@
 }
 
 .btnPrimary { background-color: #0d6efd; color: #fff; }
-.btnPrimary:hover { filter: brightness(1.1); }
+.btnPrimary:hover { filter: brightness(1.1); color: #fff; }
 
 .btnOutlineSecondary { border-color: #6c757d; color: #6c757d; background: transparent; }
 .btnOutlineSecondary:hover { background-color: #6c757d; color: #fff; }
 
 .btnDanger { background-color: #dc3545; color: #fff; }
-.btnDanger:hover { filter: brightness(1.1); }
+.btnDanger:hover { filter: brightness(1.1); color: #fff; }
 
 .btnSuccess { background-color: #198754; color: #fff; padding: 0.75rem 1.5rem; font-size: 1rem; }
-.btnSuccess:hover { filter: brightness(1.1); }
+.btnSuccess:hover { filter: brightness(1.1); color: #fff; }
 
 .emptyState {
   text-align: center;

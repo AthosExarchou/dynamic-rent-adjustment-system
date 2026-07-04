@@ -257,14 +257,33 @@
   box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
 }
 
-.btnPrimary { background-color: #0d6efd; color: #fff; }
-.btnPrimary:hover { filter: brightness(1.1); }
+.btnPrimary {
+  background-color: #0d6efd;
+  color: #fff;
+}
+.btnPrimary:hover {
+  filter: brightness(1.1);
+  color: #fff;
+}
 
-.btnOutlinePrimary { border-color: #0d6efd; color: #0d6efd; background: transparent; }
-.btnOutlinePrimary:hover { background-color: #0d6efd; color: #fff; }
+.btnOutlinePrimary {
+  border-color: #0d6efd;
+  color: #0d6efd;
+  background: transparent;
+}
+.btnOutlinePrimary:hover {
+  background-color: #0d6efd;
+  color: #fff;
+}
 
-.btnSuccess { background-color: #198754; color: #fff; }
-.btnSuccess:hover { filter: brightness(1.1); }
+.btnSuccess {
+  background-color: #198754;
+  color: #fff;
+}
+.btnSuccess:hover {
+  filter: brightness(1.1);
+  color: #fff;
+}
 
 .btnOutlineSuccess { border-color: #198754; color: #198754; background: transparent; }
 .btnOutlineSuccess:hover { background-color: #198754; color: #fff; }

@@ -248,6 +248,7 @@
 
 .viewBtn:hover {
   filter: brightness(0.9);
+  color: #fff;
 }
 
 /* CTA Section */

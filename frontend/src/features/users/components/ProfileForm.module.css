@@ -208,8 +208,20 @@
   transform: none;
 }
 
-.btnPrimary { background-color: #0d6efd; color: #fff; }
-.btnPrimary:hover:not(:disabled) { background-color: #0b5ed7; }
+.btnPrimary {
+  background-color: #0d6efd;
+  color: #fff;
+}
+.btnPrimary:hover:not(:disabled) {
+  background-color: #0b5ed7;
+  color: #fff;
+}
 
-.btnDanger { background-color: #dc3545; color: #fff; }
-.btnDanger:hover:not(:disabled) { background-color: #bb2d3b; }
+.btnDanger {
+  background-color: #dc3545;
+  color: #fff;
+}
+.btnDanger:hover:not(:disabled) {
+  background-color: #bb2d3b;
+  color: #fff;
+}
