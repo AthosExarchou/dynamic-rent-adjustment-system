@@ -189,6 +189,19 @@ public class UserController {
         Role role = roleRepository.findById(role_id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid role ID: " + role_id));
 
+        // OWNER and TENANT roles cannot be removed while the user still has an active profile
+        if ("OWNER".equals(role.getName()) && user.getOwner() != null) {
+            return ResponseEntity.badRequest().body(
+                    java.util.Map.of("message", "OWNER role cannot be removed while an Owner profile exists. Delete the Owner profile first.")
+            );
+        }
+
+        if ("TENANT".equals(role.getName()) && user.getTenant() != null) {
+            return ResponseEntity.badRequest().body(
+                    java.util.Map.of("message", "TENANT role cannot be removed while a Tenant profile exists. Delete the Tenant profile first.")
+            );
+        }
+
         user.getRoles().remove(role);
         userService.updateUser(user);
 
