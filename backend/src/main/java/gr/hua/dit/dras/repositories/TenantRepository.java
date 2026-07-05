@@ -8,12 +8,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public interface TenantRepository extends JpaRepository<Tenant, Integer> {
 
     Optional<Tenant> findByUserId(Integer userId);
 
+    @Transactional
     @Modifying
     @Query(value = "DELETE FROM tenant_listing_applications WHERE listing_id = :listingId", nativeQuery = true)
     void deleteApplicationsByListingId(@Param("listingId") Integer listingId);
