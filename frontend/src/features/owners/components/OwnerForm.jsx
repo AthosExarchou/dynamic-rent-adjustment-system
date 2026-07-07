@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { UserCheck, Phone, CheckCircle, ChevronRight, Briefcase } from 'lucide-react';
+import { Phone, CheckCircle, ChevronRight, Briefcase } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { useAuth } from '../../auth';
 import styles from './OwnerForm.module.css';
 
 export default function OwnerForm() {
   const navigate = useNavigate();
-  const {} = useAuth();
   const [formData, setFormData] = useState({ firstName: '', lastName: '', phoneNumber: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);

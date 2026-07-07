@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { User, Mail, Phone, Users, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
@@ -20,9 +20,9 @@ export default function ListingApplications() {
       isMounted.current = false;
       controller.abort();
     };
-  }, [listingId]);
+  }, [fetchApplications]);
 
-  const fetchApplications = async (signal) => {
+  const fetchApplications = useCallback(async (signal) => {
     try {
       const data = await apiClient(`/listings/${listingId}/applications`, signal ? { signal } : {});
       if (!isMounted.current) return;
@@ -42,7 +42,7 @@ export default function ListingApplications() {
     } finally {
       if (isMounted.current) setLoading(false);
     }
-  };
+  }, [listingId]);
 
   const handleApprove = async (tenantId) => {
     try {
