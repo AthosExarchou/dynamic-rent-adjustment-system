@@ -124,6 +124,15 @@ def _tracked_sleep(secs):
 
 time.sleep = _tracked_sleep
 
+# Disable uc.Chrome destructor cleanup. All drivers are closed
+# via driver.quit(). Without this patch, Windows may emit harmless
+# WinError 6 exceptions during interpreter shutdown when
+# __del__ runs after OS handles have already been released.
+def _safe_chrome_del(self):
+    pass
+
+uc.Chrome.__del__ = _safe_chrome_del
+
 logger = logging.getLogger("dras.scraper")
 
 __version__ = "1.2.1"
@@ -889,12 +898,20 @@ def rotate_session(old_driver, display=None):
 
     time.sleep(random.uniform(5, 10))
 
+    new_driver = None
     try:
         fresh_options = setup_chrome_options()  # new ChromeOptions object
         new_driver = init_driver(fresh_options)
         new_agent = new_driver.execute_script("return navigator.userAgent;")
         return new_driver, new_agent
     except Exception:
+        # Quit new_driver if it was created but initialization
+        # did not fully complete (e.g. execute_script raised)
+        if new_driver is not None:
+            try:
+                new_driver.quit()
+            except Exception:
+                pass
         if display:
             try:
                 display.stop()
