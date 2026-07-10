@@ -3,6 +3,8 @@ package gr.hua.dit.dras.dto;
 /* imports */
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 public class OwnerCreateRequest {
 
@@ -10,12 +12,18 @@ public class OwnerCreateRequest {
     private Integer userId;
 
     @NotBlank(message = "First name is required")
+    @Size(max = 20, message = "First name cannot exceed 20 characters")
     private String firstName;
 
     @NotBlank(message = "Last name is required")
+    @Size(max = 20, message = "Last name cannot exceed 20 characters")
     private String lastName;
 
     @NotBlank(message = "Phone number is required")
+    @Pattern(
+            regexp = "^\\+?[0-9. ()-]{7,25}$",
+            message = "Invalid phone number format"
+    )
     private String phoneNumber;
 
     public Integer getUserId() {

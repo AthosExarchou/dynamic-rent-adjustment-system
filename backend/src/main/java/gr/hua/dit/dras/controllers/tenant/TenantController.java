@@ -77,6 +77,10 @@ public class TenantController {
                 return ResponseEntity.badRequest().body(Map.of("error", "Invalid form data. All fields are required."));
             }
 
+            if (!phoneNumber.trim().matches("^\\+?[0-9. ()-]{7,25}$")) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid phone number format."));
+            }
+
             tenantService.createTenantForCurrentUser(
                     firstName.trim(),
                     lastName.trim(),

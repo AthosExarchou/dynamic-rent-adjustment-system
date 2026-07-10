@@ -1,13 +1,16 @@
 package gr.hua.dit.dras.controllers.owner;
 
 /* imports */
+import gr.hua.dit.dras.dto.OwnerCreateRequest;
 import gr.hua.dit.dras.entities.Owner;
 import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.services.application.ListingApplicationService;
 import gr.hua.dit.dras.services.domain.*;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
@@ -34,30 +37,34 @@ public class OwnerController {
     @PostMapping("/new")
     @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
     public ResponseEntity<?> createOwner(
-            @RequestBody Map<String, String> payload
+            @Valid @RequestBody OwnerCreateRequest request,
+            BindingResult bindingResult
     ) {
-        String firstName = payload.get("firstName");
-        String lastName = payload.get("lastName");
-        String phoneNumber = payload.get("phoneNumber");
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed",
+                    "details", bindingResult.getAllErrors()
+                            .stream()
+                            .map(e -> e.getDefaultMessage())
+                            .toList()
+            ));
+        }
+
         Integer userId;
 
         // Regular USERs are always forced to use their own ID to prevent IDOR
         boolean isAdmin = userService.currentUserHasRole("ADMIN");
-        if (isAdmin && payload.containsKey("userId") && payload.get("userId") != null) {
-            userId = Integer.parseInt(payload.get("userId").toString());
+        if (isAdmin && request.getUserId() != null) {
+            userId = request.getUserId();
         } else {
             userId = userService.getCurrentUserId();
         }
 
-        if (firstName == null || lastName == null || phoneNumber == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Missing fields"));
-        }
-
         ownerService.createOwnerForUser(
                 userId,
-                firstName,
-                lastName,
-                phoneNumber
+                request.getFirstName(),
+                request.getLastName(),
+                request.getPhoneNumber()
         );
 
         return ResponseEntity.ok().build();
