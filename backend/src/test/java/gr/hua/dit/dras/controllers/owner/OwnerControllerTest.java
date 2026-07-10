@@ -1,5 +1,6 @@
 package gr.hua.dit.dras.controllers.owner;
 
+import gr.hua.dit.dras.dto.OwnerCreateRequest;
 import gr.hua.dit.dras.entities.Listing;
 import gr.hua.dit.dras.entities.Owner;
 import gr.hua.dit.dras.entities.User;
@@ -17,10 +18,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.validation.BindingResult;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -110,15 +111,18 @@ class OwnerControllerTest {
     @Test
     @DisplayName("Should create owner and return 200 on success")
     void shouldCreateOwnerOnSuccess() {
-        Map<String, String> request = new HashMap<>();
-        request.put("userId", "1");
-        request.put("firstName", "John");
-        request.put("lastName", "Doe");
-        request.put("phoneNumber", "123");
+        OwnerCreateRequest request = new OwnerCreateRequest();
+        request.setUserId(1);
+        request.setFirstName("John");
+        request.setLastName("Doe");
+        request.setPhoneNumber("123");
 
+        BindingResult bindingResult = mock(BindingResult.class);
+        when(bindingResult.hasErrors()).thenReturn(false);
         when(userService.getCurrentUserId()).thenReturn(1);
+        when(userService.currentUserHasRole("ADMIN")).thenReturn(false);
 
-        ResponseEntity<?> response = ownerController.createOwner(request);
+        ResponseEntity<?> response = ownerController.createOwner(request, bindingResult);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(ownerService).createOwnerForUser(1, "John", "Doe", "123");
@@ -127,10 +131,15 @@ class OwnerControllerTest {
     @Test
     @DisplayName("Should return bad request on missing fields")
     void shouldReturnBadRequestOnMissingFields() {
-        Map<String, String> request = new HashMap<>();
-        request.put("userId", "1");
+        OwnerCreateRequest request = new OwnerCreateRequest();
+        request.setUserId(1);
+        // firstName, lastName, phoneNumber intentionally omitted
 
-        ResponseEntity<?> response = ownerController.createOwner(request);
+        BindingResult bindingResult = mock(BindingResult.class);
+        when(bindingResult.hasErrors()).thenReturn(true);
+        when(bindingResult.getAllErrors()).thenReturn(Collections.emptyList());
+
+        ResponseEntity<?> response = ownerController.createOwner(request, bindingResult);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         verifyNoInteractions(ownerService);
