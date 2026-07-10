@@ -1,0 +1,40 @@
+/* Price Drop Indicator Badge */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 0.2rem 0.45rem;
+  border-radius: 20px;
+  white-space: nowrap;
+  cursor: default;
+  user-select: none;
+  /* Subtle fade-in on mount */
+  animation: fadeInBadge 0.4s ease;
+}
+
+/* Recently lowered - slightly more vivid green */
+.recentDrop {
+  background-color: rgba(25, 200, 100, 0.15);
+  color: #10a855;
+  border: 1px solid rgba(25, 200, 100, 0.35);
+}
+
+/* Below market average - softer green */
+.belowMarket {
+  background-color: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.arrow {
+  flex-shrink: 0;
+}
+
+@keyframes fadeInBadge {
+  from { opacity: 0; transform: translateY(-3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

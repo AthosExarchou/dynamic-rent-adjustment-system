@@ -198,7 +198,7 @@ export default function MainLayout() {
               </div>
 
               <div className={styles.navActions}>
-                {/* Notification Bell — only for authenticated users */}
+                {/* Notification Bell - only for authenticated users */}
                 {isAuthenticated && (
                   <div className={styles.dropdown} ref={notifRef}>
                     <button 

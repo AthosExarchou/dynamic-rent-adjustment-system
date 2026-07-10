@@ -19,11 +19,14 @@ import {
 import { useAuth } from '../../auth';
 import apiClient from '../../../shared/api/client';
 import styles from './ListingList.module.css';
+import PriceDropIndicator, { computeAvgPricePerM2 } from './PriceDropIndicator';
+
 
 export default function ListingList() {
   const { isAuthenticated, roles } = useAuth();
   const [searchParams] = useSearchParams();
   const [listings, setListings] = useState([]);
+  const [avgPricePerM2, setAvgPricePerM2] = useState(null);
   const [filter, setFilter] = useState({ title: '', minPrice: '', maxPrice: '' });
 
   const [loading, setLoading] = useState(true);
@@ -49,6 +52,7 @@ export default function ListingList() {
       const data = await apiClient('/listings', signal ? { signal } : {});
       const approved = data.filter(l => l.status === 'APPROVED' || l.approved);
       setListings(approved);
+      setAvgPricePerM2(computeAvgPricePerM2(approved));
       setError(null);
     } catch (err) {
       if (err.name === 'AbortError') return;
@@ -71,6 +75,7 @@ export default function ListingList() {
       const data = await apiClient(`/listings/filter?${params.toString()}`, signal ? { signal } : {});
       const approved = data.filter(l => l.status === 'APPROVED' || l.approved);
       setListings(approved);
+      setAvgPricePerM2(computeAvgPricePerM2(approved));
       setError(null);
     } catch (err) {
       if (err.name === 'AbortError') return;
@@ -188,6 +193,7 @@ export default function ListingList() {
                   </h5>
                   <h5 className={styles.priceContainer}>
                     <span className={styles.priceBadge}>{l.price} € /mo</span>
+                    <PriceDropIndicator listing={l} avgPricePerM2={avgPricePerM2} />
                   </h5>
                 </div>
                 

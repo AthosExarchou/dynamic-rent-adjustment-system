@@ -18,12 +18,14 @@ import {
 import apiClient from '../../../shared/api/client';
 import { useAuth } from '../../auth';
 import styles from './ListingDetail.module.css';
+import PriceDropIndicator, { computeAvgPricePerM2 } from './PriceDropIndicator';
 
 export default function ListingDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated, roles } = useAuth();
   const [listing, setListing] = useState(null);
+  const [avgPricePerM2, setAvgPricePerM2] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const [error, setError] = useState(null);
@@ -36,6 +38,14 @@ export default function ListingDetail() {
         if (data && data.id) {
           setListing(data);
           setError(null);
+          // Fetch all approved listings to compute avg pricePerM2 for comparison
+          try {
+            const all = await apiClient('/listings', { signal: controller.signal });
+            const approved = all.filter(l => l.status === 'APPROVED' || l.approved);
+            setAvgPricePerM2(computeAvgPricePerM2(approved));
+          } catch {
+            // non-critical
+          }
         } else {
           setListing(null);
           setError("Listing not found.");
@@ -101,6 +111,7 @@ export default function ListingDetail() {
             {listing.subtitle && <h4 className={styles.subtitle}>{listing.subtitle}</h4>}
             <div className={styles.priceTag}>
               <Euro size={24} /> {listing.price} / month
+              <PriceDropIndicator listing={listing} avgPricePerM2={avgPricePerM2} />
             </div>
           </div>
 
