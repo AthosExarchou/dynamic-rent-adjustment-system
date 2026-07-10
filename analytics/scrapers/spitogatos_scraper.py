@@ -37,6 +37,7 @@ Key Features:
 - Backend integration via chunked API requests
 - Configurable execution modes (fast vs full, normal vs weekly)
 - Virtual display support for headless environments
+- Save state and resume capability for long-running scraping sessions
 
 Outputs:
 - data/spitogatos_athens_listings.csv
@@ -45,6 +46,8 @@ Outputs:
     Aggregated historical price metrics (€/m2)
 - data/images/<listing_id>/
     Optional per-listing image storage with metadata tracking
+- data/scraper_state.json
+    Interim state file enabling resumption of long-running scrapes
 - failed_payloads/
     Failed backend payloads
 
