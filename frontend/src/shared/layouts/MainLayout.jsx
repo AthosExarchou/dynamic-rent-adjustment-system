@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { NavLink, Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { Sun, Moon, UserCircle, LogIn, UserPlus, LogOut, Building2, ChevronRight, Search, Bell } from 'lucide-react';
 import { useAuth } from '../../features/auth';
 import apiClient from '../api/client';
@@ -53,9 +53,6 @@ export default function MainLayout() {
     document.documentElement.setAttribute('data-theme', nextTheme);
   };
 
-  const isAdmin = roles.includes('ADMIN');
-  const isOwner = roles.includes('OWNER');
-  const isUser = isAuthenticated;
 
   const location = useLocation();
   const pathnames = location.pathname.split('/').filter(x => x);
@@ -146,9 +143,6 @@ export default function MainLayout() {
       </nav>
     );
   };
-
-  const navLinkClassName = ({ isActive }) => 
-    isActive ? `${styles.navLink} ${styles.active}` : styles.navLink;
 
   return (
     <div className={styles.appContainer}>

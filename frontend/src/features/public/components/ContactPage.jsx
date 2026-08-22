@@ -20,7 +20,7 @@ export default function ContactPage() {
       setSuccess(true);
       setError('');
       setFormData({ name: '', email: '', subject: '', message: '' });
-    } catch (err) {
+    } catch {
       setError('Failed to send message. Please try again.');
     } finally {
       setIsSubmitting(false);

@@ -28,7 +28,7 @@ export default function EditUserModal({ user, onClose, onRefresh }) {
       });
       onRefresh();
       onClose();
-    } catch (err) {
+    } catch {
       setError('Failed to update user. Username or email may be taken.');
     } finally {
       setLoading(false);

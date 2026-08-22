@@ -20,7 +20,7 @@ export default function RegisterForm() {
     try {
       await register(formData.username, formData.email, formData.password);
       navigate('/login');
-    } catch (err) {
+    } catch {
       setError('Registration failed. Please check your details and try again.');
     } finally {
       setLoading(false);
