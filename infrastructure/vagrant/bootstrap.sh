@@ -13,27 +13,6 @@ apt-get install -y ca-certificates curl gnupg lsb-release wget apt-transport-htt
 # Create keyrings directory if it doesn't exist
 install -m 0755 -d /etc/apt/keyrings
 
-# Java 21
-echo "Installing Java 21..."
-if ! command -v javac >/dev/null 2>&1; then
-    wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /etc/apt/keyrings/adoptium.asc > /dev/null
-    echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list
-    
-    apt-get update -y
-    apt-get install -y temurin-21-jdk
-else
-    echo "Java 21 is already installed, skipping."
-fi
-
-# Node.js 20
-echo "Installing Node.js 20..."
-if ! command -v node >/dev/null 2>&1; then
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-    apt-get install -y nodejs
-else
-    echo "Node.js is already installed, skipping."
-fi
-
 # Docker & Docker Compose Plugin
 echo "Installing Docker..."
 if ! command -v docker >/dev/null 2>&1; then
