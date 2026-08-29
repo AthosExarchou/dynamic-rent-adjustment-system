@@ -6,62 +6,73 @@ pipeline {
     }
 
     stages {
-        stage('Backend Build') {
-            steps {
-                dir('backend') {
-                    sh 'mvn clean package -DskipTests'
-                }
-            }
-        }
 
+        // Validate backend using a disposable Maven container
         stage('Backend Tests') {
             steps {
-                dir('backend') {
-                    sh 'mvn test'
-                }
+                sh '''
+                    docker run --rm \
+                        -v "$(pwd)/backend":/app \
+                        -w /app \
+                        maven:3.9.6-eclipse-temurin-21 \
+                        mvn -B test
+                '''
             }
         }
 
-        stage('Frontend Install') {
+        // Validate frontend using a disposable Node container
+        stage('Frontend Lint') {
             steps {
-                dir('frontend') {
-                    sh 'npm install'
-                }
+                sh '''
+                    docker run --rm \
+                        -v "$(pwd)/frontend":/app \
+                        -w /app \
+                        node:20-alpine \
+                        sh -c "npm ci && npm run lint"
+                '''
             }
         }
 
-        stage('Frontend Build') {
-            steps {
-                dir('frontend') {
-                    sh 'npm run build'
-                }
-            }
-        }
-
+        // Build production Docker images
         stage('Docker Image Build') {
             steps {
                 sh "${DOCKER_COMPOSE_CMD} build"
             }
         }
 
-        stage('Docker Compose Deployment') {
+        // Deploy the application stack
+        // Using --remove-orphans replaces changed containers in-place without
+        // tearing down the entire stack first, minimizing downtime.
+        stage('Deploy') {
             steps {
-                sh "${DOCKER_COMPOSE_CMD} up -d"
+                sh "${DOCKER_COMPOSE_CMD} up -d --remove-orphans"
             }
         }
 
-        stage('Health Check') {
+        // Verify that the deployed application is responding
+        stage('Smoke Test') {
             steps {
-                sleep time: 15, unit: 'SECONDS'
-                sh "curl -f http://localhost:80/actuator/health"
+                sh 'infrastructure/scripts/smoke-test.sh'
             }
         }
 
+        // Archive deployment logs for troubleshooting
         stage('Archive Logs') {
             steps {
                 sh "${DOCKER_COMPOSE_CMD} logs > docker_deployment.log"
                 archiveArtifacts artifacts: 'docker_deployment.log', allowEmptyArchive: true
             }
+        }
+    }
+
+    post {
+        failure {
+            // Stop the stack if the pipeline fails
+            echo 'Pipeline failed. Stopping the deployment stack.'
+            sh "${DOCKER_COMPOSE_CMD} down --remove-orphans || true"
+        }
+        success {
+            echo 'Deployment successful.'
         }
     }
 }
