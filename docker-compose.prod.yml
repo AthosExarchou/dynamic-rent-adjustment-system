@@ -1,3 +1,4 @@
+
 services:
   db:
     image: postgres:15-alpine
@@ -41,18 +42,16 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # Build-only service: compiles the React app and populates the shared
+  # frontend_dist volume. It exits after copying files and is not a
+  # long-running service. Nginx reads directly from the same volume.
   frontend:
     build:
       context: .
       dockerfile: docker/frontend/Dockerfile
-    depends_on:
-      - backend
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+    volumes:
+      - frontend_dist:/app/dist
+    restart: "no"
 
   nginx:
     build:
@@ -60,11 +59,13 @@ services:
       dockerfile: docker/nginx/Dockerfile
     ports:
       - "80:80"
+    volumes:
+      - frontend_dist:/usr/share/nginx/html:ro
     depends_on:
       backend:
         condition: service_healthy
       frontend:
-        condition: service_started
+        condition: service_completed_successfully
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:80 || exit 1"]
@@ -80,3 +81,4 @@ services:
 
 volumes:
   db_data_prod:
+  frontend_dist:

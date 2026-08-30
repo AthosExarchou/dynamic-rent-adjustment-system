@@ -1,12 +1,17 @@
-FROM node:20 AS builder
+# Build stage: install dependencies and compile the React application.
+FROM node:20-alpine AS builder
+
 WORKDIR /app
+
 COPY frontend/package*.json ./
-RUN npm install
+RUN npm ci
+
 COPY frontend/ .
 RUN npm run build
 
-FROM nginx:alpine
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY docker/frontend/nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Artifact stage: the image contains only the compiled frontend assets.
+# Docker Compose mounts /app/dist into the shared frontend_dist named volume,
+# which nginx then serves directly. This container exits after population.
+FROM alpine:3.20
+
+COPY --from=builder /app/dist /app/dist
