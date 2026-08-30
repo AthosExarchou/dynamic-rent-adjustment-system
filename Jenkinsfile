@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         DOCKER_COMPOSE_CMD = 'docker compose -f docker-compose.prod.yml'
+        COMPOSE_PROJECT_NAME = 'dras'
     }
 
     stages {
@@ -42,10 +43,20 @@ pipeline {
             }
         }
 
-        // Deploy the application stack
+        // Deploy the application stack.
+        //
+        // The frontend_dist named volume must be explicitly deleted before each
+        // deployment so that Docker re-initializes it from the newly built
+        // frontend artifact image. Without this step, the existing volume
+        // persists and nginx would continue serving the old React build.
+        //
+        // Note: 'docker compose down' removes containers and networks but does
+        // NOT remove named volumes (no -v flag), so the database is safe.
         stage('Deploy') {
             steps {
-                sh "${DOCKER_COMPOSE_CMD} up -d --remove-orphans"
+                sh "${DOCKER_COMPOSE_CMD} down --remove-orphans"
+                sh "docker volume rm ${COMPOSE_PROJECT_NAME}_frontend_dist || true"
+                sh "${DOCKER_COMPOSE_CMD} up -d"
             }
         }
 
@@ -71,7 +82,7 @@ pipeline {
             junit allowEmptyResults: true, testResults: 'backend/target/surefire-reports/TEST-*.xml'
         }
         failure {
-            // Actively stop the stack if a deployment fails midway to avoid zombie containers.
+            // Actively stop the stack if a deployment fails midway to avoid zombie containers
             echo 'Pipeline failed. Tearing down broken deployment stack...'
             sh "${DOCKER_COMPOSE_CMD} down --remove-orphans || true"
         }
