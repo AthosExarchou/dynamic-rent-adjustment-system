@@ -7,12 +7,13 @@ pipeline {
 
     stages {
 
-        // Validate backend using a disposable Maven container
+        // Validate backend with a disposable container and a persistent Maven cache
         stage('Backend Tests') {
             steps {
                 sh '''
                     docker run --rm \
                         -v "$(pwd)/backend":/app \
+                        -v jenkins_maven_cache:/root/.m2 \
                         -w /app \
                         maven:3.9.6-eclipse-temurin-21 \
                         mvn -B test
@@ -20,12 +21,13 @@ pipeline {
             }
         }
 
-        // Validate frontend using a disposable Node container
+        // Validate frontend with a disposable container and a persistent npm cache
         stage('Frontend Lint') {
             steps {
                 sh '''
                     docker run --rm \
                         -v "$(pwd)/frontend":/app \
+                        -v jenkins_npm_cache:/root/.npm \
                         -w /app \
                         node:20-alpine \
                         sh -c "npm ci && npm run lint"
@@ -41,8 +43,6 @@ pipeline {
         }
 
         // Deploy the application stack
-        // Using --remove-orphans replaces changed containers in-place without
-        // tearing down the entire stack first, minimizing downtime.
         stage('Deploy') {
             steps {
                 sh "${DOCKER_COMPOSE_CMD} up -d --remove-orphans"
@@ -66,9 +66,13 @@ pipeline {
     }
 
     post {
+        always {
+            // Publish test results to Jenkins so failures are visible in the UI
+            junit allowEmptyResults: true, testResults: 'backend/target/surefire-reports/TEST-*.xml'
+        }
         failure {
-            // Stop the stack if the pipeline fails
-            echo 'Pipeline failed. Stopping the deployment stack.'
+            // Actively stop the stack if a deployment fails midway to avoid zombie containers.
+            echo 'Pipeline failed. Tearing down broken deployment stack...'
             sh "${DOCKER_COMPOSE_CMD} down --remove-orphans || true"
         }
         success {
