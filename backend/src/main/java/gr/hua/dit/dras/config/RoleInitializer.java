@@ -10,7 +10,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
-@Order(1)
 public class RoleInitializer {
 
     private final RoleRepository roleRepository;
@@ -20,6 +19,7 @@ public class RoleInitializer {
     }
 
     @EventListener(ApplicationReadyEvent.class)
+    @Order(1)
     @Transactional
     public void setup() {
         initializeRole("USER");

@@ -16,7 +16,6 @@ import java.util.Optional;
 import org.springframework.core.annotation.Order;
 
 @Component
-@Order(2)
 public class AdminInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(AdminInitializer.class);
@@ -36,6 +35,7 @@ public class AdminInitializer {
     }
 
     @EventListener(ApplicationReadyEvent.class)
+    @Order(2)
     public void createDefaultAdminUser() {
         Optional<User> defaultAdmin = userRepository.findByUsername("admin");
 

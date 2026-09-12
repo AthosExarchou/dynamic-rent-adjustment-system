@@ -19,7 +19,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
-@Order(3)
 public class SystemOwnerInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(SystemOwnerInitializer.class);
@@ -43,6 +42,7 @@ public class SystemOwnerInitializer {
 
     @Transactional
     @EventListener(ApplicationReadyEvent.class)
+    @Order(3)
     public void createSystemOwner() {
 
         /* Checks if system owner already exists */
