@@ -138,7 +138,7 @@ export default function TermsOfService() {
           <section id="section11" ref={el => sectionRefs.current['section11'] = el} className={styles.section}>
             <h2 className={styles.sectionTitle}>11. Contact Us</h2>
             <p>
-              Have questions about our Terms and Conditions? Reach out via our <Link to="/contact" className={styles.link}>Contact Form</Link> or email us at <a href="mailto:realestate2025project@gmail.com" className={styles.link}>realestate2025project@gmail.com</a>.
+              Have questions about our Terms and Conditions? Reach out via our <Link to="/contact" className={styles.link}>Contact Form</Link> or email us at <a href="mailto:dras.system@gmail.com" className={styles.link}>dras.system@gmail.com</a>.
             </p>
           </section>
         </main>

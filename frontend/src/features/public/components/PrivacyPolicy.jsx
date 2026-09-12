@@ -53,7 +53,7 @@ export default function PrivacyPolicy() {
         <section className={styles.section}>
           <h3 className={styles.sectionTitle}>7. Contact Us</h3>
           <p>
-            Have questions about our Privacy Policy? Reach out via our <Link to="/contact" className={styles.link}>Contact Form</Link> or email us at <a href="mailto:realestate2025project@gmail.com" className={styles.link}>realestate2025project@gmail.com</a>.
+            Have questions about our Privacy Policy? Reach out via our <Link to="/contact" className={styles.link}>Contact Form</Link> or email us at <a href="mailto:dras.system@gmail.com" className={styles.link}>dras.system@gmail.com</a>.
           </p>
         </section>
       </div>

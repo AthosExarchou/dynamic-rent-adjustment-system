@@ -202,7 +202,7 @@ public class EmailService {
 
     public boolean sendContactUsEmail(ContactForm contactForm) {
 
-        String to = "realestate2025project@gmail.com";
+        String to = "dras.system@gmail.com";
 
         /* Prepare Thymeleaf context */
         Context context = new Context();

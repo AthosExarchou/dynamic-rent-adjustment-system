@@ -66,8 +66,8 @@ export default function ContactPage() {
             <Mail className={styles.contactIcon} size={24} />
             <div>
               <strong>General Inquiries:</strong><br />
-              <a href="mailto:realestate2025project@gmail.com"
-                 className={styles.contactLink}>realestate2025project@gmail.com</a>
+              <a href="mailto:dras.system@gmail.com"
+                 className={styles.contactLink}>dras.system@gmail.com</a>
             </div>
           </div>
 
