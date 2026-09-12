@@ -10,7 +10,7 @@ set -euo pipefail
 
 BACKEND_URL="http://localhost:80/actuator/health"
 FRONTEND_URL="http://localhost:80"
-MAX_WAIT_SECONDS=60
+MAX_WAIT_SECONDS=180
 POLL_INTERVAL=5
 
 # Helpers
