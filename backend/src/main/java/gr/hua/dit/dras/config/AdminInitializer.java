@@ -13,8 +13,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import java.security.SecureRandom;
 import java.util.Optional;
+import org.springframework.core.annotation.Order;
 
 @Component
+@Order(2)
 public class AdminInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(AdminInitializer.class);
