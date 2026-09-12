@@ -66,6 +66,9 @@ public class SecurityConfig {
                         /* REST Auth Endpoints */
                         .requestMatchers("/api/auth/**").permitAll()
 
+                        /* Actuator health/info */
+                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+
                         /* Protected API Endpoints */
                         .requestMatchers("/api/external-import/**").hasAuthority("ADMIN")
 
