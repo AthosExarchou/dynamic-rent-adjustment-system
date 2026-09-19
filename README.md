@@ -23,7 +23,7 @@ It follows a layered backend architecture, feature-based frontend architecture, 
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage Guide](#usage-guide)
-- [Infrastructure & Deployment](#infrastructure--deployment)
+- [CI/CD & Production Deployment](#cicd--production-deployment)
 - [Author](#author)
 - [License](#license)
 
@@ -145,18 +145,21 @@ VITE_API_BASE_URL=http://localhost:8080/api
 2. Review and approve pending property listings.
 3. Manage users and assign or revoke roles as necessary.
 
-## Infrastructure & Deployment
+## Production & CI/CD
 
-Detailed instructions for deploying the Dynamic Rent Adjustment System (including Docker, Vagrant, and Jenkins
-configurations, as well as troubleshooting tips for VirtualBox Secure Boot) have been moved to their own dedicated documentation.
+The app is hosted on an **Oracle Cloud ARM64 VM** (their Always Free tier) using Docker Compose. It uses Nginx to serve the React frontend and proxy requests to the Spring Boot backend. The PostgreSQL database is hidden from the public internet for security.
 
-**[Read the Infrastructure Guide](infrastructure/README.md)**
+I set up a fully automated deployment pipeline:
+- **GitHub Actions**: Runs unit tests and ESLint every time code is pushed.
+- **Jenkins**: Runs directly on the Oracle server. Whenever the `main` branch is updated, Jenkins automatically builds new Docker images and restarts the app without downtime. It even runs a quick smoke test to make sure the app actually boots before calling the deployment successful.
+
+For the exact commands to run the app locally or manage the server, see the **[Deployment Cheat Sheet](docs/deployment.md)**.
 
 ## Author
 
 - **Name**: Exarchou Athos
 - **Student ID**: it2022134
-- **Email**: athosexarhou@gmail.com
+- **Email**: athosexarhou@gmail.com | it2022134@hua.gr
 
 ## License
 
