@@ -1,6 +1,13 @@
+# LEGACY / FROZEN
+#
+# Rentola scraper retained for historical reproducibility.
+# Rentola was replaced by Spitogatos due to prolonged technical
+# availability issues. This scraper is no longer part of the
+# active DRAS data-collection pipeline.
+
 """
-# Dynamic Rent Adjustment System (DRAS) - Rentola Web Scraper
-# -----------------------------------------------------------
+Dynamic Rent Adjustment System (DRAS) - Rentola Web Scraper
+-----------------------------------------------------------
 This script automates the collection of residential rental listings from the
 Rentola (rentola.gr) website for the Athens area. It navigates paginated search
 results, handles cookie consent prompts, extracts structured and semi-structured
@@ -68,10 +75,9 @@ import os
 import sys
 import argparse
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from constants import PPM2_MIN, PPM2_MAX
-
 # CONFIG
+PPM2_MIN = 2
+PPM2_MAX = 80
 DATA_DIR = Path("data")
 DATA_DIR.mkdir(exist_ok=True)
 LATEST_CSV = DATA_DIR / "rentola_athens_listings.csv"

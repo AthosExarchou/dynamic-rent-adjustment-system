@@ -101,7 +101,6 @@ import random
 import re
 import os
 import shutil
-from constants import PPM2_MIN, PPM2_MAX
 import json
 import hashlib
 import argparse
@@ -138,6 +137,8 @@ logger = logging.getLogger("dras.scraper")
 __version__ = "1.2.1"
 
 # CONFIGURATION
+PPM2_MIN = 2
+PPM2_MAX = 80
 DATA_DIR = Path("data")
 DATA_DIR.mkdir(exist_ok=True)
 LATEST_CSV = DATA_DIR / "spitogatos_athens_listings.csv"
@@ -1114,32 +1115,50 @@ def init_driver(options):
     """
     logger.info("Initializing stealth browser")
 
-    # Looks for a system-installed chromedriver
+    # Look for system-installed driver and browser
     system_driver_path = shutil.which("chromedriver")
+
+    browser_path = (
+        shutil.which("chromium-browser")
+        or shutil.which("chromium")
+        or shutil.which("google-chrome")
+        or shutil.which("google-chrome-stable")
+    )
+
+    if browser_path:
+        logger.info("Using browser executable | path=%s", browser_path)
+    else:
+        logger.info("No system browser executable found in PATH")
 
     if system_driver_path:
         try:
             logger.info("Using system chromedriver | path=%s", system_driver_path)
+
             return uc.Chrome(
                 options=options,
-                driver_executable_path=system_driver_path
+                driver_executable_path=system_driver_path,
+                browser_executable_path=browser_path
             )
+
         except Exception as e:
-            logger.warning("System chromedriver failed, falling back to ChromeDriverManager")
+            logger.warning("System chromedriver failed, falling back to ChromeDriverManager | error=%s", e)
     else:
         logger.info("No system chromedriver found in PATH, falling back to ChromeDriverManager")
 
     # Fallback: Dynamic Download
     try:
         logger.info("Downloading chromedriver via ChromeDriverManager")
+
         path = ChromeDriverManager().install()
 
         return uc.Chrome(
             options=options,
-            driver_executable_path=path
+            driver_executable_path=path,
+            browser_executable_path=browser_path
         )
+
     except Exception as e2:
-        raise RuntimeError(f"CRITICAL: Driver initialization failed: {e2}")
+        raise RuntimeError(f"CRITICAL: Driver initialization failed: {e2}") from e2
 
 
 # Main Scraper Pipeline
