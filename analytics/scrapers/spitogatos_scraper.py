@@ -1728,7 +1728,7 @@ def build_parser() -> argparse.ArgumentParser:
             Notes:
                 - 'auto' display mode detects headless environments
                 - '--full' enables image downloading
-                - default backend url: http://localhost:8080/api/external-import/listings
+                - default backend url: http://localhost/api/external-import/listings
             """
         )
     )
@@ -1777,7 +1777,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     output_group.add_argument(
         "--backend-url",
-        default="http://localhost:8080/api/external-import/listings",
+        default="http://localhost/api/external-import/listings",
         help="Backend endpoint URL"
     )
 

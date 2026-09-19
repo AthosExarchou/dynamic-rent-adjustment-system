@@ -423,7 +423,7 @@ def save_meta(meta_path: Path, data: dict):
 
 
 def push_to_backend(
-        df: pd.DataFrame, api_url: str = "http://localhost:8080/api/external-import/listings"):
+        df: pd.DataFrame, api_url: str = "http://localhost/api/external-import/listings"):
     """
     Transforms the scraped DataFrame and pushes it to the Spring Boot REST API.
     The Java backend handles mapping the raw Greek strings to Enums.
