@@ -23,7 +23,7 @@ export function AuthProvider({ children }) {
 
   const checkSession = useCallback(async (cancelled = false) => {
     try {
-      const currentUser = await apiClient('/api/auth/me');
+      const currentUser = await apiClient('/auth/me');
       if (!cancelled) {
         setUser(currentUser);
       }
@@ -50,8 +50,8 @@ export function AuthProvider({ children }) {
   }, [checkSession]);
 
   const login = useCallback(async (username, password) => {
-    // Expected: POST /api/auth/login { username, password } -> User JSON + session cookie
-    const loggedInUser = await apiClient('/api/auth/login', {
+    // Expected: POST /auth/login { username, password } -> User JSON + session cookie
+    const loggedInUser = await apiClient('/auth/login', {
       method: 'POST',
       body: { username, password },
     });
@@ -61,7 +61,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     try {
-      await apiClient('/api/auth/logout', { method: 'POST' });
+      await apiClient('/auth/logout', { method: 'POST' });
     } catch {
       /* Proceed with client-side cleanup regardless */
     }

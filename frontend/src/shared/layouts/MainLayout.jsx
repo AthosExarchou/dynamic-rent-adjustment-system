@@ -77,7 +77,7 @@ export default function MainLayout() {
 
   const fetchNotifications = async () => {
     try {
-      const data = await apiClient('/api/notifications');
+      const data = await apiClient('/notifications');
       setNotifications(data || []);
       setUnreadCount((data || []).filter(n => !n.read).length);
     } catch (error) {
@@ -88,7 +88,7 @@ export default function MainLayout() {
   const handleMarkAsRead = async (id, currentReadStatus) => {
     if (currentReadStatus) return; // Already read
     try {
-      await apiClient(`/api/notifications/${id}/read`, { method: 'PUT' });
+      await apiClient(`/notifications/${id}/read`, { method: 'PUT' });
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
@@ -98,7 +98,7 @@ export default function MainLayout() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      await apiClient('/api/notifications/read-all', { method: 'PUT' });
+      await apiClient('/notifications/read-all', { method: 'PUT' });
       setNotifications(prev => prev.map(n => ({ ...n, read: true })));
       setUnreadCount(0);
     } catch (error) {
