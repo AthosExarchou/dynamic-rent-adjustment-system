@@ -34,8 +34,9 @@ services:
     build:
       context: .
       dockerfile: docker/frontend/Dockerfile
-    ports:
-      - "5173:80"
+    volumes:
+      - frontend_dist:/app/dist
+    restart: "no"
 
   nginx:
     build:
@@ -43,9 +44,14 @@ services:
       dockerfile: docker/nginx/Dockerfile
     ports:
       - "80:80"
+    volumes:
+      - frontend_dist:/usr/share/nginx/html:ro
     depends_on:
-      - frontend
-      - backend
+      backend:
+        condition: service_started
+      frontend:
+        condition: service_completed_successfully
 
 volumes:
   db_data:
+  frontend_dist:
