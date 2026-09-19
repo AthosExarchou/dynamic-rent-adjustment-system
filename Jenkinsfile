@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
     environment {
         DOCKER_COMPOSE_CMD = 'docker compose -f docker-compose.prod.yml'
         COMPOSE_PROJECT_NAME = 'dras'
