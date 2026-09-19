@@ -85,7 +85,7 @@
       <p>Dear <strong th:text="${username}">User</strong>,</p>
       <p>Your profile information has been successfully updated on the Dynamic Rent Adjustment System.</p>
       <p>If you did not make this change, please contact our support team immediately to secure your account.</p>
-      <a href="http://localhost/profile" class="btn">Review Your Profile</a>
+      <a th:href="${publicUrl} + '/profile'" class="btn">Review Your Profile</a>
     </div>
     <div class="email-footer">
       <p>&copy; 2025 Dynamic Rent Adjustment System (DRAS). All rights reserved.</p>

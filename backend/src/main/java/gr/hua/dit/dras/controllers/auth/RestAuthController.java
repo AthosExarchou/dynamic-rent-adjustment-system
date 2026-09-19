@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 public class RestAuthController {
 
     @Autowired

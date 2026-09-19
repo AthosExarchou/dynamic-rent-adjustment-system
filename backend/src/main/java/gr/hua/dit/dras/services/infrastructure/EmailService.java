@@ -24,6 +24,9 @@ public class EmailService {
     private final SpringTemplateEngine templateEngine;
     private final NotificationService notificationService;
 
+    @org.springframework.beans.factory.annotation.Value("${app.public-url}")
+    private String publicUrl;
+
     public EmailService(
             JavaMailSender mailSender,
             SpringTemplateEngine templateEngine,
@@ -50,6 +53,7 @@ public class EmailService {
             MimeMessageHelper helper =
                     new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
+            context.setVariable("publicUrl", publicUrl);
             String htmlContent = templateEngine.process(template, context);
 
             helper.setTo(to);

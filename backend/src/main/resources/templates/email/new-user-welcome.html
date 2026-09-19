@@ -85,7 +85,7 @@
       <p>Dear <strong th:text="${username}">User</strong>,</p>
       <p>Thank you for registering at Dynamic Rent Adjustment System. We are thrilled to have you with us!</p>
       <p>You can now browse verified listings, connect with property owners, and manage your profile in a completely secure environment.</p>
-      <a href="http://localhost/login" class="btn">Sign In to Your Account</a>
+      <a th:href="${publicUrl} + '/login'" class="btn">Sign In to Your Account</a>
     </div>
     <div class="email-footer">
       <p>&copy; 2025 Dynamic Rent Adjustment System (DRAS). All rights reserved.</p>

@@ -6,6 +6,11 @@ spring:
 
 server:
   port: 8080
+  servlet:
+    context-path: /api
+
+app:
+  public-url: ${APP_PUBLIC_URL:http://localhost:5173}
 
 management:
   endpoints:

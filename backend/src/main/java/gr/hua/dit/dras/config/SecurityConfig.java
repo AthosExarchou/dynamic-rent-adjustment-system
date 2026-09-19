@@ -64,20 +64,20 @@ public class SecurityConfig {
                         ).permitAll()
 
                         /* REST Auth Endpoints */
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/auth/**").permitAll()
 
                         /* Actuator health/info */
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
 
                         /* Protected API Endpoints */
-                        .requestMatchers("/api/external-import/**").hasAuthority("ADMIN")
+                        .requestMatchers("/external-import/**").hasAuthority("ADMIN")
 
                         /* Role-specific checks are handled by @Secured in the controllers */
                         .anyRequest().authenticated()
                 )
 
                 .csrf((csrf) -> csrf
-                        .ignoringRequestMatchers("/api/auth/login", "/api/auth/logout", "/api/notifications/**")
+                        .ignoringRequestMatchers("/auth/login", "/auth/logout", "/notifications/**")
                 )
 
                 .formLogin((form) -> form
