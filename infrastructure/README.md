@@ -2,132 +2,161 @@
 
 This document outlines the deployment workflow and infrastructure setup for the Dynamic Rent Adjustment System (DRAS).
 
-## Prerequisites
-To run this application, ensure you have the following installed (if you are not using Vagrant):
-- **Docker** and **Docker Compose**
-- **Git**
-- **Java 21+**, **Node.js 20+**, and **Maven** (for local development)
+## 1. Architecture Diagrams
 
-## Docker Deployment
-The application is containerized using Docker and orchestrated with Docker Compose. Nginx acts as a reverse proxy,
-routing traffic to the frontend and backend containers.
+### Diagram A: Production Deployment Architecture (OCI)
 
-### Development Environment
-To run the containers in a development setup:
-```bash
-docker compose up -d --build
+```mermaid
+flowchart TB
+    %% Theme-Agnostic Styling
+    classDef external fill:none,stroke:#8b949e,stroke-width:2px
+    classDef cloud fill:none,stroke:#64748b,stroke-width:2px
+    classDef proxy fill:none,stroke:#3b82f6,stroke-width:2px
+    classDef app fill:none,stroke:#10b981,stroke-width:2px
+    classDef db fill:none,stroke:#f59e0b,stroke-width:2px
+    classDef cicd fill:none,stroke:#ef4444,stroke-width:2px
+
+    User["User / Browser"]:::external
+    GitHub["GitHub Repository"]:::external
+
+    subgraph OCI["Oracle Cloud Infrastructure (OCI)"]
+        subgraph Compute["OCI Compute Instance (Oracle Linux 9)"]
+            Jenkins["Jenkins<br/>CI/CD"]:::cicd
+
+            subgraph Docker["Docker Engine"]
+                Nginx["Nginx<br/>Reverse Proxy"]:::proxy
+                Frontend["Frontend Build Container<br/>React"]:::app
+                Backend["Backend Container<br/>Spring Boot"]:::app
+                PostgreSQL["PostgreSQL Container"]:::db
+            end
+        end
+    end
+
+    style OCI fill:none,stroke:#64748b,stroke-width:2px
+    style Compute fill:none,stroke:#64748b,stroke-width:2px
+    style Docker fill:none,stroke:#3b82f6,stroke-width:2px,stroke-dasharray:5 5
+
+    User -->|"HTTP / HTTPS"| Nginx
+    Nginx -->|"/"| Frontend
+    Nginx -->|"/api"| Backend
+    Backend -->|"SQL"| PostgreSQL
+
+    GitHub -->|"Webhook"| Jenkins
+    Jenkins -->|"Checkout source"| GitHub
+    Jenkins -->|"Build, test & deploy"| Docker
 ```
-Access the application at `http://localhost:5173` (or `http://localhost` if using the Nginx reverse proxy).
 
-### Production Environment
-The production configuration (`docker-compose.prod.yml`) includes restart policies, health checks,
-named volumes, and log rotation. Nginx is the only publicly exposed service.
+### Diagram B: Local Deployment / Reproducible Environment (Vagrant)
 
-```bash
-cp .env.example .env
-# Edit .env with your credentials
-docker compose -f docker-compose.prod.yml up -d --build
+```mermaid
+flowchart TB
+%% Theme-Agnostic Styling
+classDef external fill:none,stroke:#8b949e,stroke-width:2px
+classDef infra fill:none,stroke:#64748b,stroke-width:2px
+classDef proxy fill:none,stroke:#3b82f6,stroke-width:2px
+classDef app fill:none,stroke:#10b981,stroke-width:2px
+classDef db fill:none,stroke:#f59e0b,stroke-width:2px
+classDef cicd fill:none,stroke:#ef4444,stroke-width:2px
+
+    User["User / Browser"]:::external
+    GitHub["GitHub Repository"]:::external
+
+    subgraph Host["Developer Machine"]
+        Vagrant["Vagrant<br/>VM provisioning"]:::infra
+
+        subgraph VM["Ubuntu Virtual Machine"]
+            Jenkins["Jenkins<br/>CI/CD"]:::cicd
+
+            subgraph Docker["Docker Engine"]
+                Nginx["Nginx<br/>Reverse Proxy"]:::proxy
+                Frontend["Frontend Build Container<br/>React"]:::app
+                Backend["Backend Container<br/>Spring Boot"]:::app
+                PostgreSQL["PostgreSQL Container"]:::db
+            end
+        end
+    end
+
+    %% Apply wireframe styles to subgraphs
+    style Host fill:none,stroke:#94a3b8,stroke-width:2px
+    style VM fill:none,stroke:#64748b,stroke-width:2px
+    style Docker fill:none,stroke:#3b82f6,stroke-width:2px,stroke-dasharray: 5 5
+
+    %% Connections
+    User -->|"HTTP / HTTPS"| Nginx
+    Nginx -->|"/"| Frontend
+    Nginx -->|"/api"| Backend
+    Backend -->|"SQL"| PostgreSQL
+
+    GitHub -->|"Webhook"| Jenkins
+    Jenkins -->|"Checkout source"| GitHub
+    Jenkins -->|"Build, test & deploy"| Docker
+
+    Vagrant -->|"Create & provision"| VM
 ```
 
-## Vagrant Installation
-A complete, reproducible infrastructure is provided via Vagrant.
-The `Vagrantfile` and `bootstrap.sh` automate the setup of an Ubuntu VM containing:
-- Java 21
-- Node.js 20
-- Docker & Docker Compose
-- Jenkins
+## 2. Prerequisites
 
-To start the VM and trigger provisioning:
-```bash
-cd infrastructure/vagrant
-vagrant up
-```
-The application will be accessible at `http://localhost:8080` (forwarded to the VM's port 80).
-Jenkins will be accessible at `http://localhost:8888` on your host machine.
+To run this application locally without Vagrant, ensure you have the following installed:
+- Docker and Docker Compose.
+- Git.
 
-## Jenkins Setup
-1. After starting Vagrant, open your browser and go to `http://localhost:8888`.
-2. Retrieve the initial admin password by running:
-   ```bash
-   vagrant ssh -c "sudo cat /var/lib/jenkins/secrets/initialAdminPassword"
-   ```
+## 3. Local Development (Docker)
+
+The application is containerized using Docker and orchestrated with Docker Compose. Nginx acts as a reverse proxy, routing traffic to the frontend and backend containers.
+- **Start everything:** Run `docker compose up -d`.
+- **Rebuild:** Run `docker compose up -d --build` after adding new dependencies (like npm packages or Maven imports).
+- **Stop everything:** Run `docker compose down`.
+- **Watch logs:** Run `docker compose logs -f` to see everything, or `docker compose logs -f backend` for just the backend.
+- **Access the app:** Navigate to `http://localhost:5173` (or `http://localhost` if using the Nginx reverse proxy).
+
+## 4. Infrastructure Provisioning (Vagrant)
+
+A complete, reproducible infrastructure is provided via Vagrant. The `Vagrantfile` and `bootstrap.sh` automate the setup of an Ubuntu VM containing Java 21, Node.js 20, Docker, Docker Compose, and Jenkins.
+- To start the VM and trigger provisioning, run `cd infrastructure/vagrant` followed by `vagrant up`.
+- The application will be accessible at `http://localhost:8080` (this is forwarded to the VM's internal Nginx proxy on port 80).
+- Jenkins will be accessible at `http://localhost:8888` on your host machine.
+
+## 5. CI/CD Pipeline (Jenkins Setup)
+
+Jenkins automatically handles deployments when you push to GitHub. The project includes a `Jenkinsfile` for CI/CD, containing stages for Backend Build, Backend Tests, Frontend Install, Frontend Build, Docker Image Build, Docker Compose Deployment, Health Check, and Archive Logs.
+
+### Initial Setup (Local Vagrant Environment)
+If you are testing the pipeline locally using Vagrant, set up Jenkins as follows:
+1. Open your browser and go to `http://localhost:8888`.
+2. Retrieve the initial admin password by running `vagrant ssh -c "sudo cat /var/lib/jenkins/secrets/initialAdminPassword"`.
 3. Install the suggested plugins and create your admin user.
-4. Create a new "Pipeline" project.
-5. Under the Pipeline section, set "Definition" to "Pipeline script from SCM" and point it to your Git repository URL.
-6. Set the Script Path to `Jenkinsfile`.
+4. Create a new "Pipeline" project, set "Definition" to "Pipeline script from SCM", point it to your Git repository URL, and set the Script Path to `Jenkinsfile`.
+5. To deploy manually, click **Build Now** in your Jenkins pipeline.
 
-## Deployment Workflow
-The project includes a `Jenkinsfile` for CI/CD, containing stages for:
-1. **Backend Build** (`mvn clean package -DskipTests`)
-2. **Backend Tests** (`mvn test`)
-3. **Frontend Install** (`npm install`)
-4. **Frontend Build** (`npm run build`)
-5. **Docker Image Build** (`docker compose -f docker-compose.prod.yml build`)
-6. **Docker Compose Deployment** (`docker compose -f docker-compose.prod.yml up -d`)
-7. **Health Check** (Verify Spring Boot Actuator)
-8. **Archive Logs**
+### Production Setup (OCI)
+In production (Oracle Cloud), Jenkins runs as a native system service on the Ubuntu host (not inside Vagrant or Docker). The setup steps are similar, but you access Jenkins via the server's designated port and retrieve the initial password directly from `/var/lib/jenkins/secrets/initialAdminPassword` on the host.
 
-To deploy, simply click **Build Now** in your Jenkins pipeline.
+## 6. Production Management (Oracle Cloud VM)
 
-## Troubleshooting
+The production configuration (`docker-compose.prod.yml`) includes restart policies, health checks, named volumes, and log rotation, with Nginx being the only publicly exposed service. Before deploying, you must copy `.env.example` to `.env` and edit it with your credentials.
+
+If you ever need to manually fix things on the production server, SSH in and go to `/opt/dras/repository`.
+- **See what's running:** Run `docker compose -f docker-compose.prod.yml ps`.
+- **Watch live production logs:** Run `docker compose -f docker-compose.prod.yml logs --tail=100 -f`.
+- **Force a manual redeploy from scratch:** If the frontend isn't updating properly, run `docker compose -f docker-compose.prod.yml build`, followed by `docker compose -f docker-compose.prod.yml down --remove-orphans`, optionally `docker volume rm dras_frontend_dist || true`, and finally `docker compose -f docker-compose.prod.yml up -d`.
+
+## 7. Database Backups
+
+There is a backup script located at `infrastructure/scripts/backup-db.sh`.
+- It is set up on the Oracle server to run automatically every night at 3:00 AM using a cron job, saving backups to `/opt/dras/backups/`.
+- To take a manual backup before doing something risky, run `/opt/dras/repository/infrastructure/scripts/backup-db.sh`.
+
+## 8. Troubleshooting
 
 ### General Issues
-- **Database Connection Issues**: Ensure your `.env` credentials match the Spring Boot configuration.
-  If using Docker, ensure the `db` service is healthy before `backend` starts.
-- **Port Conflicts**: If port 8080 or 5432 is already in use on your host machine, modify `docker-compose.yml`
-  or the `Vagrantfile` port forwarding settings.
-- **Nginx 502 Bad Gateway**: Check the backend logs (`docker compose logs backend`).
-  This typically occurs if the Spring Boot application fails to start or is still initializing.
+- **Database Connection Issues:** Ensure your `.env` credentials match the Spring Boot configuration. If using Docker, ensure the `db` service is healthy before `backend` starts.
+- **Port Conflicts (Local Only):** If port 8080 or 5432 is already in use on your host machine, modify `docker-compose.yml` or the `Vagrantfile` port forwarding settings. In production, port 8080 is never exposed (only port 80 via Nginx).
+- **Nginx 502 Bad Gateway:** Check the backend logs (`docker compose logs backend`). This typically occurs if the Spring Boot application fails to start or is still initializing.
 
 ### VirtualBox fails to start with Secure Boot enabled
-If `vagrant up` reports that no provider is available, or loading the VirtualBox kernel module fails with:
+If `vagrant up` reports that no provider is available or loading the VirtualBox kernel module fails with `Key was rejected by service`, check if the VirtualBox module signing key is enrolled by running `sudo mokutil --test-key /var/lib/shim-signed/mok/MOK.der`.
 
-`modprobe: ERROR: could not insert 'vboxdrv': Key was rejected by service`
-
-Check whether the VirtualBox module signing key has been enrolled:
-
-```bash
-sudo mokutil --test-key /var/lib/shim-signed/mok/MOK.der
-```
-
-If the output is:
-
-`/var/lib/shim-signed/mok/MOK.der is not enrolled`
-
-Enroll the key:
-
-```bash
-sudo mokutil --import /var/lib/shim-signed/mok/MOK.der
-```
-
-Choose a temporary password when prompted, then reboot.
-
-During the next boot, the MOK Manager screen will appear:
-
-1. Select **Enroll MOK**
-2. Select **Continue**
-3. Select **Yes**
-4. Enter the password you created
-5. **Reboot**
-
-Verify the enrollment:
-
-```bash
-sudo mokutil --test-key /var/lib/shim-signed/mok/MOK.der
-```
-
-The expected output is:
-
-`/var/lib/shim-signed/mok/MOK.der is already enrolled`
-
-Load the VirtualBox module:
-
-```bash
-sudo modprobe vboxdrv
-```
-
-Finally, start the VM:
-
-```bash
-vagrant up
-```
+If it is not enrolled:
+1. Run `sudo mokutil --import /var/lib/shim-signed/mok/MOK.der` and choose a temporary password.
+2. Reboot, and in the MOK Manager screen, select **Enroll MOK** > **Continue** > **Yes**, enter your password, and **Reboot**.
+3. Verify enrollment with the test-key command, load the module with `sudo modprobe vboxdrv`, and start the VM with `vagrant up`.
