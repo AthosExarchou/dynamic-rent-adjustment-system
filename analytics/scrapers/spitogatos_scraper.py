@@ -656,7 +656,7 @@ def handle_cookies(page: Page, timeout: int = 3) -> bool:
     try:
         cookie_btn = page.wait_for_selector(cookie_selector, state="visible", timeout=timeout * 1000)
         if cookie_btn:
-            cookie_btn.click()
+            cookie_btn.evaluate("el => el.click()")
             logger.debug("Cookies: banner accepted via text selector")
             time.sleep(1)
             return True
@@ -674,7 +674,7 @@ def handle_cookies(page: Page, timeout: int = 3) -> bool:
         try:
             btn = page.query_selector(f"#{btn_id}")
             if btn:
-                btn.click()
+                btn.evaluate("el => el.click()")
                 logger.debug("Cookies: banner accepted | button_id=%s", btn_id)
                 time.sleep(1)
                 return True
@@ -695,7 +695,7 @@ def handle_cookies(page: Page, timeout: int = 3) -> bool:
         delayed_loc = page.locator(cookie_selector).first
         if delayed_loc.count():
             logger.debug("Cookies: banner appeared after delay")
-            delayed_loc.click()
+            delayed_loc.evaluate("el => el.click()")
             time.sleep(1)
         else:
             logger.debug("Cookies: no banner detected, proceeding")
@@ -744,13 +744,13 @@ def validate_df_with_report(df: pd.DataFrame) -> pd.DataFrame:
         df["floor"] = pd.Series(pd.NA, index=df.index, dtype="Int64")
 
     if "yearBuilt" in df.columns:
-        df["yearBuilt"] = pd.to_numeric(df["yearBuilt"], errors="coerce")
+        df["yearBuilt"] = pd.to_numeric(df["yearBuilt"], errors="coerce").astype("Int64")
 
     if "bedrooms" in df.columns:
-        df["bedrooms"] = pd.to_numeric(df["bedrooms"], errors="coerce")
+        df["bedrooms"] = pd.to_numeric(df["bedrooms"], errors="coerce").astype("Int64")
 
     if "bathrooms" in df.columns:
-        df["bathrooms"] = pd.to_numeric(df["bathrooms"], errors="coerce")
+        df["bathrooms"] = pd.to_numeric(df["bathrooms"], errors="coerce").astype("Int64")
 
     # Image normalization
     if "images" in df.columns:
@@ -1471,7 +1471,10 @@ def run_scraper(config: ScraperConfig):
                 try:
                     more_btn = page.query_selector(".property__description__more, .read-more")
                     if more_btn:
-                        more_btn.click(force=True)
+                        # Explicitly scroll into view
+                        more_btn.scroll_into_view_if_needed()
+                        page.wait_for_timeout(300)
+                        more_btn.evaluate("el => el.click()")
                         page.wait_for_timeout(500)
                 except Exception:
                     pass
@@ -1704,22 +1707,28 @@ def run_scraper(config: ScraperConfig):
 
     finally:
         # Cleanup
+        import sys
+        exc_type, _, _ = sys.exc_info()
+        
         logger.info("Shutting down browser and virtual display")
-        if context:
-            try:
-                context.close()
-            except Exception:
-                logger.exception("Error while closing browser context")
-        if browser:
-            try:
-                browser.close()
-            except Exception:
-                logger.exception("Error while closing browser")
-        if pw:
-            try:
-                pw.stop()
-            except Exception:
-                logger.exception("Error while stopping playwright")
+        if exc_type is KeyboardInterrupt:
+            logger.warning("KeyboardInterrupt detected. Skipping graceful Playwright shutdown to prevent deadlocks.")
+        else:
+            if context:
+                try:
+                    context.close()
+                except Exception:
+                    logger.exception("Error while closing browser context")
+            if browser:
+                try:
+                    browser.close()
+                except Exception:
+                    logger.exception("Error while closing browser")
+            if pw:
+                try:
+                    pw.stop()
+                except Exception:
+                    logger.exception("Error while stopping playwright")
 
         if display:
             try:
@@ -1874,4 +1883,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass
