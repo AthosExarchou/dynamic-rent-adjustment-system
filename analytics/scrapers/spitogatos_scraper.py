@@ -5,8 +5,9 @@ This module serves as the primary data acquisition engine for the DRAS
 platform, automating the collection of residential rental listings from
 Spitogatos (spitogatos.gr) for the Athens city center.
 
-To ensure high data fidelity and bypass enterprise anti-bot systems such as
-Datadome & Cloudflare. The scraper employs a strict Two-Phase Architecture:
+To maintain high data fidelity and improve resilience against anti-bot
+systems such as Datadome and Cloudflare, the scraper employs a strict
+Two-Phase Architecture:
 
     * Phase 1 (Discovery): Systematically navigates paginated search results,
       extracts preview-level data, and compiles a deduplicated registry of
@@ -29,7 +30,7 @@ employing retry logic, size thresholding, and an automated 30-day Garbage
 Collection (GC) policy for stale properties.
 
 Key Features:
-- Stealth browser automation (undetected-chromedriver)
+- Stealth browser automation (Playwright)
 - Robust numeric parsing for Greek/European formats
 - Data validation with rule-based filtering and reporting
 - Incremental dataset updates with deduplication
@@ -65,9 +66,7 @@ Usage:
         -> Runs in fast mode using a virtual display and scrapes up to 3 pages.
 
 Dependencies:
-    selenium
-    undetected-chromedriver
-    webdriver-manager
+    playwright
     beautifulsoup4
     pandas
     requests
@@ -81,19 +80,16 @@ responsible for complying with Spitogatos’s Terms of Service and applicable la
 """
 
 # Imported Libraries
-from webdriver_manager.chrome import ChromeDriverManager
+from playwright.sync_api import sync_playwright, Page, Browser
+from playwright_stealth import Stealth
 from bs4 import BeautifulSoup
 from pathlib import Path
 from urllib.parse import urlparse, unquote, urljoin
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
 from typing import List, Dict, Any
 from dataclasses import dataclass
 from logging.handlers import RotatingFileHandler
 import textwrap
 import logging
-import undetected_chromedriver as uc
 import pandas as pd
 import requests
 import time
@@ -123,18 +119,9 @@ def _tracked_sleep(secs):
 
 time.sleep = _tracked_sleep
 
-# Disable uc.Chrome destructor cleanup. All drivers are closed
-# via driver.quit(). Without this patch, Windows may emit harmless
-# WinError 6 exceptions during interpreter shutdown when
-# __del__ runs after OS handles have already been released.
-def _safe_chrome_del(self):
-    pass
-
-uc.Chrome.__del__ = _safe_chrome_del
-
 logger = logging.getLogger("dras.scraper")
 
-__version__ = "1.2.1"
+__version__ = "2.0.0"
 
 # CONFIGURATION
 PPM2_MIN = 2
@@ -146,6 +133,7 @@ HISTORY_AGG_CSV = DATA_DIR / "spitogatos_history.csv"
 IMAGES_DIR = DATA_DIR / "images"  # Images stored per-listing in subfolders
 FAILED_DIR = Path("failed_payloads")
 FAILED_DIR.mkdir(exist_ok=True)
+DEBUG_DIR = DATA_DIR / "debug"
 
 VALID_EXTS = {".jpg", ".jpeg", ".webp", ".png"}
 
@@ -182,6 +170,9 @@ class ScraperConfig:
     push_backend: bool
     backend_url: str
 
+    headless: bool
+    debug: bool
+
 
 # Logging Setup
 
@@ -208,9 +199,8 @@ def setup_logging(debug: bool = False):
         handlers=[console_handler, file_handler]
     )
 
-    logging.getLogger("WDM").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
-    logging.getLogger("selenium").setLevel(logging.WARNING)
+    logging.getLogger("playwright").setLevel(logging.WARNING)
 
 
 # Utilities
@@ -643,7 +633,7 @@ def parse_property_page(html_content: str) -> Dict[str, Any]:
     return detail_data
 
 
-def handle_cookies(driver, timeout=3) -> bool:
+def handle_cookies(page: Page, timeout: int = 3) -> bool:
     """
     Returns:
         True  -> cookies accepted or banner absent
@@ -652,35 +642,24 @@ def handle_cookies(driver, timeout=3) -> bool:
     logger.debug("Cookies: checking for banner")
 
     try:
-        body = driver.find_element(By.TAG_NAME, "body")
-
-        if not body.text.strip() and len(body.find_elements(By.XPATH, ".//*")) < 5:
+        body_text = page.inner_text("body")
+        child_count = page.evaluate("document.body.querySelectorAll('*').length")
+        if not body_text.strip() and child_count < 5:
             logger.warning("Cookies: body appears empty or incomplete")
             return False
-
-    except Exception as e:
+    except Exception:
         logger.exception("Cookies: page sanity check failed")
         return False
 
     # Try known cookie buttons
-    cookie_xpath = (
-        "//button[contains(normalize-space(), 'ΣΥΜΦΩΝΩ') "
-        "or contains(normalize-space(), 'Συμφωνώ')]"
-    )
+    cookie_selector = "button:has-text('ΣΥΜΦΩΝΩ'), button:has-text('Συμφωνώ')"
     try:
-        cookie_btn = WebDriverWait(driver, timeout).until(
-            EC.element_to_be_clickable((By.XPATH, cookie_xpath))
-        )
-
-        try:
+        cookie_btn = page.wait_for_selector(cookie_selector, state="visible", timeout=timeout * 1000)
+        if cookie_btn:
             cookie_btn.click()
-        except Exception:
-            driver.execute_script("arguments[0].click();", cookie_btn)
-
-        logger.debug("Cookies: banner accepted via XPath")
-        time.sleep(1)
-        return True
-
+            logger.debug("Cookies: banner accepted via text selector")
+            time.sleep(1)
+            return True
     except Exception:
         pass
 
@@ -693,56 +672,37 @@ def handle_cookies(driver, timeout=3) -> bool:
 
     for btn_id in known_ids:
         try:
-            buttons = driver.find_elements(By.ID, btn_id)
-
-            if buttons:
-                try:
-                    buttons[0].click()
-                except Exception:
-                    driver.execute_script(
-                        "arguments[0].click();",
-                        buttons[0]
-                    )
-
+            btn = page.query_selector(f"#{btn_id}")
+            if btn:
+                btn.click()
                 logger.debug("Cookies: banner accepted | button_id=%s", btn_id)
                 time.sleep(1)
                 return True
-
         except Exception:
             pass
 
-    # No banner found, decide whether the page should be trusted
+    # No banner found - verify page readiness
     try:
-
-        ready_state = driver.execute_script(
-            "return document.readyState"
-        )
-
+        ready_state = page.evaluate("document.readyState")
         if ready_state != "complete":
             logger.warning("Cookies: DOM not fully loaded | readyState=%s", ready_state)
             return False
 
         time.sleep(1.5)
 
-        delayed_buttons = driver.find_elements(
-            By.XPATH, cookie_xpath
-        )
-
-        if delayed_buttons:
+        # Check once more after delay (use locator, not query_selector,
+        # because cookie_selector contains :has-text() which is Playwright-only)
+        delayed_loc = page.locator(cookie_selector).first
+        if delayed_loc.count():
             logger.debug("Cookies: banner appeared after delay")
+            delayed_loc.click()
+            time.sleep(1)
+        else:
+            logger.debug("Cookies: no banner detected, proceeding")
 
-            try:
-                delayed_buttons[0].click()
-            except Exception:
-                driver.execute_script(
-                    "arguments[0].click();",
-                    delayed_buttons[0]
-                )
-
-        logger.debug("Cookies: no banner detected, proceeding")
         return True
 
-    except Exception as e:
+    except Exception:
         logger.exception("Cookies: could not verify page state")
         return False
 
@@ -851,74 +811,114 @@ def validate_df_with_report(df: pd.DataFrame) -> pd.DataFrame:
 
 # Stealth & Network
 
-def is_blocked(driver):
+def is_blocked(page: Page) -> bool:
     """
     Checks if the current page is an anti-bot challenge or block page.
     """
     try:
-        title = driver.title.lower()
+        title = page.title().lower()
         if any(x in title for x in [
             "access denied", "security", "just a moment", "pardon our interruption"
         ]):
             return True
 
         # Checks raw page source for Datadome specific text
-        page_source = driver.page_source.lower()
-        if "pardon our interruption" in page_source or "super-human speed" in page_source:
+        page_source = page.content().lower()
+        source_block_phrases = [
+            "pardon our interruption",
+            "super-human speed",
+            "request blocked",
+            "generated by cloudfront"
+        ]
+
+        if any(phrase in page_source for phrase in source_block_phrases):
             return True
 
     except Exception as e:
         logger.warning("Error checking block status | error=%s", e)
+        # If the page can't be read safely, assume it's blocked to trigger a rotation
         return True
 
     return False
 
 
-def safe_get(driver, url, retries=3):
+def safe_get(page: Page, url: str, retries: int = 3) -> bool:
     for attempt in range(retries):
-        driver.get(url)
+        try:
+            page.goto(url, wait_until="domcontentloaded", timeout=30000)
+        except Exception as e:
+            logger.warning("Navigation error | attempt=%d/%d | url=%s | error=%s",
+                           attempt + 1, retries, url, e)
+            if attempt < retries - 1:
+                time.sleep(random.uniform(2, 5))
+            continue
+
         time.sleep(random.uniform(2, 5))
 
-        if not is_blocked(driver):
+        if not is_blocked(page):
             return True
 
         logger.warning("Block detected | attempt=%d/%d | url=%s",
                        attempt + 1, retries, url)
+
         time.sleep(random.uniform(10, 20))
 
     return False
 
 
-def rotate_session(old_driver, display=None):
-    """Dynamically rotates the session."""
-    logger.info("Rotating session...")
+def get_stealth_ua(browser: Browser) -> str:
+    """Gets a clean user agent without the 'HeadlessChrome' identifier."""
+    temp_context = browser.new_context()
     try:
-        old_driver.quit()
-    except Exception as e:
-        logger.exception("Error closing driver during session rotation")
+        temp_page = temp_context.new_page()
+        ua = temp_page.evaluate("navigator.userAgent")
+        return ua.replace("HeadlessChrome", "Chrome")
+    finally:
+        temp_context.close()
+
+
+def rotate_session(pw, launch_args: list, headless: bool = True) -> tuple:
+    """Launches a completely fresh browser process for session rotation.
+
+    The caller is responsible for closing the old browser *before* calling
+    this function. Returns a tuple of (browser, context, page, user_agent).
+    """
+    logger.info("Rotating session (full browser restart)...")
 
     time.sleep(random.uniform(5, 10))
 
-    new_driver = None
+    new_browser = pw.chromium.launch(headless=headless, args=launch_args)
+    new_context = None
     try:
-        fresh_options = setup_chrome_options()  # new ChromeOptions object
-        new_driver = init_driver(fresh_options)
-        new_agent = new_driver.execute_script("return navigator.userAgent;")
-        return new_driver, new_agent
+        stealth_ua = get_stealth_ua(new_browser)
+        new_context = new_browser.new_context(
+            viewport={"width": 1920, "height": 1080},
+            user_agent=stealth_ua
+        )
+        stealth = Stealth()
+        stealth.apply_stealth_sync(new_context)
+        new_page = new_context.new_page()
+        new_agent = new_page.evaluate("navigator.userAgent")
+        return new_browser, new_context, new_page, new_agent
     except Exception:
-        # Quit new_driver if it was created but initialization
-        # did not fully complete (e.g. execute_script raised)
-        if new_driver is not None:
-            try:
-                new_driver.quit()
-            except Exception:
-                pass
-        if display:
-            try:
-                display.stop()
-            except Exception:
-                pass
+        logger.exception("Failed to set up rotated session, cleaning up")
+        if new_context:
+            new_context.close()
+        new_browser.close()
         raise
+
+
+def close_and_rotate(browser, context, pw, launch_args, headless):
+    """Closes the current browser and launches a fresh session.
+
+    Returns a tuple of (browser, context, page, user_agent).
+    """
+    try:
+        context.close()
+        browser.close()
+    except Exception:
+        logger.warning("Error closing browser during rotation, continuing")
+    return rotate_session(pw, launch_args, headless)
 
 
 # Display & Stealth Configurations
@@ -926,7 +926,19 @@ def setup_display(config: ScraperConfig):
     """
     Attempts to set up a virtual X display via pyvirtualdisplay.
     Returns the display object if successful, otherwise None.
+
+    When running headless (config.headless=True), no display environment is
+    needed - Playwright renders entirely off-screen - so this function returns
+    None immediately regardless of display_mode.
+
+    When running headful (config.headless=False), the virtual display is
+    provisioned according to display_mode so the browser window has a valid
+    X server to render into (required on display-less CI / server environments).
     """
+    if config.headless:
+        logger.info("Headless mode - skipping display setup")
+        return None
+
     needs_virtual = False
 
     if config.display_mode == "virtual":
@@ -957,23 +969,6 @@ def setup_display(config: ScraperConfig):
 
     logger.info("Running with native display | mode=%s", config.display_mode)
     return None
-
-
-def setup_chrome_options():
-    """
-    Configures Chrome options with randomized User-Agents
-    and stealth (headful) execution.
-    """
-    options = uc.ChromeOptions()
-    options.add_argument("--window-size=1920,1080")
-    options.add_argument("--disable-background-timer-throttling")
-    options.add_argument("--disable-backgrounding-occluded-windows")
-    options.add_argument("--disable-blink-features=AutomationControlled")
-    options.add_argument("--disable-notifications")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-
-    return options
 
 
 def cleanup_failed_payloads(directory: Path, max_age_days: int = 7, max_files: int = 50):
@@ -1109,65 +1104,14 @@ def push_to_backend(df: pd.DataFrame, api_url: str):
     cleanup_failed_payloads(FAILED_DIR, max_age_days=7, max_files=50)
 
 
-def init_driver(options):
-    """
-    Initializes and returns a fresh undetected_chromedriver session.
-    """
-    logger.info("Initializing stealth browser")
-
-    # Look for system-installed driver and browser
-    system_driver_path = shutil.which("chromedriver")
-
-    browser_path = (
-        shutil.which("chromium-browser")
-        or shutil.which("chromium")
-        or shutil.which("google-chrome")
-        or shutil.which("google-chrome-stable")
-    )
-
-    if browser_path:
-        logger.info("Using browser executable | path=%s", browser_path)
-    else:
-        logger.info("No system browser executable found in PATH")
-
-    if system_driver_path:
-        try:
-            logger.info("Using system chromedriver | path=%s", system_driver_path)
-
-            return uc.Chrome(
-                options=options,
-                driver_executable_path=system_driver_path,
-                browser_executable_path=browser_path
-            )
-
-        except Exception as e:
-            logger.warning("System chromedriver failed, falling back to ChromeDriverManager | error=%s", e)
-    else:
-        logger.info("No system chromedriver found in PATH, falling back to ChromeDriverManager")
-
-    # Fallback: Dynamic Download
-    try:
-        logger.info("Downloading chromedriver via ChromeDriverManager")
-
-        path = ChromeDriverManager().install()
-
-        return uc.Chrome(
-            options=options,
-            driver_executable_path=path,
-            browser_executable_path=browser_path
-        )
-
-    except Exception as e2:
-        raise RuntimeError(f"CRITICAL: Driver initialization failed: {e2}") from e2
-
-
 # Main Scraper Pipeline
+
 def run_scraper(config: ScraperConfig):
     """
     Executes the full web scraping pipeline for Spitogatos Athens listings.
 
-    The function applies human-like delays and configures a Selenium WebDriver
-    with custom options for stability and performance. It navigates paginated
+    The function applies human-like delays and uses a Playwright browser
+    for page navigation and content extraction. It navigates paginated
     search result pages, collects property URLs, retrieves detailed listing
     information (including attributes and images), and stores the results in
     structured CSV outputs (latest snapshot, historical records, and derived
@@ -1206,7 +1150,7 @@ def run_scraper(config: ScraperConfig):
                 Forces use of a virtual display (Xvfb).
 
             "native"
-                Uses the system’s native display.
+                Uses the system's native display.
 
     Returns
     -------
@@ -1219,26 +1163,53 @@ def run_scraper(config: ScraperConfig):
     image_download = config.full
     mode = config.mode
 
-    # Initializes Display & Options
+    # Initializes Display
+    display = None
     try:
         display = setup_display(config)
     except RuntimeError as e:
         logger.critical("Display setup failed, aborting | error=%s", e)
         return
 
-    options = setup_chrome_options()
+    # Playwright browser launch args (stealth)
+    launch_args = [
+        "--no-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-background-timer-throttling",
+        "--disable-backgrounding-occluded-windows",
+        "--disable-blink-features=AutomationControlled",
+        "--disable-notifications",
+        "--window-size=1920,1080",
+    ]
 
+    pw = None
+    browser = None
+    context = None
     try:
-        driver = init_driver(options)
-        dynamic_user_agent = driver.execute_script("return navigator.userAgent;")
-    except Exception as e:
-        logger.exception("Driver initialization failed")
+        pw = sync_playwright().start()
+        browser = pw.chromium.launch(headless=config.headless, args=launch_args)
+
+        stealth_ua = get_stealth_ua(browser)
+        context = browser.new_context(
+            viewport={"width": 1920, "height": 1080},
+            user_agent=stealth_ua
+        )
+        stealth = Stealth()
+        stealth.apply_stealth_sync(context)
+        page = context.new_page()
+        dynamic_user_agent = page.evaluate("navigator.userAgent")
+        logger.info("Playwright browser initialized")
+    except Exception:
+        logger.exception("Browser initialization failed")
+        if context:
+            context.close()
+        if browser:
+            browser.close()
+        if pw:
+            pw.stop()
         if display:
             display.stop()
         return
-
-    wait = WebDriverWait(driver, WAIT_SECONDS)
-    logger.info("WebDriver initialized")
 
     try:
         # Loops through result pages for Spitogatos Athens
@@ -1282,22 +1253,23 @@ def run_scraper(config: ScraperConfig):
             logger.info("Scraping search page | page=%d/%d | url=%s", page_num, max_pages, url)
 
             try:
-                if not safe_get(driver, url):
+                if not safe_get(page, url):
                     logger.warning(
                         "Hard block on search page | page=%d | rotating session", page_num)
-                    driver, dynamic_user_agent = rotate_session(driver, display)
+                    browser, context, page, dynamic_user_agent = close_and_rotate(
+                        browser, context, pw, launch_args, config.headless
+                    )
 
                     cookies_accepted = False
                     fresh_session = True
-                    wait = WebDriverWait(driver, WAIT_SECONDS)
-                    if not safe_get(driver, url, retries=1):
+                    if not safe_get(page, url, retries=1):
                         logger.error("Block persists after session rotation. Aborting Phase 1.")
                         break
 
                 # Handles cookie pop-up
                 if not cookies_accepted:
                     accepted = handle_cookies(
-                        driver,
+                        page,
                         timeout=8 if fresh_session else 3
                     )
 
@@ -1305,19 +1277,31 @@ def run_scraper(config: ScraperConfig):
                     fresh_session = False
 
                 try:
-                    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "article.ordered-element")))
+                    page.wait_for_selector("article.ordered-element", timeout=WAIT_SECONDS * 1000)
                 except Exception:
                     logger.warning("Timeout waiting for listings | page=%d | url=%s", page_num, url)
+                    if config.debug:
+                        DEBUG_DIR.mkdir(exist_ok=True)
+                        page.screenshot(
+                            path=str(DEBUG_DIR / f"debug_page_{page_num}.png"),
+                            full_page=True
+                        )
+                        with open(
+                                DEBUG_DIR / f"debug_page_{page_num}.html",
+                                "w",
+                                encoding="utf-8"
+                        ) as f:
+                            f.write(page.content())
                     break
 
                 # Scrolls down slowly to trigger lazy loading
                 scroll_height = random.uniform(0.4, 0.8)
-                driver.execute_script(f"window.scrollTo(0, document.body.scrollHeight * {scroll_height});")
+                page.evaluate(f"window.scrollTo(0, document.body.scrollHeight * {scroll_height})")
                 time.sleep(random.uniform(2, 6))
-                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
                 time.sleep(random.uniform(2, 6))
 
-                soup = BeautifulSoup(driver.page_source, "html.parser")
+                soup = BeautifulSoup(page.content(), "html.parser")
                 articles = soup.find_all("article", class_="ordered-element")
 
                 if len(articles) < 5:
@@ -1399,10 +1383,11 @@ def run_scraper(config: ScraperConfig):
                 if page_num % 20 == 0:
                     logger.info("Deep sleep for IP cooldown | page=%d | duration=5-10 min", page_num)
                     time.sleep(random.uniform(300, 600))  # 5 to 10 minutes
-                    driver, dynamic_user_agent = rotate_session(driver, display)
+                    browser, context, page, dynamic_user_agent = close_and_rotate(
+                        browser, context, pw, launch_args, config.headless
+                    )
                     cookies_accepted = False
                     fresh_session = True
-                    wait = WebDriverWait(driver, WAIT_SECONDS)
                 elif page_num % 5 == 0:
                     logger.info("Long break between pages | page=%d | duration=30-50s", page_num)
                     time.sleep(random.uniform(30, 50))
@@ -1447,24 +1432,28 @@ def run_scraper(config: ScraperConfig):
                 if details_processed > 0 and details_processed % 100 == 0:
                     logger.info("Deep sleep for IP cooldown | listing=%d | duration=5-10 min", i)
                     time.sleep(random.uniform(300, 600))  # 5 to 10 minutes
-                    driver, dynamic_user_agent = rotate_session(driver, display)
+                    browser, context, page, dynamic_user_agent = close_and_rotate(
+                        browser, context, pw, launch_args, config.headless
+                    )
 
                     cookies_accepted = False
                     fresh_session = True
 
                 url = data["url"]
 
-                if not safe_get(driver, url, retries=2):
+                if not safe_get(page, url, retries=2):
                     logger.warning("Block on detail page | listing=%d/%d | url=%s | rotating session",
                                    i + 1, len(all_property_data), url)
-                    driver, dynamic_user_agent = rotate_session(driver, display)
+                    browser, context, page, dynamic_user_agent = close_and_rotate(
+                        browser, context, pw, launch_args, config.headless
+                    )
 
                     cookies_accepted = False
                     fresh_session = True
 
-                    if not safe_get(driver, url, retries=1):
-                        logger.error("Persistent block after rotation | skipping | url=%s", url)
-                        continue
+                    if not safe_get(page, url, retries=1):
+                        logger.error("Persistent block after rotation | aborting Phase 2 | url=%s", url)
+                        break
 
                 logger.info("Scraping detail page | listing=%d/%d | url=%s",
                             i + 1, len(all_property_data), url)
@@ -1472,7 +1461,7 @@ def run_scraper(config: ScraperConfig):
                 # Handles cookie pop-up
                 if not cookies_accepted:
                     accepted = handle_cookies(
-                        driver,
+                        page,
                         timeout=8 if fresh_session else 3
                     )
 
@@ -1480,14 +1469,15 @@ def run_scraper(config: ScraperConfig):
                     fresh_session = False
 
                 try:
-                    more_btn = driver.find_element(By.CSS_SELECTOR, ".property__description__more, .read-more")
-                    driver.execute_script("arguments[0].click();", more_btn)
-                    time.sleep(0.5)
+                    more_btn = page.query_selector(".property__description__more, .read-more")
+                    if more_btn:
+                        more_btn.click(force=True)
+                        page.wait_for_timeout(500)
                 except Exception:
                     pass
 
                 # Parses the page
-                detail_html = driver.page_source
+                detail_html = page.content()
                 details = parse_property_page(detail_html)
                 data.update(details)
 
@@ -1714,17 +1704,27 @@ def run_scraper(config: ScraperConfig):
 
     finally:
         # Cleanup
-        logger.info("Shutting down driver and virtual display")
-        if driver:
+        logger.info("Shutting down browser and virtual display")
+        if context:
             try:
-                driver.quit()
-            except Exception as e:
-                logger.exception("Error while quitting driver")
+                context.close()
+            except Exception:
+                logger.exception("Error while closing browser context")
+        if browser:
+            try:
+                browser.close()
+            except Exception:
+                logger.exception("Error while closing browser")
+        if pw:
+            try:
+                pw.stop()
+            except Exception:
+                logger.exception("Error while stopping playwright")
 
         if display:
             try:
                 display.stop()
-            except Exception as e:
+            except Exception:
                 logger.exception("Error while stopping virtual display")
 
 
@@ -1779,7 +1779,17 @@ def build_parser() -> argparse.ArgumentParser:
         "--display-mode",
         choices=["auto", "virtual", "native"],
         default="auto",
-        help="Xvfb display strategy"
+        help="Xvfb display strategy (only relevant in headful mode)"
+    )
+    display_group.add_argument(
+        "--headful",
+        action="store_true",
+        default=False,
+        help=(
+            "Launch the browser in headful (visible) mode for local debugging. "
+            "Xvfb is provisioned automatically when needed. "
+            "Default: headless=True (no display required)."
+        )
     )
 
     # Output Group
@@ -1799,6 +1809,11 @@ def build_parser() -> argparse.ArgumentParser:
         default="http://localhost/api/external-import/listings",
         help="Backend endpoint URL"
     )
+    output_group.add_argument(
+        "--debug",
+        action="store_true",
+        help="Save debug screenshots and HTML files on scraping failures"
+    )
 
     return parser
 
@@ -1808,6 +1823,9 @@ def parse_args() -> ScraperConfig:
     parser = build_parser()
     args = parser.parse_args()
 
+    if not args.headful and args.display_mode != "auto":
+        parser.error("--display-mode is only applicable when running in --headful mode.")
+
     return ScraperConfig(
         full=args.full,
         mode=args.mode,
@@ -1815,24 +1833,27 @@ def parse_args() -> ScraperConfig:
         display_mode=args.display_mode,
         push_backend=args.push_backend,
         backend_url=args.backend_url,
+        headless=not args.headful,
+        debug=args.debug,
     )
 
 
 # Main Entry Point
 def main():
-    setup_logging(debug=True)
-
     start_time = dt.datetime.now()
     try:
         config = parse_args()
+        setup_logging(debug=config.debug)
 
         logger.info(
-            "DRAS start | mode=%s | pages=%d | display=%s | images=%s | push_backend=%s",
+            "DRAS start | mode=%s | pages=%d | display=%s | images=%s | push_backend=%s | headless=%s | debug=%s",
             config.mode,
             config.max_pages,
             config.display_mode,
             "ON" if config.full else "OFF",
             "ON" if config.push_backend else "OFF",
+            "ON" if config.headless else "OFF",
+            "ON" if config.debug else "OFF",
         )
 
         run_scraper(config)
