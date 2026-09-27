@@ -116,6 +116,11 @@ A complete, reproducible infrastructure is provided via Vagrant. The `Vagrantfil
 - The application will be accessible at `http://localhost:8080` (this is forwarded to the VM's internal Nginx proxy on port 80).
 - Jenkins will be accessible at `http://localhost:8888` on your host machine.
 
+### Useful Vagrant Commands
+If you want to monitor the containers running inside the Vagrant VM from your host machine (assuming you are in the `infrastructure/vagrant` directory):
+- **See what's running inside Vagrant:** `vagrant ssh -c "docker ps"`
+- **Watch live backend logs:** `vagrant ssh -c "docker logs -f dras-backend-1"`
+
 ## 5. CI/CD Pipeline (Jenkins Setup)
 
 Jenkins automatically handles deployments when you push to GitHub. The project includes a `Jenkinsfile` for CI/CD, containing stages for Backend Build, Backend Tests, Frontend Install, Frontend Build, Docker Image Build, Docker Compose Deployment, Health Check, and Archive Logs.

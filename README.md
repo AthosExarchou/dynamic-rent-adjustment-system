@@ -109,7 +109,7 @@ To run this application, ensure you have the following installed:
    npm install
    npm run dev
    ```
-4. Access the web application in your browser at `http://localhost:5173/`
+4. Access the web application in your browser at `http://localhost`
 
 ## Configuration
 
