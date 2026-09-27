@@ -721,9 +721,13 @@ def validate_df_with_report(df: pd.DataFrame) -> pd.DataFrame:
 
     if "bedrooms" in df.columns:
         df["bedrooms"] = pd.to_numeric(df["bedrooms"], errors="coerce").astype("Int64")
+    else:
+        df["bedrooms"] = pd.Series(pd.NA, index=df.index, dtype="Int64")
 
     if "bathrooms" in df.columns:
         df["bathrooms"] = pd.to_numeric(df["bathrooms"], errors="coerce").astype("Int64")
+    else:
+        df["bathrooms"] = pd.Series(pd.NA, index=df.index, dtype="Int64")
 
     # Image normalization
     if "images" in df.columns:
@@ -1460,7 +1464,11 @@ def run_scraper(config: ScraperConfig):
                 # Parses the page
                 detail_html = page.content()
                 details = parse_property_page(detail_html)
-                data.update(details)
+
+                # Only overwrite Phase 1 values when Phase 2 found something; preserve valid 0 values
+                for key, value in details.items():
+                    if value is not None and value != "" and value != []:
+                        data[key] = value
 
                 # Save state after each detail page
                 state["last_detail_index"] = i
