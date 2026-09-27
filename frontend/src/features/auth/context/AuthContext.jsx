@@ -49,6 +49,19 @@ export function AuthProvider({ children }) {
     await checkSession(false);
   }, [checkSession]);
 
+  const register = useCallback(async (username, email, password) => {
+    const formData = new FormData();
+    formData.append('username', username);
+    formData.append('email', email);
+    formData.append('password', password);
+
+    const result = await apiClient('/saveUser', {
+      method: 'POST',
+      body: formData,
+    });
+    return result;
+  }, []);
+
   const login = useCallback(async (username, password) => {
     // Expected: POST /auth/login { username, password } -> User JSON + session cookie
     const loggedInUser = await apiClient('/auth/login', {
@@ -84,6 +97,7 @@ export function AuthProvider({ children }) {
     roles,
     isLoading,
     isAuthenticated: user !== null,
+    register,
     login,
     logout,
     hasRole,
