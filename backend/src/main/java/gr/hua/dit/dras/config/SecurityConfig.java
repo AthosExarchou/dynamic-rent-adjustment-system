@@ -77,7 +77,7 @@ public class SecurityConfig {
                 )
 
                 .csrf((csrf) -> csrf
-                        .ignoringRequestMatchers("/auth/login", "/auth/logout", "/notifications/**")
+                        .ignoringRequestMatchers("/auth/login", "/auth/logout", "/notifications/**", "/saveUser")
                 )
 
                 .formLogin((form) -> form
