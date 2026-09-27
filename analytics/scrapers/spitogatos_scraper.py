@@ -231,33 +231,6 @@ def ensure_list(x):
     return []
 
 
-def parse_numeric(x):
-    """Numeric parsing for strings such as '1.234,56 €' or '950'."""
-    if pd.isna(x):
-        return None
-
-    if isinstance(x, (int, float)):
-        return float(x)
-
-    s = str(x).strip()
-    if s == "":
-        return None
-    # Removes euro and non-digit except ".", and ","
-    s = re.sub(r"[^\d.,\-]", "", s)
-    # If both "." and "," exist and "." appears before comma, treats "." as thousand seperator
-    if "." in s and "," in s:
-        # Converts thousand separators
-        if s.rfind(".") < s.rfind(","):
-            s = s.replace(".", "").replace(",", ".")
-    # If only "," is present and no ".", then comma is decimal
-    elif "," in s and "." not in s:
-        s = s.replace(",", ".")
-    try:
-        return float(s)
-    except Exception:
-        return None
-
-
 # Helper functions
 
 def parse_money_to_float(text: str) -> float | None:
@@ -692,10 +665,10 @@ def handle_cookies(page: Page, timeout: int = 3) -> bool:
 
         # Check once more after delay (use locator, not query_selector,
         # because cookie_selector contains :has-text() which is Playwright-only)
-        delayed_loc = page.locator(cookie_selector).first
+        delayed_loc = page.locator(cookie_selector)
         if delayed_loc.count():
             logger.debug("Cookies: banner appeared after delay")
-            delayed_loc.evaluate("el => el.click()")
+            delayed_loc.first.evaluate("el => el.click()")
             time.sleep(1)
         else:
             logger.debug("Cookies: no banner detected, proceeding")
@@ -1028,7 +1001,7 @@ def push_to_backend(df: pd.DataFrame, api_url: str):
             "description": str(row.get("description"))[:5000] if pd.notna(row.get("description")) else "",
 
             "price": safe_int(row.get("price")),
-            "pricePerM2": safe_int(row.get("price_per_m2")),
+            "pricePerM2": safe_float(row.get("price_per_m2")),
             "sizeM2": safe_int(row.get("Μέγεθος")),
 
             "floor": safe_int(row.get("floor")),
@@ -1038,7 +1011,7 @@ def push_to_backend(df: pd.DataFrame, api_url: str):
 
             "address": str(row.get("address", ""))[:255],
             "propertyType": str(row.get("Τύπος_ακινήτου", "Ακίνητο")),
-            "rentalDuration": str(row.get("Διάρκεια_ενοικίασης", "LONG_TERM")),
+            "rentalDuration": str(row.get("rental_duration", "LONG_TERM")),
 
             "images": images,
         }
@@ -1304,12 +1277,12 @@ def run_scraper(config: ScraperConfig):
                 soup = BeautifulSoup(page.content(), "html.parser")
                 articles = soup.find_all("article", class_="ordered-element")
 
-                if len(articles) < 5:
-                    logger.warning("Suspiciously low article count (%d) on page %d - likely blocked", len(articles), page_num)
-                    break
-
                 if not articles:
                     logger.warning("No listings found on page | page=%d | url=%s", page_num, url)
+                    break
+
+                if len(articles) < 5:
+                    logger.warning("Suspiciously low article count (%d) on page %d - likely blocked", len(articles), page_num)
                     break
 
                 for article in articles:
@@ -1378,7 +1351,7 @@ def run_scraper(config: ScraperConfig):
                             "images": []
                         })
                     except Exception:
-                        pass
+                        logger.warning("Failed to parse article on page %d", page_num, exc_info=True)
 
                 if page_num % 20 == 0:
                     logger.info("Deep sleep for IP cooldown | page=%d | duration=5-10 min", page_num)
@@ -1411,12 +1384,17 @@ def run_scraper(config: ScraperConfig):
             # this block runs only if the loop completed without break
             if not phase_1_complete:
                 state["phase_1_complete"] = True
-                try:
-                    with open(state_file, "w", encoding="utf-8") as f:
-                        json.dump(state, f, ensure_ascii=False)
-                except Exception:
-                    pass
                 logger.info("Phase 1 complete | unique_listings=%d", len(all_property_data))
+
+        # Always persist state after Phase 1, whether it completed or broke
+        state["all_property_data"] = all_property_data
+        try:
+            temp_file = state_file.with_suffix(".tmp")
+            with open(temp_file, "w", encoding="utf-8") as f:
+                json.dump(state, f, ensure_ascii=False)
+            temp_file.replace(state_file)
+        except Exception as e:
+            logger.warning("Failed to save state after Phase 1: %s", e)
 
         # STEP 2: Enrich with Detail Pages
         if all_property_data:
@@ -1497,6 +1475,16 @@ def run_scraper(config: ScraperConfig):
                         pass
 
                 details_processed += 1
+
+            # Always persist state after Phase 2, whether it completed or broke
+            state["all_property_data"] = all_property_data
+            try:
+                temp_file = state_file.with_suffix(".tmp")
+                with open(temp_file, "w", encoding="utf-8") as f:
+                    json.dump(state, f, ensure_ascii=False)
+                temp_file.replace(state_file)
+            except Exception as e:
+                logger.warning("Failed to save state after Phase 2: %s", e)
 
         if not all_property_data:
             logger.critical("No data extracted. Exiting.")
@@ -1680,6 +1668,7 @@ def run_scraper(config: ScraperConfig):
         if hist_path.exists():
             hist_df = pd.read_csv(hist_path)
             updated_hist = pd.concat([hist_df, pd.DataFrame([record])], ignore_index=True)
+            updated_hist = updated_hist.drop_duplicates(subset=["date", "city"], keep="last")
             updated_hist.to_csv(hist_path, index=False)
         else:
             pd.DataFrame([record]).to_csv(hist_path, index=False)
