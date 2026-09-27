@@ -24,7 +24,7 @@ export default function ProfileEditForm() {
     setError('');
     setLoading(true);
     try {
-      await apiClient(`/user/edit/${user?.id}`, {
+      await apiClient(`/user/${user?.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
