@@ -107,7 +107,7 @@ The application is containerized using Docker and orchestrated with Docker Compo
 - **Rebuild:** Run `docker compose up -d --build` after adding new dependencies (like npm packages or Maven imports).
 - **Stop everything:** Run `docker compose down`.
 - **Watch logs:** Run `docker compose logs -f` to see everything, or `docker compose logs -f backend` for just the backend.
-- **Access the app:** Navigate to `http://localhost:5173` (or `http://localhost` if using the Nginx reverse proxy).
+- **Access the app:** Navigate to `http://localhost` (the app is served via the Nginx reverse proxy on port 80).
 
 ## 4. Infrastructure Provisioning (Vagrant)
 
@@ -125,7 +125,7 @@ If you are testing the pipeline locally using Vagrant, set up Jenkins as follows
 1. Open your browser and go to `http://localhost:8888`.
 2. Retrieve the initial admin password by running `vagrant ssh -c "sudo cat /var/lib/jenkins/secrets/initialAdminPassword"`.
 3. Install the suggested plugins and create your admin user.
-4. Create a new "Pipeline" project, set "Definition" to "Pipeline script from SCM", point it to your Git repository URL, and set the Script Path to `Jenkinsfile`.
+4. Create a new "Pipeline" project named `dras-dev`, set "Definition" to "Pipeline script from SCM", point it to your Git repository URL, and set the Script Path to `Jenkinsfile`.
 5. To deploy manually, click **Build Now** in your Jenkins pipeline.
 
 ### Production Setup (OCI)

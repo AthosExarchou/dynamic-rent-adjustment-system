@@ -6,7 +6,7 @@ pipeline {
     }
 
     environment {
-        DOCKER_COMPOSE_CMD = 'docker compose -f docker-compose.prod.yml'
+        DOCKER_COMPOSE_CMD = env.JOB_BASE_NAME.toLowerCase().contains('prod') ? 'docker compose -f docker-compose.prod.yml' : 'docker compose'
         COMPOSE_PROJECT_NAME = 'dras'
     }
 
