@@ -8,6 +8,9 @@ pipeline {
     environment {
         DOCKER_COMPOSE_CMD = "${env.JOB_BASE_NAME.toLowerCase().contains('prod') ? 'docker compose -f docker-compose.prod.yml' : 'docker compose'}"
         COMPOSE_PROJECT_NAME = 'dras'
+        DATABASE_PASSWORD = credentials('dras-database-password')
+        MAIL_USERNAME     = credentials('dras-mail-username')
+        MAIL_PASSWORD     = credentials('dras-mail-password')
     }
 
     stages {
