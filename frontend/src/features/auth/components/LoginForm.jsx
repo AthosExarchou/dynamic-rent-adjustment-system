@@ -7,7 +7,7 @@ import styles from './AuthForm.module.css';
 export default function LoginForm() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -18,7 +18,7 @@ export default function LoginForm() {
     setLoading(true);
     setError('');
     try {
-      await login(username, password);
+      await login(email, password);
       navigate('/');
     } catch (err) {
       setError('Invalid username or password.');
@@ -43,15 +43,15 @@ export default function LoginForm() {
         
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.formGroup}>
-            <label htmlFor="loginUsername" className={styles.label}>Username</label>
+            <label htmlFor="loginEmail" className={styles.label}>Email</label>
             <input 
-              id="loginUsername"
-              type="text" 
+              id="loginEmail"
+              type="email" 
               required 
-              value={username} 
-              onChange={e => setUsername(e.target.value)} 
+              value={email} 
+              onChange={e => setEmail(e.target.value)} 
               className={styles.input} 
-              placeholder="Enter your username" 
+              placeholder="Enter your email" 
             />
           </div>
           

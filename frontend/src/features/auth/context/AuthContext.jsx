@@ -62,11 +62,11 @@ export function AuthProvider({ children }) {
     return result;
   }, []);
 
-  const login = useCallback(async (username, password) => {
-    // Expected: POST /auth/login { username, password } -> User JSON + session cookie
+  const login = useCallback(async (email, password) => {
+    // Expected: POST /auth/login { email, password } -> User JSON + session cookie
     const loggedInUser = await apiClient('/auth/login', {
       method: 'POST',
-      body: { username, password },
+      body: { email, password },
     });
     setUser(loggedInUser);
     return loggedInUser;
