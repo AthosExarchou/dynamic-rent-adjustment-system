@@ -178,11 +178,11 @@ export default function UserManagement() {
       {userToDelete && (
         <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)',
           display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000}}>
-          <div style={{backgroundColor: 'white', padding: '2rem', borderRadius: '8px', maxWidth: '400px', color: '#333'}}>
-            <h3 style={{marginTop: 0}}>Confirm Deletion</h3>
-            <p>Are you sure you want to delete this user? This action cannot be undone.</p>
+          <div style={{backgroundColor: 'var(--background-paper)', padding: '2rem', borderRadius: '8px', maxWidth: '400px', color: 'var(--text-primary)', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'}}>
+            <h3 style={{marginTop: 0, color: 'var(--text-primary)'}}>Confirm Deletion</h3>
+            <p style={{color: 'var(--text-secondary)'}}>Are you sure you want to delete this user? This action cannot be undone.</p>
             <div style={{display: 'flex', gap: '1rem', marginTop: '1.5rem', justifyContent: 'flex-end'}}>
-              <button onClick={() => setUserToDelete(null)} className={styles.addBtn} style={{background: '#ccc', color: '#333'}}>Cancel</button>
+              <button onClick={() => setUserToDelete(null)} className={styles.addBtn} style={{background: 'var(--background-default)', color: 'var(--text-primary)', border: '1px solid var(--border-color)'}}>Cancel</button>
               <button onClick={handleDeleteUser} className={styles.delBtn}>Confirm Delete</button>
             </div>
           </div>
