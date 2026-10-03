@@ -6,6 +6,8 @@ import gr.hua.dit.dras.dto.UserEditRequest;
 import gr.hua.dit.dras.dto.UserDTO;
 import gr.hua.dit.dras.entities.Role;
 import gr.hua.dit.dras.entities.User;
+import gr.hua.dit.dras.entities.Owner;
+import gr.hua.dit.dras.entities.Tenant;
 import gr.hua.dit.dras.repositories.UserRepository;
 import gr.hua.dit.dras.repositories.RoleRepository;
 import gr.hua.dit.dras.services.application.UserApplicationService;
@@ -189,19 +191,6 @@ public class UserController {
         Role role = roleRepository.findById(role_id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid role ID: " + role_id));
 
-        // OWNER and TENANT roles cannot be removed while the user still has an active profile
-        if ("OWNER".equals(role.getName()) && user.getOwner() != null) {
-            return ResponseEntity.badRequest().body(
-                    java.util.Map.of("message", "OWNER role cannot be removed while an Owner profile exists. Delete the Owner profile first.")
-            );
-        }
-
-        if ("TENANT".equals(role.getName()) && user.getTenant() != null) {
-            return ResponseEntity.badRequest().body(
-                    java.util.Map.of("message", "TENANT role cannot be removed while a Tenant profile exists. Delete the Tenant profile first.")
-            );
-        }
-
         user.getRoles().remove(role);
         userService.updateUser(user);
 
@@ -229,6 +218,18 @@ public class UserController {
                 if (user.getOwner() != null) {
                     assignRole(user, "OWNER");
                     return ResponseEntity.ok().build();
+                } else if (user.getTenant() != null) {
+                    Owner owner = new Owner(
+                        user.getTenant().getFirstName(),
+                        user.getTenant().getLastName(),
+                        user.getTenant().getPhoneNumber(),
+                        false
+                    );
+                    owner.setUser(user);
+                    user.setOwner(owner);
+                    userRepository.save(user);
+                    assignRole(user, "OWNER");
+                    return ResponseEntity.ok().build();
                 }
                 return ResponseEntity.badRequest().body(
                         java.util.Map.of("message", "OWNER_PROFILE_REQUIRED")
@@ -236,6 +237,17 @@ public class UserController {
 
             case "TENANT":
                 if (user.getTenant() != null) {
+                    assignRole(user, "TENANT");
+                    return ResponseEntity.ok().build();
+                } else if (user.getOwner() != null) {
+                    Tenant tenant = new Tenant(
+                        user.getOwner().getFirstName(),
+                        user.getOwner().getLastName(),
+                        user.getOwner().getPhoneNumber()
+                    );
+                    tenant.setUser(user);
+                    user.setTenant(tenant);
+                    userRepository.save(user);
                     assignRole(user, "TENANT");
                     return ResponseEntity.ok().build();
                 }
