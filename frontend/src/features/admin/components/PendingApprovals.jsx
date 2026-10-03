@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MapPin } from 'lucide-react';
+import { MapPin, ClipboardCheck } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import styles from './AdminDashboard.module.css';
 
@@ -59,7 +59,14 @@ export default function PendingApprovals() {
 
   return (
     <div className={styles.container}>
-      <h2 className={styles.title}>Pending Listing Approvals</h2>
+      <div className={styles.header}>
+        <h2 className={styles.title}>
+          <ClipboardCheck className={styles.titleIcon} size={28} />
+          Pending Listing Approvals
+        </h2>
+      </div>
+
+      <hr className={styles.divider} />
 
       <div className={styles.grid}>
         {listings.map(l => (

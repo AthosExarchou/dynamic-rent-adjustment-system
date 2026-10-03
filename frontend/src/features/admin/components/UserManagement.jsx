@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Users } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import styles from './AdminDashboard.module.css';
 import EditUserModal from './EditUserModal';
@@ -90,7 +91,14 @@ export default function UserManagement() {
 
   return (
     <div className={styles.container}>
-      <h2 className={styles.title}>User Management Dashboard</h2>
+      <div className={styles.header}>
+        <h2 className={styles.title}>
+          <Users className={styles.titleIcon} size={28} />
+          User Management Dashboard
+        </h2>
+      </div>
+      
+      <hr className={styles.divider} />
       
       <div className={styles.tableContainer}>
         <table className={styles.table}>
@@ -107,12 +115,12 @@ export default function UserManagement() {
               <tr key={u.id}>
                 <td>{u.username}</td>
                 <td>{u.email}</td>
-                <td>{u.roles.map(r => r.name).join(', ')}</td>
+                <td>{u.roles.join(', ')}</td>
                 <td>
                   <div className={styles.roleActions}>
                     <button onClick={() => setEditingUser(u)} className={styles.editBtn}>Edit</button>
                     {roles.map(r => {
-                      const hasRole = u.roles.some(ur => ur.name === r.name);
+                      const hasRole = u.roles.some(ur => ur === r.name);
                       return hasRole ? (
                         <button key={r.id} onClick={() => handleRemoveRole(u.id, r.id)} className={styles.removeBtn}>- {r.name}</button>
                       ) : (
