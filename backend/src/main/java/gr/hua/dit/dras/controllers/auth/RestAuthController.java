@@ -31,7 +31,6 @@ public class RestAuthController {
     @Autowired
     private UserRepository userRepository;
 
-    @Transactional
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials, HttpServletRequest request) {
         String email = credentials.get("email");
