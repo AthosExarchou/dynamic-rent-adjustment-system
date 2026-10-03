@@ -6,7 +6,25 @@ import apiClient from '../../../shared/api/client';
 import styles from './ProfileForm.module.css';
 
 export default function ProfileEditForm() {
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, hasRole } = useAuth();
+
+  if (hasRole('ADMIN') || user?.isSystem) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.topActions}>
+          <Link to="/profile" className={styles.backLink}>
+            <ArrowLeft size={18} /> Back to Profile
+          </Link>
+        </div>
+        <div className={styles.card}>
+          <div className={styles.body} style={{ textAlign: 'center', padding: '3rem' }}>
+            <h3 style={{ color: '#dc3545' }}>Action Not Allowed</h3>
+            <p style={{ color: '#666' }}>Administrator and System accounts cannot modify their core profile details.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ username: user?.username || '', email: user?.email || '' });
   const [error, setError] = useState('');

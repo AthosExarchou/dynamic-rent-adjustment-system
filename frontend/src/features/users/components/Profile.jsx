@@ -53,17 +53,21 @@ export default function Profile() {
           <div className={styles.actionsContainer}>
             <h4 className={styles.actionsTitle}>Account Management</h4>
             <div className={styles.actionsGrid}>
-              <Link to="/profile/edit" className={`${styles.actionBtn} ${styles.btnPrimary}`}>
-                <Settings size={18} /> Edit Profile Details
-              </Link>
+              {!roles.includes('ADMIN') && !user?.isSystem && (
+                <Link to="/profile/edit" className={`${styles.actionBtn} ${styles.btnPrimary}`}>
+                  <Settings size={18} /> Edit Profile Details
+                </Link>
+              )}
               
               <Link to="/profile/password" className={`${styles.actionBtn} ${styles.btnOutlinePrimary}`}>
                 <Key size={18} /> Change Password
               </Link>
               
-              <Link to="/profile/delete" className={`${styles.actionBtn} ${styles.btnDanger}`}>
-                <Trash2 size={18} /> Delete Account
-              </Link>
+              {!roles.includes('ADMIN') && !user?.isSystem && (
+                <Link to="/profile/delete" className={`${styles.actionBtn} ${styles.btnDanger}`}>
+                  <Trash2 size={18} /> Delete Account
+                </Link>
+              )}
             </div>
           </div>
         </div>
