@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { createBrowserRouter, Navigate, useRouteError } from 'react-router-dom';
+import ProtectedRoute from '../../shared/components/ProtectedRoute';
 import MainLayout from '../../shared/layouts/MainLayout';
 import styles from './Loading.module.css';
 
@@ -90,20 +91,20 @@ export const router = createBrowserRouter([
       { path: 'register', element: withSuspense(RegisterForm) },
 
       // Protected User Routes
-      { path: 'profile', element: withSuspense(Profile) },
-      { path: 'profile/edit', element: withSuspense(ProfileEditForm) },
-      { path: 'profile/password', element: withSuspense(ChangePasswordForm) },
-      { path: 'profile/delete', element: withSuspense(DeleteAccountConfirm) },
-      { path: 'listings/new', element: withSuspense(ListingForm) },
-      { path: 'tenant/rent/:listingId', element: withSuspense(TenantForm) },
+      { path: 'profile', element: <ProtectedRoute>{withSuspense(Profile)}</ProtectedRoute> },
+      { path: 'profile/edit', element: <ProtectedRoute>{withSuspense(ProfileEditForm)}</ProtectedRoute> },
+      { path: 'profile/password', element: <ProtectedRoute>{withSuspense(ChangePasswordForm)}</ProtectedRoute> },
+      { path: 'profile/delete', element: <ProtectedRoute>{withSuspense(DeleteAccountConfirm)}</ProtectedRoute> },
+      { path: 'listings/new', element: <ProtectedRoute requiredRole="OWNER">{withSuspense(ListingForm)}</ProtectedRoute> },
+      { path: 'tenant/rent/:listingId', element: <ProtectedRoute requiredRole="TENANT">{withSuspense(TenantForm)}</ProtectedRoute> },
 
       // Owner Routes
-      { path: 'my-listings', element: withSuspense(MyListings) },
-      { path: 'my-listings/:listingId/apps', element: withSuspense(ListingApplications) },
+      { path: 'my-listings', element: <ProtectedRoute requiredRole="OWNER">{withSuspense(MyListings)}</ProtectedRoute> },
+      { path: 'my-listings/:listingId/apps', element: <ProtectedRoute requiredRole="OWNER">{withSuspense(ListingApplications)}</ProtectedRoute> },
 
       // Admin Routes
-      { path: 'admin/users', element: withSuspense(UserManagement) },
-      { path: 'admin/approvals', element: withSuspense(PendingApprovals) },
+      { path: 'admin/users', element: <ProtectedRoute requiredRole="ADMIN">{withSuspense(UserManagement)}</ProtectedRoute> },
+      { path: 'admin/approvals', element: <ProtectedRoute requiredRole="ADMIN">{withSuspense(PendingApprovals)}</ProtectedRoute> },
 
       // Catch-all (404 Not Found)
       { path: '*', element: withSuspense(NotFoundPage) }
