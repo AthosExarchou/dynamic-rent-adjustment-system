@@ -4,12 +4,14 @@ import apiClient from '../../../shared/api/client';
 import styles from './AdminDashboard.module.css';
 import EditUserModal from './EditUserModal';
 import AdminProfileCreationModal from './AdminProfileCreationModal';
+import CreateUserModal from './CreateUserModal';
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   
   // Modal states
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [creatingProfileFor, setCreatingProfileFor] = useState(null); // { userId, roleType }
   
@@ -30,7 +32,7 @@ export default function UserManagement() {
       setUsers(usersData);
       setRoles([
         { id: 1, name: 'USER' },
-        { id: 2, name: 'OWNER' },
+        { id: 4, name: 'OWNER' },
         { id: 3, name: 'TENANT' }
       ]);
       setError(null);
@@ -40,7 +42,7 @@ export default function UserManagement() {
       setUsers([]);
       setRoles([
         { id: 1, name: 'USER' },
-        { id: 2, name: 'OWNER' },
+        { id: 4, name: 'OWNER' },
         { id: 3, name: 'TENANT' }
       ]);
       setError("Failed to load users.");
@@ -96,6 +98,13 @@ export default function UserManagement() {
           <Users className={styles.titleIcon} size={28} />
           User Management Dashboard
         </h2>
+        <button 
+          className={styles.approveBtn} 
+          onClick={() => setShowCreateModal(true)}
+          style={{ padding: '0.4rem 1rem' }}
+        >
+          + Create User
+        </button>
       </div>
       
       <hr className={styles.divider} />
@@ -118,16 +127,20 @@ export default function UserManagement() {
                 <td>{u.roles.join(', ')}</td>
                 <td>
                   <div className={styles.roleActions}>
-                    <button onClick={() => setEditingUser(u)} className={styles.editBtn}>Edit</button>
-                    {roles.map(r => {
-                      const hasRole = u.roles.some(ur => ur === r.name);
-                      return hasRole ? (
-                        <button key={r.id} onClick={() => handleRemoveRole(u.id, r.id)} className={styles.removeBtn}>- {r.name}</button>
-                      ) : (
-                        <button key={r.id} onClick={() => handleAddRole(u.id, r.id)} className={styles.addBtn}>+ {r.name}</button>
-                      );
-                    })}
-                    <button onClick={() => confirmDeleteUser(u.id)} className={styles.delBtn}>Delete</button>
+                    {!u.roles.includes('ADMIN') && !u.isSystem && (
+                      <>
+                        <button onClick={() => setEditingUser(u)} className={styles.editBtn}>Edit</button>
+                        {roles.map(r => {
+                          const hasRole = u.roles.some(ur => ur === r.name);
+                          return hasRole ? (
+                            <button key={r.id} onClick={() => handleRemoveRole(u.id, r.id)} className={styles.removeBtn}>- {r.name}</button>
+                          ) : (
+                            <button key={r.id} onClick={() => handleAddRole(u.id, r.id)} className={styles.addBtn}>+ {r.name}</button>
+                          );
+                        })}
+                        <button onClick={() => confirmDeleteUser(u.id)} className={styles.delBtn}>Delete</button>
+                      </>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -145,6 +158,13 @@ export default function UserManagement() {
         onClose={() => setEditingUser(null)} 
         onRefresh={fetchUsersAndRoles} 
       />
+
+      {showCreateModal && (
+        <CreateUserModal
+          onClose={() => setShowCreateModal(false)}
+          onRefresh={fetchUsersAndRoles}
+        />
+      )}
 
       {creatingProfileFor && (
         <AdminProfileCreationModal
