@@ -5,6 +5,7 @@ import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.services.domain.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,7 +26,7 @@ public class ProfileController {
 
     /* Process password change */
     @PostMapping("/user/change-password/{id}")
-    @Secured("USER")
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<?> changePassword(
             @PathVariable Integer id,
             @RequestParam String oldPassword,

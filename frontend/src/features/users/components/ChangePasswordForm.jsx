@@ -32,11 +32,10 @@ export default function ChangePasswordForm() {
     setError('');
     setLoading(true);
     try {
-      const { confirmPassword: _ignored, ...payloadData } = formData;
       await apiClient(`/user/change-password/${user?.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams(payloadData).toString()
+        body: new URLSearchParams(formData).toString()
       });
       setSuccess(true);
     } catch {
