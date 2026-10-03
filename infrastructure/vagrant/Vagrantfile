@@ -9,6 +9,9 @@ Vagrant.configure("2") do |config|
   # Jenkins
   config.vm.network "forwarded_port", guest: 8080, host: 8888, id: "jenkins"
 
+  # Forward Postgres Port
+  config.vm.network "forwarded_port", guest: 5433, host: 5434, id: "postgres"
+
   config.vm.provider "libvirt" do |lv|
     lv.memory = 4096
     lv.cpus = 2

@@ -104,7 +104,21 @@ To run this application locally without Vagrant, ensure you have the following i
 
 The application is containerized using Docker and orchestrated with Docker Compose. Nginx acts as a reverse proxy, routing traffic to the frontend and backend containers.
 - **Start everything:** Run `docker compose up -d`.
-- **Rebuild:** Run `docker compose up -d --build` after adding new dependencies (like npm packages or Maven imports).
+- **Rebuild (backend / dependency changes):** Run `docker compose up -d --build`.
+- **Rebuild (frontend changes):** The React build is served from a named Docker volume (`frontend_dist`). Simply rebuilding the image is not enough - the stale volume must be deleted first so Docker re-initializes it from the new build:
+  ```bash
+  docker compose down
+  docker volume rm dynamic-rent-adjustment-system_frontend_dist
+  docker compose up -d
+  ```
+  > **Note:** This only applies to the local Docker environment. When running via **Vagrant** or a VM, frontend rebuilds are handled automatically by the Jenkins pipeline's Deploy stage. Simply click **Build Now** in Jenkins.
+- **Reset database (wipe all data):** `docker compose down -v` removes all named volumes - this means both the database **and** the frontend build are deleted. The subsequent `docker compose up -d` will take longer as both must be re-created from scratch. To wipe only the database and preserve the frontend volume, run:
+  ```bash
+  docker compose down
+  docker volume rm dynamic-rent-adjustment-system_db_data
+  docker compose up -d
+  ```
+  > **Note:** For **Vagrant**, the database volume is `dras_db_data` (Jenkins sets `COMPOSE_PROJECT_NAME=dras`). For a VM, the production volume is `dras_db_data_prod` (defined in `docker-compose.prod.yml`). In both cases, stop the relevant containers first via `vagrant ssh` or SSH into your server before removing the volume, then trigger a Jenkins build to redeploy.
 - **Stop everything:** Run `docker compose down`.
 - **Watch logs:** Run `docker compose logs -f` to see everything, or `docker compose logs -f backend` for just the backend.
 - **Access the app:** Navigate to `http://localhost` (the app is served via the Nginx reverse proxy on port 80).
@@ -165,3 +179,11 @@ If it is not enrolled:
 1. Run `sudo mokutil --import /var/lib/shim-signed/mok/MOK.der` and choose a temporary password.
 2. Reboot, and in the MOK Manager screen, select **Enroll MOK** > **Continue** > **Yes**, enter your password, and **Reboot**.
 3. Verify enrollment with the test-key command, load the module with `sudo modprobe vboxdrv`, and start the VM with `vagrant up`.
+
+## 9. Database Connection Ports
+
+To connect a local database client to the different environments, use the following configurations:
+
+- **Local Docker Environment:** Connect to `localhost` on port `5433` (already mapped in `docker-compose.yml`).
+- **Local Vagrant Environment:** You must first manually add `config.vm.network "forwarded_port", guest: 5433, host: 5434, id: "postgres"` to your `Vagrantfile` and run `vagrant reload`. Then, connect to `localhost` on port `5434`.
+- **Production Environment (Remote VM):** First, add `ports: ["127.0.0.1:5432:5432"]` to the `db` service in `docker-compose.prod.yml` to securely bind it to the server's loopback interface. Then, configure your client to connect to `localhost:5432` using an **SSH Tunnel** through your production server.
