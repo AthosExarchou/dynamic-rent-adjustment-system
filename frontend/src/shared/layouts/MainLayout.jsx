@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
-import { Sun, Moon, UserCircle, LogIn, UserPlus, LogOut, Building2, ChevronRight, Search, Bell } from 'lucide-react';
+import { Sun, Moon, UserCircle, LogIn, UserPlus, LogOut, Building2, ChevronRight, Search, Bell, X } from 'lucide-react';
 import { useAuth } from '../../features/auth';
 import apiClient from '../api/client';
 import Sidebar from './Sidebar';
@@ -180,7 +180,12 @@ export default function MainLayout() {
               {/* Center Search Bar */}
               <div className={styles.topbarCenter}>
                 <form className={styles.searchContainer} onSubmit={handleSearchSubmit}>
-                  <Search className={styles.searchIcon} size={16} />
+                  <Search 
+                    className={styles.searchIcon} 
+                    size={16} 
+                    onClick={handleSearchSubmit}
+                    style={{ cursor: 'pointer' }}
+                  />
                   <input 
                     type="text" 
                     placeholder="Search apartments..." 
@@ -188,6 +193,13 @@ export default function MainLayout() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
+                  {searchQuery && (
+                    <X 
+                      size={16} 
+                      onClick={() => setSearchQuery('')}
+                      style={{ cursor: 'pointer', color: 'var(--text-secondary)' }}
+                    />
+                  )}
                 </form>
               </div>
 
