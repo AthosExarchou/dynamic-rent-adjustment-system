@@ -8,6 +8,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -24,7 +25,7 @@ public class EmailService {
     private final SpringTemplateEngine templateEngine;
     private final NotificationService notificationService;
 
-    @org.springframework.beans.factory.annotation.Value("${app.public-url}")
+    @Value("${app.public-url}")
     private String publicUrl;
 
     public EmailService(
@@ -60,11 +61,7 @@ public class EmailService {
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
 
-            mailSender.send(mimeMessage);
-
-            log.info("Email sent successfully [type={}] to [{}]", emailType, to);
-
-            // Mirror email as an in-app notification
+            // Mirror email as an in-app notification regardless of email delivery success
             try {
                 String notifMessage;
                 if (emailType.equals("welcome")) notifMessage = "Welcome to Dynamic Rent Adjustment System!";
@@ -83,6 +80,9 @@ public class EmailService {
             } catch (Exception notifEx) {
                 log.warn("Failed to create in-app notification [type={}] to [{}]: {}", emailType, to, notifEx.getMessage());
             }
+            
+            mailSender.send(mimeMessage);
+            log.info("Email sent successfully [type={}] to [{}]", emailType, to);
 
         } catch (MailException | MessagingException e) {
             log.warn("Failed to send email [type={}] to [{}]: {}",
