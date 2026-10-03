@@ -243,12 +243,14 @@
   font-size: 0.875rem;
   border-radius: 0.25rem;
   text-decoration: none;
-  transition: filter 0.2s;
+  transition: all 0.3s ease;
 }
 
 .viewBtn:hover {
-  filter: brightness(0.9);
+  background-color: #0b5ed7;
   color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
 }
 
 /* CTA Section */
