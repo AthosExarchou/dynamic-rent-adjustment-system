@@ -95,7 +95,7 @@ public class TenantController {
     }
 
     /* Admin creates a tenant for a user */
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/new")
     public ResponseEntity<?> createTenant(
             @Valid @RequestBody TenantCreateRequest request,

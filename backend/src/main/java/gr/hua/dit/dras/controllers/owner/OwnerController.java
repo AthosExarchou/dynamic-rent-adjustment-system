@@ -35,7 +35,7 @@ public class OwnerController {
     }
 
     @PostMapping("/new")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
     public ResponseEntity<?> createOwner(
             @Valid @RequestBody OwnerCreateRequest request,
             BindingResult bindingResult
@@ -71,7 +71,7 @@ public class OwnerController {
     }
 
     @GetMapping("/{id}/listings")
-    @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('OWNER') or hasAuthority('ADMIN')")
     public ResponseEntity<?> showListings(@PathVariable Integer id) {
 
         Owner owner = ownerService.getOwner(id);
