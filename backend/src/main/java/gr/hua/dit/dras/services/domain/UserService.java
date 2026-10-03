@@ -156,9 +156,13 @@ public class UserService implements UserDetailsService {
     public void assertNotAdmin(User user) {
         boolean isAdmin = user.getRoles().stream()
                 .anyMatch(r -> r.getName().equals("ADMIN"));
+        boolean isSystem = user.getOwner() != null && user.getOwner().isSystemOwner();
 
         if (isAdmin) {
             throw new AccessDeniedException("Administrator account cannot be modified.");
+        }
+        if (isSystem) {
+            throw new AccessDeniedException("System account cannot be modified.");
         }
     }
 

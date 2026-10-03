@@ -17,6 +17,7 @@ public class UserDTO {
     private List<String> roles;
     private LocalDateTime createdAt;
     private LocalDateTime lastLogin;
+    private boolean isSystem;
 
     public UserDTO() {}
 
@@ -29,6 +30,7 @@ public class UserDTO {
                 .collect(Collectors.toList());
         this.createdAt = user.getCreatedAt();
         this.lastLogin = user.getLastLogin();
+        this.isSystem = user.getOwner() != null && user.getOwner().isSystemOwner();
     }
 
     public Integer getId() {
@@ -66,5 +68,11 @@ public class UserDTO {
     }
     public void setLastLogin(LocalDateTime lastLogin) {
         this.lastLogin = lastLogin;
+    }
+    public boolean getIsSystem() {
+        return isSystem;
+    }
+    public void setIsSystem(boolean isSystem) {
+        this.isSystem = isSystem;
     }
 }
