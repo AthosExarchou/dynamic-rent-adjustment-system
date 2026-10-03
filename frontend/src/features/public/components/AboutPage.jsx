@@ -73,7 +73,7 @@ export default function AboutPage() {
       </section>
 
       <footer className={styles.footer}>
-        <p>&copy; DRAS · Helping people find the perfect home since 2025.</p>
+        <p>DRAS · Helping people find the perfect place to live since 2025.</p>
       </footer>
     </div>
   );

@@ -111,15 +111,17 @@
     position: fixed;
     top: 0;
     left: 0;
+    padding-top: 5rem;
     transform: translateX(-100%);
+    z-index: 1040;
   }
 
   .sidebar.open {
     transform: translateX(0);
   }
 
-  .closeBtn {
-    display: block;
+  .sidebarHeader {
+    display: none;
   }
 
   .mobileOverlay {
