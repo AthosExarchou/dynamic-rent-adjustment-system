@@ -15,18 +15,15 @@ export default function AdminProfileCreationModal({ userId, roleType, onClose, o
     setError('');
 
     const endpoint = roleType === 'OWNER' ? '/owner/new' : '/tenant/new';
-    const params = new URLSearchParams({
-      userId: String(userId),
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      phoneNumber: formData.phoneNumber,
-    });
-
     try {
       await apiClient(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString()
+        body: {
+          userId: Number(userId),
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phoneNumber: formData.phoneNumber
+        }
       });
       onRefresh();
       onClose();
