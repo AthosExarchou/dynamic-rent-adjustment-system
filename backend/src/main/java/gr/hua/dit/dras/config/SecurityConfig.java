@@ -2,6 +2,16 @@ package gr.hua.dit.dras.config;
 
 /* imports */
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -81,9 +91,24 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                .csrf((csrf) -> csrf
-                        .ignoringRequestMatchers("/auth/login", "/auth/logout", "/notifications/**", "/saveUser")
-                )
+                .csrf((csrf) -> {
+                        CookieCsrfTokenRepository tokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+                        tokenRepository.setCookiePath("/");
+                        tokenRepository.setCookieName("XSRF-TOKEN-DRAS");
+                        csrf.csrfTokenRepository(tokenRepository)
+                            .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+                            .ignoringRequestMatchers("/auth/login", "/auth/logout", "/notifications/**", "/saveUser");
+                })
+                .addFilterAfter(new OncePerRequestFilter() {
+                    @Override
+                    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+                        CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+                        if (csrfToken != null) {
+                            csrfToken.getToken();
+                        }
+                        filterChain.doFilter(request, response);
+                    }
+                }, BasicAuthenticationFilter.class)
 
                 .formLogin((form) -> form
                         .loginPage("/login")

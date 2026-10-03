@@ -43,7 +43,7 @@ async function apiClient(endpoint, options = {}) {
   // Extract CSRF token and append it
   const method = (restOptions.method || 'GET').toUpperCase();
   if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
-    const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]*)/);
+    const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN-DRAS=([^;]*)/);
     if (match && match[1]) {
       headers['X-XSRF-TOKEN'] = decodeURIComponent(match[1]);
     }
@@ -56,7 +56,9 @@ async function apiClient(endpoint, options = {}) {
   };
 
   if (body) {
-    fetchConfig.body = typeof body === 'string' ? body : JSON.stringify(body);
+    fetchConfig.body = (body instanceof FormData || typeof body === 'string') 
+      ? body 
+      : JSON.stringify(body);
   }
 
   activeRequests++;
