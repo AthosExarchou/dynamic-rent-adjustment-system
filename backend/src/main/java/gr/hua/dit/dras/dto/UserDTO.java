@@ -17,6 +17,7 @@ public class UserDTO {
     private List<String> roles;
     private LocalDateTime createdAt;
     private LocalDateTime lastLogin;
+    private LocalDateTime passwordChangedAt;
     private boolean isSystem;
 
     public UserDTO() {}
@@ -30,6 +31,7 @@ public class UserDTO {
                 .collect(Collectors.toList());
         this.createdAt = user.getCreatedAt();
         this.lastLogin = user.getLastLogin();
+        this.passwordChangedAt = user.getPasswordChangedAt();
         this.isSystem = user.getOwner() != null && user.getOwner().isSystemOwner();
     }
 
@@ -68,6 +70,12 @@ public class UserDTO {
     }
     public void setLastLogin(LocalDateTime lastLogin) {
         this.lastLogin = lastLogin;
+    }
+    public LocalDateTime getPasswordChangedAt() {
+        return passwordChangedAt;
+    }
+    public void setPasswordChangedAt(LocalDateTime passwordChangedAt) {
+        this.passwordChangedAt = passwordChangedAt;
     }
     public boolean getIsSystem() {
         return isSystem;

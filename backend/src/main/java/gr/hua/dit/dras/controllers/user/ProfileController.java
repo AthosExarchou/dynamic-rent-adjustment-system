@@ -59,6 +59,7 @@ public class ProfileController {
 
         /* Save new password */
         user.setPassword(passwordEncoder.encode(newPassword));
+        user.setPasswordChangedAt(java.time.LocalDateTime.now());
         userService.updateUser(user);
 
         return ResponseEntity.ok().build();

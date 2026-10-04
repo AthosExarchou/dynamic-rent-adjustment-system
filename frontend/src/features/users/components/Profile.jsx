@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth';
-import { UserCircle, Mail, Shield, Settings, Key, Trash2, Briefcase, Calendar, Clock } from 'lucide-react';
+import { UserCircle, Mail, Shield, Settings, Key, Trash2, Briefcase, Calendar, Clock, Lock } from 'lucide-react';
 import styles from './Profile.module.css';
 
 const formatDate = (dateStr) => {
@@ -57,6 +57,15 @@ export default function Profile() {
                 <Clock size={18} /> Last Login
               </div>
               <div className={styles.infoValue}>{formatDate(user?.lastLogin)}</div>
+            </div>
+
+            <div className={styles.infoGroup}>
+              <div className={styles.infoLabel}>
+                <Lock size={18} /> Password Last Changed
+              </div>
+              <div className={styles.infoValue}>
+                {user?.passwordChangedAt ? formatDate(user.passwordChangedAt) : 'Never'}
+              </div>
             </div>
 
             <div className={styles.infoGroup}>

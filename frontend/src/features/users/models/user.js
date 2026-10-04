@@ -8,11 +8,12 @@
  *   username   - String (max 20, unique)
  *   email      - String (max 50, unique, used as login principal)
  *   roles      - Role[] (each: { id, name })
- *   createdAt  - ISO date string
- *   updatedAt  - ISO date string
- *   lastLogin  - ISO date string | null
- *   owner      - OwnerSummary | null
- *   tenant     - TenantSummary | null
+ *   createdAt         - ISO date string
+ *   updatedAt         - ISO date string
+ *   lastLogin         - ISO date string | null
+ *   passwordChangedAt - ISO date string | null
+ *   owner             - OwnerSummary | null
+ *   tenant            - TenantSummary | null
  *
  * UserEditRequest shape (for profile editing):
  *   username   - String (@NotBlank, max 20)
