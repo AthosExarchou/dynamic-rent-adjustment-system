@@ -38,8 +38,8 @@ export default function ChangePasswordForm() {
         body: new URLSearchParams(formData).toString()
       });
       setSuccess(true);
-    } catch {
-      setError('Failed to change password. Old password may be incorrect.');
+    } catch (err) {
+      setError(err.message || 'Failed to change password. Old password may be incorrect.');
     } finally {
       setLoading(false);
     }

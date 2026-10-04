@@ -7,6 +7,27 @@ import styles from './ProfileForm.module.css';
 
 export default function ProfileEditForm() {
   const { user, refreshUser, hasRole } = useAuth();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({ username: user?.username || '', email: user?.email || '' });
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      setFormData({ username: user.username || '', email: user.email || '' });
+    }
+  }, [user]);
+
+  useEffect(() => {
+    let timeoutId;
+    if (success) {
+      timeoutId = setTimeout(() => navigate('/profile'), 2000);
+    }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [success, navigate]);
 
   if (hasRole('ADMIN') || user?.isSystem) {
     return (
@@ -25,17 +46,6 @@ export default function ProfileEditForm() {
       </div>
     );
   }
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({ username: user?.username || '', email: user?.email || '' });
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      setFormData({ username: user.username || '', email: user.email || '' });
-    }
-  }, [user]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -52,22 +62,12 @@ export default function ProfileEditForm() {
       });
       setSuccess(true);
       if (refreshUser) await refreshUser();
-    } catch {
-      setError('Failed to update details. Email or Username may be taken.');
+    } catch (err) {
+      setError(err.message || 'Failed to update details. Email or Username may be taken.');
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    let timeoutId;
-    if (success) {
-      timeoutId = setTimeout(() => navigate('/profile'), 2000);
-    }
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [success, navigate]);
 
   return (
     <div className={styles.container}>

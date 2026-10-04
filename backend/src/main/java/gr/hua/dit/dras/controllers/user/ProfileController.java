@@ -51,6 +51,12 @@ public class ProfileController {
             return ResponseEntity.badRequest().body(Map.of("error", "New password and confirmation do not match."));
         }
 
+        /* Check password complexity */
+        if (!newPassword.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$")) {
+            return ResponseEntity.badRequest().body(Map.of("error",
+                    "Password must contain 8+ characters, including uppercase, lowercase, a number, and a special character."));
+        }
+
         /* Save new password */
         user.setPassword(passwordEncoder.encode(newPassword));
         userService.updateUser(user);
