@@ -1,8 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth';
-import { UserCircle, Mail, Shield, Settings, Key, Trash2 } from 'lucide-react';
+import { UserCircle, Mail, Shield, Settings, Key, Trash2, Briefcase, Calendar, Clock } from 'lucide-react';
 import styles from './Profile.module.css';
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return 'N/A';
+  const d = new Date(dateStr.endsWith('Z') ? dateStr : dateStr + 'Z');
+  return d.toLocaleDateString(undefined,
+      { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+};
 
 export default function Profile() {
   const { user, roles } = useAuth();
@@ -40,6 +47,20 @@ export default function Profile() {
 
             <div className={styles.infoGroup}>
               <div className={styles.infoLabel}>
+                <Calendar size={18} /> Member Since
+              </div>
+              <div className={styles.infoValue}>{formatDate(user?.createdAt)}</div>
+            </div>
+
+            <div className={styles.infoGroup}>
+              <div className={styles.infoLabel}>
+                <Clock size={18} /> Last Login
+              </div>
+              <div className={styles.infoValue}>{formatDate(user?.lastLogin)}</div>
+            </div>
+
+            <div className={styles.infoGroup}>
+              <div className={styles.infoLabel}>
                 <Shield size={18} /> Account Roles
               </div>
               <div className={styles.rolesContainer}>
@@ -56,6 +77,12 @@ export default function Profile() {
               {!roles.includes('ADMIN') && !user?.isSystem && (
                 <Link to="/profile/edit" className={`${styles.actionBtn} ${styles.btnPrimary}`}>
                   <Settings size={18} /> Edit Profile Details
+                </Link>
+              )}
+              
+              {!roles.includes('OWNER') && !roles.includes('ADMIN') && !user?.isSystem && (
+                <Link to="/owner/new" className={`${styles.actionBtn} ${styles.btnOutlinePrimary}`}>
+                  <Briefcase size={18} /> Register as Owner
                 </Link>
               )}
               

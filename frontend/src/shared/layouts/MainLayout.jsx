@@ -108,7 +108,7 @@ export default function MainLayout() {
 
   const formatTimeAgo = (dateString) => {
     if (!dateString) return '';
-    const date = new Date(dateString);
+    const date = new Date(dateString.endsWith('Z') ? dateString : dateString + 'Z');
     const diffInSeconds = Math.floor((new Date() - date) / 1000);
     if (diffInSeconds < 60) return 'Just now';
     const diffInMinutes = Math.floor(diffInSeconds / 60);
