@@ -151,10 +151,8 @@ public class UserController {
 
         boolean changesMade = userApplicationService.editUser(targetUserId, request);
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        boolean isAdmin = auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ADMIN"));
-        boolean isSelfEdit = userService.getCurrentUserId().equals(targetUserId);
+        boolean isAdmin = isAdminEarly;
+        boolean isSelfEdit = isSelfEditEarly;
 
         /* Handle Session Invalidation */
         if (!isAdmin && isSelfEdit) {
