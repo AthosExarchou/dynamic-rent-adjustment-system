@@ -162,3 +162,7 @@
   background-color: #198754;
   color: #fff;
 }
+
+.btnSuccess:hover:not(:disabled) {
+  background-color: #157347;
+}

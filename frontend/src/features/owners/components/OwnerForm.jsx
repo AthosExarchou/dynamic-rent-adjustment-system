@@ -6,6 +6,7 @@ import { useAuth } from '../../auth';
 import styles from './OwnerForm.module.css';
 
 export default function OwnerForm() {
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ firstName: '', lastName: '', phoneNumber: '' });
   const [error, setError] = useState('');
@@ -20,8 +21,9 @@ export default function OwnerForm() {
       await apiClient(`/owner/new`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: formData
+        body: { ...formData, userId: user?.id }
       });
+      await refreshUser();
       alert('Owner profile created successfully!');
       navigate('/profile'); 
     } catch (err) {

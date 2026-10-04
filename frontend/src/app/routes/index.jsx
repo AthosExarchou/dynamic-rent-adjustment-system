@@ -30,6 +30,7 @@ const UserManagement = lazy(() => import('../../features/admin/components/UserMa
 const PendingApprovals = lazy(() => import('../../features/admin/components/PendingApprovals'));
 
 const TenantForm = lazy(() => import('../../features/tenants/components/TenantForm'));
+const OwnerForm = lazy(() => import('../../features/owners/components/OwnerForm'));
 
 // Professional loading fallback
 const PageLoader = () => (
@@ -95,8 +96,9 @@ export const router = createBrowserRouter([
       { path: 'profile/edit', element: <ProtectedRoute>{withSuspense(ProfileEditForm)}</ProtectedRoute> },
       { path: 'profile/password', element: <ProtectedRoute>{withSuspense(ChangePasswordForm)}</ProtectedRoute> },
       { path: 'profile/delete', element: <ProtectedRoute>{withSuspense(DeleteAccountConfirm)}</ProtectedRoute> },
+      { path: 'owner/new', element: <ProtectedRoute>{withSuspense(OwnerForm)}</ProtectedRoute> },
       { path: 'listings/new', element: <ProtectedRoute requiredRole="OWNER">{withSuspense(ListingForm)}</ProtectedRoute> },
-      { path: 'tenant/rent/:listingId', element: <ProtectedRoute requiredRole="TENANT">{withSuspense(TenantForm)}</ProtectedRoute> },
+      { path: 'tenant/rent/:listingId', element: <ProtectedRoute>{withSuspense(TenantForm)}</ProtectedRoute> },
 
       // Owner Routes
       { path: 'my-listings', element: <ProtectedRoute requiredRole="OWNER">{withSuspense(MyListings)}</ProtectedRoute> },

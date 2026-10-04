@@ -93,6 +93,7 @@ export default function ListingList() {
   };
 
   const isUserOnly = isAuthenticated && roles.includes('USER') && !roles.includes('OWNER') && !roles.includes('ADMIN');
+  const isOwner = isAuthenticated && roles.includes('OWNER');
 
   return (
     <div className={styles.container}>
@@ -101,6 +102,11 @@ export default function ListingList() {
           <Building2 className={styles.pageIcon} size={28} /> Apartments
         </h2>
         {isUserOnly && (
+          <Link to="/owner/new" className={`${styles.btn} ${styles.btnSuccess} ${styles.pulseBtn}`}>
+            <Plus size={18} /> Become an Owner to List
+          </Link>
+        )}
+        {isOwner && (
           <Link to="/listings/new" className={`${styles.btn} ${styles.btnSuccess} ${styles.pulseBtn}`}>
             <Plus size={18} /> Create New Apartment
           </Link>
@@ -230,6 +236,11 @@ export default function ListingList() {
       {/* Bottom CTA */}
       <div className={styles.bottomCta}>
         {isUserOnly && (
+          <Link to="/owner/new" className={`${styles.btn} ${styles.btnOutlineSuccess} ${styles.pulseBtn}`}>
+            <Plus size={18} /> Become an Owner to List
+          </Link>
+        )}
+        {isOwner && (
           <Link to="/listings/new" className={`${styles.btn} ${styles.btnOutlineSuccess} ${styles.pulseBtn}`}>
             <Plus size={18} /> Create New Apartment
           </Link>

@@ -7,7 +7,7 @@ import styles from './TenantForm.module.css';
 
 export default function TenantForm() {
   const { listingId } = useParams();
-  const { roles } = useAuth();
+  const { roles, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ firstName: '', lastName: '', phoneNumber: '' });
   const [error, setError] = useState('');
@@ -35,6 +35,7 @@ export default function TenantForm() {
 
     try {
       await apiClient(`/tenant/rent/${listingId}`, requestOptions);
+      if (!isTenant) await refreshUser();
       alert('Application submitted successfully!');
       navigate('/listings');
     } catch {
