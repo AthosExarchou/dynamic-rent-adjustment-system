@@ -51,7 +51,7 @@ public class TenantController {
 
         /* Pre-validate existing tenants before any state changes */
         if (isAlreadyTenant) {
-            Tenant existingTenant = tenantService.getTenant(currentUser.getId());
+            Tenant existingTenant = tenantService.getTenant(null);
 
             if (existingTenant.getListing() != null) {
                 return ResponseEntity.badRequest().body(Map.of("error", "You already rent a listing."));

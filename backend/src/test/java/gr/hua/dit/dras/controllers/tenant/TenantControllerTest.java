@@ -84,7 +84,7 @@ public class TenantControllerTest {
         when(userService.getUser(currentUser.getId())).thenReturn(currentUser);
         when(listingService.getListing(listing.getId())).thenReturn(listing);
         when(tenantService.isUserTenant()).thenReturn(true);
-        when(tenantService.getTenant(currentUser.getId())).thenReturn(existingTenant);
+        when(tenantService.getTenant(null)).thenReturn(existingTenant);
 
         ResponseEntity<?> response = tenantController.rentListing(listing.getId(), null);
 
@@ -121,7 +121,7 @@ public class TenantControllerTest {
         when(userService.getUser(currentUser.getId())).thenReturn(currentUser);
         when(listingService.getListing(listing.getId())).thenReturn(listing);
         when(tenantService.isUserTenant()).thenReturn(true);
-        when(tenantService.getTenant(currentUser.getId())).thenReturn(existingTenant);
+        when(tenantService.getTenant(null)).thenReturn(existingTenant);
 
         ResponseEntity<?> response = tenantController.rentListing(listing.getId(), null);
 

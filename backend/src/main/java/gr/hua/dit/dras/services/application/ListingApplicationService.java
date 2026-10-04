@@ -88,9 +88,7 @@ public class ListingApplicationService {
 
     @Transactional(readOnly = true)
     public List<Listing> getOwnerListingsForCurrentUser() {
-
-        User user = requireUser();
-        Owner owner = ownerService.getOwner(user.getId());
+        Owner owner = ownerService.getOwner(null);
         return listingService.getListingsByOwner(owner);
     }
 
