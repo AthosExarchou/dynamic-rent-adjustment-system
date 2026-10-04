@@ -88,8 +88,12 @@ public class ListingApplicationService {
 
     @Transactional(readOnly = true)
     public List<Listing> getOwnerListingsForCurrentUser() {
-        Owner owner = ownerService.getOwner(null);
-        return listingService.getListingsByOwner(owner);
+        try {
+            Owner owner = ownerService.getOwner(null);
+            return listingService.getListingsByOwner(owner);
+        } catch (IllegalStateException e) {
+            return java.util.Collections.emptyList();
+        }
     }
 
     /* Create Listing*/
