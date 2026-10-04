@@ -130,10 +130,10 @@ public class ListingApplicationService {
 
         } else {
             if (ownerId == null) {
-                ownerId = user.getId();
+                owner = ownerService.getOwner(null);
+            } else {
+                owner = ownerService.getOwner(ownerId);
             }
-
-            owner = ownerService.getOwner(ownerId);
             if (owner == null) {
                 throw new IllegalStateException("Owner not found.");
             }
