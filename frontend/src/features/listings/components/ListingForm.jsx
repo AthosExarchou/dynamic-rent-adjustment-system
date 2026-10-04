@@ -21,6 +21,14 @@ export default function ListingForm() {
 
   const isOwner = roles.includes('OWNER');
 
+  /** Clamps a numeric formData field to [min, max] when the input loses focus. */
+  const clampField = (field, min, max) => () => {
+    const num = Number(formData[field]);
+    if (formData[field] === '' || isNaN(num)) return;
+    const clamped = String(Math.min(Math.max(num, min), max));
+    if (clamped !== formData[field]) setFormData(prev => ({ ...prev, [field]: clamped }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -80,30 +88,30 @@ export default function ListingForm() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.card}>
+      <div className={`${styles.card} ${styles.cardHover}`}>
         <h2 className={styles.title}>Submit Property Listing</h2>
         {error && <div className={styles.error}>{error}</div>}
         
         <form onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
             <label htmlFor="title" className={styles.label}>Title</label>
-            <input id="title" type="text" required value={formData.title}
+            <input id="title" type="text" required maxLength={LISTING_CONSTRAINTS.TITLE_MAX} value={formData.title}
                    onChange={e => setFormData(
                        {...formData, title: e.target.value})} className={styles.input} placeholder="Modern 2BR near Downtown" />
           </div>
 
           <div className={styles.formGroup}>
             <label htmlFor="subtitle" className={styles.label}>Subtitle</label>
-            <input id="subtitle" type="text" value={formData.subtitle}
+            <input id="subtitle" type="text" maxLength={LISTING_CONSTRAINTS.SUBTITLE_MAX} value={formData.subtitle}
                    onChange={e => setFormData(
                        {...formData, subtitle: e.target.value})} className={styles.input} placeholder="Optional subtitle details" />
           </div>
 
           <div className={styles.formGroup}>
             <label htmlFor="description" className={styles.label}>Description</label>
-            <textarea id="description" rows="4" required value={formData.description}
+            <textarea id="description" rows="4" required maxLength={LISTING_CONSTRAINTS.DESCRIPTION_MAX} value={formData.description}
                       onChange={e => setFormData(
-                          {...formData, description: e.target.value})} className={styles.input}></textarea>
+                          {...formData, description: e.target.value})} className={styles.textarea}></textarea>
           </div>
 
           <div className={styles.grid2}>
@@ -112,20 +120,24 @@ export default function ListingForm() {
               <input id="price" type="number" required min={LISTING_CONSTRAINTS.PRICE_MIN}
                      max={LISTING_CONSTRAINTS.PRICE_MAX} value={formData.price}
                      onChange={e => setFormData(
-                         {...formData, price: e.target.value})} className={styles.input} />
+                         {...formData, price: e.target.value})}
+                     onBlur={clampField('price', LISTING_CONSTRAINTS.PRICE_MIN, LISTING_CONSTRAINTS.PRICE_MAX)}
+                     className={styles.input} />
             </div>
             <div>
               <label htmlFor="sizeM2" className={styles.label}>Area Size (m²)</label>
               <input id="sizeM2" type="number" required min={LISTING_CONSTRAINTS.SIZE_M2_MIN}
                      max={LISTING_CONSTRAINTS.SIZE_M2_MAX} value={formData.sizeM2}
                      onChange={e => setFormData(
-                         {...formData, sizeM2: e.target.value})} className={styles.input} />
+                         {...formData, sizeM2: e.target.value})}
+                     onBlur={clampField('sizeM2', LISTING_CONSTRAINTS.SIZE_M2_MIN, LISTING_CONSTRAINTS.SIZE_M2_MAX)}
+                     className={styles.input} />
             </div>
           </div>
 
           <div className={styles.formGroup}>
             <label htmlFor="address" className={styles.label}>Address</label>
-            <input id="address" type="text" required value={formData.address}
+            <input id="address" type="text" required maxLength={LISTING_CONSTRAINTS.ADDRESS_MAX} value={formData.address}
                    onChange={e => setFormData(
                        {...formData, address: e.target.value})} className={styles.input} placeholder="123 Main Street, Athens" />
           </div>
@@ -162,7 +174,9 @@ export default function ListingForm() {
               <input id="floor" type="number" required min={LISTING_CONSTRAINTS.FLOOR_MIN}
                      max={LISTING_CONSTRAINTS.FLOOR_MAX} value={formData.floor}
                      onChange={e => setFormData(
-                         {...formData, floor: e.target.value})} className={styles.input} />
+                         {...formData, floor: e.target.value})}
+                     onBlur={clampField('floor', LISTING_CONSTRAINTS.FLOOR_MIN, LISTING_CONSTRAINTS.FLOOR_MAX)}
+                     className={styles.input} />
             </div>
           </div>
 
@@ -172,21 +186,27 @@ export default function ListingForm() {
               <input id="bedrooms" type="number" required min={LISTING_CONSTRAINTS.BEDROOMS_MIN}
                      max={LISTING_CONSTRAINTS.BEDROOMS_MAX} value={formData.bedrooms}
                      onChange={e => setFormData(
-                         {...formData, bedrooms: e.target.value})} className={styles.input} />
+                         {...formData, bedrooms: e.target.value})}
+                     onBlur={clampField('bedrooms', LISTING_CONSTRAINTS.BEDROOMS_MIN, LISTING_CONSTRAINTS.BEDROOMS_MAX)}
+                     className={styles.input} />
             </div>
             <div>
               <label htmlFor="bathrooms" className={styles.label}>Bathrooms</label>
               <input id="bathrooms" type="number" required min={LISTING_CONSTRAINTS.BATHROOMS_MIN}
                      max={LISTING_CONSTRAINTS.BATHROOMS_MAX} value={formData.bathrooms}
                      onChange={e => setFormData(
-                         {...formData, bathrooms: e.target.value})} className={styles.input} />
+                         {...formData, bathrooms: e.target.value})}
+                     onBlur={clampField('bathrooms', LISTING_CONSTRAINTS.BATHROOMS_MIN, LISTING_CONSTRAINTS.BATHROOMS_MAX)}
+                     className={styles.input} />
             </div>
             <div>
               <label htmlFor="yearBuilt" className={styles.label}>Year Built</label>
               <input id="yearBuilt" type="number" required min={1900}
                      max={new Date().getFullYear()} value={formData.yearBuilt}
                      onChange={e => setFormData(
-                         {...formData, yearBuilt: e.target.value})} className={styles.input} />
+                         {...formData, yearBuilt: e.target.value})}
+                     onBlur={clampField('yearBuilt', 1900, new Date().getFullYear())}
+                     className={styles.input} />
             </div>
           </div>
 
@@ -240,7 +260,7 @@ export default function ListingForm() {
                     setImages(newImages.length ? newImages : ['']);
                   }}
                   className={styles.removeBtn}
-                  style={{ padding: '0 1rem', background: 'var(--color-danger, #e74c3c)',
+                  style={{ padding: '0.5rem 1rem', background: 'var(--color-danger, #e74c3c)',
                     color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                 >
                   X

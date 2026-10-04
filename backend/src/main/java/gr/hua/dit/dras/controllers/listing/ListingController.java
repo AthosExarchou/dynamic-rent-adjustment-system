@@ -55,6 +55,10 @@ public class ListingController {
         map.put("rentalDuration", l.getRentalDuration() != null ? l.getRentalDuration().name() : null);
         map.put("yearBuilt", l.getYearBuilt());
         map.put("sizeM2", l.getSizeM2());
+        map.put("floor", l.getFloor());
+        map.put("bedrooms", l.getBedrooms());
+        map.put("bathrooms", l.getBathrooms());
+        map.put("images", l.getImages());
         map.put("status", l.getStatus().name());
         return map;
     }
@@ -118,6 +122,9 @@ public class ListingController {
         listing.setRentalDuration(listingDTO.getRentalDuration());
         listing.setYearBuilt(listingDTO.getYearBuilt());
         listing.setSizeM2(listingDTO.getSizeM2());
+        listing.setFloor(listingDTO.getFloor());
+        listing.setBedrooms(listingDTO.getBedrooms());
+        listing.setBathrooms(listingDTO.getBathrooms());
         if (listingDTO.getImages() != null) {
             listing.setImages(listingDTO.getImages());
         }
