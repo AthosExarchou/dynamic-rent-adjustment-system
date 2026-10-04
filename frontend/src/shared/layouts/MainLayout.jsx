@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, Link, useLocation, ScrollRestoration } from 'react-router-dom';
 import { Sun, Moon, UserCircle, LogIn, UserPlus, LogOut, Building2, ChevronRight, Search, Bell, X } from 'lucide-react';
 import { useAuth } from '../../features/auth';
 import apiClient from '../api/client';
@@ -305,6 +305,7 @@ export default function MainLayout() {
 
       {/* Main Content Area */}
       <main className={styles.mainContent}>
+        <ScrollRestoration />
         <Outlet />
       </main>
 
