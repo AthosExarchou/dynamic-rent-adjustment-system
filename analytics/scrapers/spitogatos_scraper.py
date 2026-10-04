@@ -1747,11 +1747,13 @@ def build_parser() -> argparse.ArgumentParser:
             """
             Examples:
                 1. python spitogatos_scraper.py --mode normal --max-pages 3 --push-backend
-                2. python spitogatos_scraper.py --full --display-mode virtual
-                3. python spitogatos_scraper.py --max-pages 5 --push-backend
+                2. python spitogatos_scraper.py --full --headful --display-mode virtual
+                3. python spitogatos_scraper.py --max-pages 5 --push-backend --headful
             
             Notes:
-                - 'auto' display mode detects headless environments
+                - The scraper runs in headless mode by default
+                - Use '--headful' to launch a visible browser for debugging
+                - '--display-mode' requires '--headful' to be active
                 - '--full' enables image downloading
                 - default backend url: http://localhost/api/external-import/listings
             """
