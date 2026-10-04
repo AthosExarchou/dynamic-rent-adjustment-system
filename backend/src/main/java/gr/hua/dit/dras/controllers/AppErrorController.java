@@ -12,7 +12,10 @@ import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 
+import io.swagger.v3.oas.annotations.Hidden;
+
 @RestController
+@Hidden
 public class AppErrorController implements ErrorController {
 
     private static final Logger log = LoggerFactory.getLogger(AppErrorController.class);

@@ -81,6 +81,9 @@ public class SecurityConfig {
                         /* REST Auth Endpoints */
                         .requestMatchers("/auth/**").permitAll()
 
+                        /* Swagger & API Docs */
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**", "/swagger-resources/**").permitAll()
+
                         /* Actuator health/info */
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
 
