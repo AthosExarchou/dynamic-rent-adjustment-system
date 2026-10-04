@@ -260,8 +260,6 @@ export default function ListingForm() {
                     setImages(newImages.length ? newImages : ['']);
                   }}
                   className={styles.removeBtn}
-                  style={{ padding: '0.5rem 1rem', background: 'var(--color-danger, #e74c3c)',
-                    color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                 >
                   X
                 </button>
@@ -272,8 +270,6 @@ export default function ListingForm() {
                 type="button"
                 onClick={() => setImages([...images, ''])}
                 className={styles.addBtn}
-                style={{ padding: '0.5rem 1rem', background: 'var(--color-secondary, #3498db)',
-                  color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginTop: '0.5rem' }}
               >
                 + Add Another Image
               </button>
