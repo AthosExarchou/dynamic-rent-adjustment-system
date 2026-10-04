@@ -5,10 +5,13 @@ import gr.hua.dit.dras.dto.ExternalListingDTO;
 import gr.hua.dit.dras.services.integration.ExternalListingImportService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.constraints.Size;
+import org.springframework.validation.annotation.Validated;
 import java.util.List;
 
 @RestController
 @RequestMapping("/external-import")
+@Validated
 public class ExternalImportController {
 
     private final ExternalListingImportService importService;
@@ -20,7 +23,8 @@ public class ExternalImportController {
     @PostMapping("/listings")
     /* @Valid intentionally omitted: ExternalListingImportService performs per-DTO
     validation and skips invalid entries instead of failing the entire batch. */
-    public ResponseEntity<String> importListings(@RequestBody List<ExternalListingDTO> dtos) {
+    public ResponseEntity<String> importListings(
+            @RequestBody @Size(max = 500, message = "Batch size cannot exceed 500 listings") List<ExternalListingDTO> dtos) {
 
         if (dtos == null || dtos.isEmpty()) {
             return ResponseEntity.badRequest().body("Payload is empty.");
