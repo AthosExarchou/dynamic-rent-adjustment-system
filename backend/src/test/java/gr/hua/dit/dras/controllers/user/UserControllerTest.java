@@ -60,6 +60,7 @@ public class UserControllerTest {
         ReflectionTestUtils.setField(user, "id", 1);
         user.setUsername("testuser");
         user.setEmail("test@example.com");
+        user.setPassword("Valid123!@#");
     }
 
     @Test

@@ -78,7 +78,8 @@ public class UserController {
             );
         }
 
-        if (!user.getPassword().matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$")) {
+        if (user.getPassword() == null || !user.getPassword().matches(
+                "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$")) {
             return ResponseEntity.badRequest().body(
                     java.util.Map.of("error",
                             "Password must contain 8+ characters, including uppercase, lowercase, a number, and a special character.")
