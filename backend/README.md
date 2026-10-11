@@ -39,11 +39,12 @@ The backend follows a layered architecture that separates presentation, business
 - **Entities (`/entities`)**: JPA mapped objects representing the underlying relational database schema.
 - **DTOs (`/dto`)**: Data Transfer Objects define request and response payloads, providing validation and preventing direct exposure of persistence models.
 
-## Security & Authentication
+## Security, Authentication & API Documentation
 
 - **Role-Based Access Control (RBAC)**: Method-level security (`@Secured`, `@PreAuthorize`) controls access to endpoints based on role requirements (`USER`, `OWNER`, `TENANT`, `ADMIN`).
 - **API Security**: Endpoints under `/api/**` bypass CSRF for stateless frontend integration.
 - **CORS Configuration**: Configured to accept requests from the frontend client (default `http://localhost:5173`).
+- **OpenAPI & Swagger UI**: Integrated OpenAPI configuration for interactive API documentation, accessible at `/api/swagger-ui/index.html`.
 - **Error Handling**: Exception interception mapping errors to JSON HTTP responses (e.g., 400, 401, 403, 404, 500).
 
 ## Requirements
@@ -65,26 +66,22 @@ Ensure you have the following installed to build and run the backend:
    ```bash
    mvn spring-boot:run
    ```
-4. The server runs on `http://localhost:8080/`.
+4. The server runs on `http://localhost:8080/api` (default context path).
+5. Access the API Documentation (Swagger UI) at `http://localhost:8080/api/swagger-ui/index.html`.
 
 ## Configuration
 
-Update `src/main/resources/application.properties` with your database and external service credentials:
+Configuration is managed via `src/main/resources/application.yml` and environment variables.
+
+It is recommended to copy the `.env.example` in the root directory to `.env` and set your variables:
 
 ```properties
-spring.application.name=DRAS-Backend
-server.port=8080
+DATABASE_URL=jdbc:postgresql://localhost:5432/dras_db
+DATABASE_USERNAME=postgres
+DATABASE_PASSWORD=your_password
 
-# Database Configuration
-spring.datasource.url=jdbc:postgresql://localhost:5432/dras_db
-spring.datasource.username=postgres
-spring.datasource.password=your_password
-
-# Email Configuration (for internal notifications)
-spring.mail.host=smtp.gmail.com
-spring.mail.port=587
-spring.mail.username=your_email@gmail.com
-spring.mail.password=your_app_password
+MAIL_USERNAME=your_email@gmail.com
+MAIL_PASSWORD=your_app_password
 ```
 
 ## Testing
@@ -101,16 +98,17 @@ mvn clean test
 ```text
 src/main/java/gr/hua/dit/dras/
 │
-├── config/                   # Global configuration classes (Security, CORS, WebMvc)
+├── config/                   # Global configuration classes (Security, OpenAPI, CORS)
 ├── controllers/              # REST controllers exposing API endpoints
 ├── dto/                      # Data Transfer Objects for secure request/response bodies
 ├── entities/                 # Database schema models (JPA Entities)
 ├── model/                    # Application Enums and simple POJOs
 ├── repositories/             # Spring Data JPA repository interfaces
 ├── services/                 # Domain logic and transactional workflows
-│   ├── application/
-│   ├── domain/
-│   └── integration/
+│   ├── application/          # Application-specific orchestrations
+│   ├── domain/               # Core business logic
+│   ├── infrastructure/       # Infrastructure-related implementations
+│   └── integration/          # External service integrations
 └── DrasApplication.java      # Main Spring Boot Entry Point
 ```
 
