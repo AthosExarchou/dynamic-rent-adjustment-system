@@ -23,7 +23,7 @@ It follows a layered backend architecture, feature-based frontend architecture, 
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage Guide](#usage-guide)
-- [CI/CD & Production Deployment](#cicd--production-deployment)
+- [CI/CD & Production Deployment](#production--cicd)
 - [Author](#author)
 - [License](#license)
 
@@ -50,10 +50,11 @@ The project is an academic research contribution and a demonstration of building
 
 ## System Architecture
 
-The project consists of two distinct applications communicating over HTTP via a RESTful API:
+The project consists of three distinct components communicating over HTTP via a RESTful API:
 
 1. **[Backend (Spring Boot API)](./backend)**: Java REST API handling data persistence, authentication, role-based authorization, and business logic.
 2. **[Frontend (React SPA)](./frontend)**: Single Page Application built with Vite and React.
+3. **[Analytics & Scraper (Python)](./analytics)**: Python-based data collection and analytics engine for retrieving and analyzing market trends.
 
 ## Core Features
 - **Listing Management**: Owners can create, update, and track real estate properties with metrics (price per m², property type, amenities).
@@ -61,6 +62,7 @@ The project consists of two distinct applications communicating over HTTP via a 
 - **Dynamic Roles**: Automatic role assignment (Owner, Tenant) based on user activity and profile creation.
 - **Admin Oversight**: Administrative workflows for user management and manual listing approvals.
 - **Frontend UI**: User interface compatible with desktop, tablet, and mobile devices.
+- **Analytics & Imports**: Automated batch importing of external listings and market data analysis.
 
 ## Role Management
 
@@ -69,7 +71,7 @@ The project consists of two distinct applications communicating over HTTP via a 
 | USER    | Assigned by default upon account registration.             |
 | OWNER   | Assigned automatically when a user creates an owner profile to list a property. |
 | TENANT  | Assigned automatically when a user creates a tenant profile to apply for a rental. |
-| ADMIN   | Full system access; oversees approvals, user roles, and platform integrity. |
+| ADMIN   | Platform governance and oversight; manages user accounts and roles, and reviews listing approvals (restricted from marketplace participation). |
 
 ## Project Structure
 
@@ -79,18 +81,24 @@ The project consists of two distinct applications communicating over HTTP via a 
 │   ├── src/main/java/        # Java source code and domain logic
 │   └── src/main/resources/   # Application properties and configurations
 │
-└── frontend/                 # React Single Page Application
-    ├── src/features/         # Domain-driven feature modules (Auth, Listings, etc.)
-    ├── src/shared/           # Centralized API client, shared hooks, and UI components
-    └── src/app/              # Global routing and context providers
+├── frontend/                 # React Single Page Application
+│   ├── src/features/         # Domain-driven feature modules (Auth, Listings, etc.)
+│   ├── src/shared/           # Centralized API client, shared hooks, and UI components
+│   └── src/app/              # Global routing and context providers
+│
+└── analytics/                # Python Data Analytics & Scraper
+    ├── analysis/             # Market data analysis scripts
+    └── scrapers/             # Web scrapers for external listings
 ```
 
 ## Requirements
 To run this application, ensure you have the following installed:
 - **Java**: JDK 21+
 - **Node.js**: v18+
+- **Python**: 3.12+ (for analytics)
 - **Maven**: 3.8+
 - **Database**: PostgreSQL (or any relational DB for development)
+- **Docker**: Optional, for containerized local development
 
 ## Installation
 1. Clone the repository:
@@ -109,17 +117,20 @@ To run this application, ensure you have the following installed:
    npm install
    npm run dev
    ```
-4. Access the web application in your browser at `http://localhost`
+4. Access the web application in your browser at `http://localhost:5173` (development) or `http://localhost` (production).
+5. For the **Analytics** module, see the `analytics` folder for Python environment setup instructions.
 
 ## Configuration
 
-### Backend (`backend/src/main/resources/application.properties`)
-Configure your database and email credentials:
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/dras_db
-spring.datasource.username=postgres
-spring.datasource.password=your_password
+### Environment Variables (`.env`)
+The project utilizes `.env` files for configuration. Copy the example file in the root directory:
+```bash
+cp .env.example .env
 ```
+Fill in the `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, and `MAIL_*` credentials.
+
+### Backend (`backend/src/main/resources/application.yml`)
+The backend is configured to use environment variables by default. You can adjust application profiles (`dev`, `prod`) here.
 
 ### Frontend (`frontend/.env.local`)
 Configure the backend API URL:
@@ -147,13 +158,15 @@ VITE_API_BASE_URL=http://localhost:8080/api
 
 ## Production & CI/CD
 
-The app is hosted on an **Oracle Cloud ARM64 VM** (their Always Free tier) using Docker Compose. It uses Nginx to serve the React frontend and proxy requests to the Spring Boot backend. The PostgreSQL database is hidden from the public internet for security.
+The app is hosted on an **Oracle Cloud ARM64 VM** (their Always Free tier) using Docker Compose.
+It uses Nginx to serve the React frontend and proxy requests to the Spring Boot backend.
+The PostgreSQL database is hidden from the public internet for security.
 
 I set up a fully automated deployment pipeline:
 - **GitHub Actions**: Runs unit tests and ESLint every time code is pushed.
-- **Jenkins**: Runs directly on the Oracle server. Whenever the `main` branch is updated, Jenkins automatically builds new Docker images and restarts the app without downtime. It even runs a quick smoke test to make sure the app actually boots before calling the deployment successful.
-
-For the exact commands to run the app locally or manage the server, see the **[Deployment Cheat Sheet](docs/deployment.md)**.
+- **Jenkins**: Runs directly on the Oracle server. Whenever the `main` branch is updated,
+  Jenkins automatically builds new Docker images and restarts the app without downtime.
+  It also runs a quick smoke test to make sure the app actually boots before calling the deployment successful.
 
 ## Author
 
