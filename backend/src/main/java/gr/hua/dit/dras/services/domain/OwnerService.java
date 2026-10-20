@@ -116,6 +116,7 @@ public class OwnerService {
         if (!user.getRoles().contains(ownerRole)) {
             user.getRoles().add(ownerRole);
             userService.updateUser(user);
+            userService.refreshAuthenticationRoles(user);
         }
     }
 
@@ -144,6 +145,7 @@ public class OwnerService {
         if (!ownerUser.getRoles().contains(ownerRole)) {
             ownerUser.getRoles().add(ownerRole);
             userService.updateUser(ownerUser); // saves the user
+            userService.refreshAuthenticationRoles(ownerUser);
         }
         listingRepository.save(listing);
     }

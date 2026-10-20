@@ -12,6 +12,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.dao.DataIntegrityViolationException;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.core.annotation.Order;
@@ -77,6 +79,30 @@ public class RestExceptionHandler {
         return ResponseEntity
                 .badRequest()
                 .body(Map.of("error", "Validation failed", "details", errors));
+    }
+
+    /**
+     * Handles authorization/access denial by returning 403 Forbidden.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", ex.getMessage() != null ? ex.getMessage() : "Access denied"));
+    }
+
+    /**
+     * Handles database integrity and foreign key constraint violations.
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, String>> handleDataIntegrityViolation(
+            DataIntegrityViolationException ex,
+            HttpServletRequest request
+    ) {
+        log.warn("Data integrity violation at URI: {}", request.getRequestURI(), ex);
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(Map.of("error", "Database constraint violation. The operation could not be completed because related records exist."));
     }
 
     /**

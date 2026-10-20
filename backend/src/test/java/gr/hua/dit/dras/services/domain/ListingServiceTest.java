@@ -199,6 +199,36 @@ public class ListingServiceTest {
     }
 
     @Test
+    @DisplayName("Should disable listing")
+    void shouldDisableListing() {
+        Listing listing = new Listing();
+        ReflectionTestUtils.setField(listing, "id", 1);
+        listing.setStatus(ListingStatus.APPROVED);
+
+        when(listingRepository.findById(1)).thenReturn(Optional.of(listing));
+
+        listingService.disableListing(1);
+
+        assertThat(listing.getStatus()).isEqualTo(ListingStatus.DISABLED);
+        verify(listingRepository).save(listing);
+    }
+
+    @Test
+    @DisplayName("Should enable listing")
+    void shouldEnableListing() {
+        Listing listing = new Listing();
+        ReflectionTestUtils.setField(listing, "id", 1);
+        listing.setStatus(ListingStatus.DISABLED);
+
+        when(listingRepository.findById(1)).thenReturn(Optional.of(listing));
+
+        listingService.enableListing(1);
+
+        assertThat(listing.getStatus()).isEqualTo(ListingStatus.APPROVED);
+        verify(listingRepository).save(listing);
+    }
+
+    @Test
     @DisplayName("Should allow admin to modify any listing")
     void shouldAllowAdminToModifyAnyListing() {
         User adminUser = new User();
@@ -254,6 +284,23 @@ public class ListingServiceTest {
         assertThatThrownBy(() -> listingService.validateListingModificationRights(listing, ownerUser))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Cannot modify a rented listing");
+    }
+
+    @Test
+    @DisplayName("Should allow owner to view own rented listing")
+    void shouldAllowOwnerToViewOwnRentedListing() {
+        User ownerUser = new User();
+        ReflectionTestUtils.setField(ownerUser, "id", 1);
+        ownerUser.setRoles(Set.of(new Role("OWNER")));
+        
+        Owner owner = new Owner();
+        owner.setUser(ownerUser);
+        
+        Listing listing = new Listing();
+        listing.setStatus(ListingStatus.RENTED);
+        listing.setOwner(owner);
+
+        listingService.validateListingOwnership(listing, ownerUser);
     }
 
     @Test

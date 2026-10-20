@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -360,6 +361,26 @@ class UserServiceTest {
     @DisplayName("Should not throw for non-admin user when asserting not admin")
     void shouldNotThrowForNonAdminUser() {
         userService.assertNotAdmin(testUser);
+    }
+
+    @Test
+    @DisplayName("Should refresh authentication roles for current user")
+    void shouldRefreshAuthenticationRolesForCurrentUser() {
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        UsernamePasswordAuthenticationToken existingAuth = new UsernamePasswordAuthenticationToken(
+                "test@test.com", "pass", Collections.emptyList()
+        );
+        context.setAuthentication(existingAuth);
+        SecurityContextHolder.setContext(context);
+
+        testUser.setRoles(Set.of(new Role("USER"), new Role("OWNER")));
+        userService.refreshAuthenticationRoles(testUser);
+
+        Authentication updatedAuth = SecurityContextHolder.getContext().getAuthentication();
+        assertThat(updatedAuth).isNotNull();
+        assertThat(updatedAuth.getAuthorities())
+                .extracting("authority")
+                .containsExactlyInAnyOrder("USER", "OWNER");
     }
 
     private void authenticateAs(String email) {

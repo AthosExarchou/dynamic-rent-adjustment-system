@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static gr.hua.dit.dras.model.enums.ListingStatus.APPROVED;
+
 @Service
 @Transactional
 public class ListingService {
@@ -277,6 +279,24 @@ public class ListingService {
     }
 
     @Transactional
+    public void disableListing(Integer listingId) {
+
+        Listing listing = getListing(listingId);
+        listing.disable();
+
+        listingRepository.save(listing);
+    }
+
+    @Transactional
+    public void enableListing(Integer listingId) {
+
+        Listing listing = getListing(listingId);
+        listing.enable();
+
+        listingRepository.save(listing);
+    }
+
+    @Transactional
     public void cleanupExternalListings(int graceDays) {
         /* Deletes if last scraped date is older than cutoff */
         Instant cutoff = Instant.now().minus(graceDays, ChronoUnit.DAYS);
@@ -284,7 +304,7 @@ public class ListingService {
 
     }
 
-    public void validateListingModificationRights(Listing listing, User currentUser) {
+    public void validateListingOwnership(Listing listing, User currentUser) {
 
         if (currentUser == null) {
             throw new AccessDeniedException("Unauthenticated");
@@ -307,6 +327,11 @@ public class ListingService {
                 !owner.getUser().getId().equals(currentUser.getId())) {
             throw new AccessDeniedException("Not owner of this listing");
         }
+    }
+
+    public void validateListingModificationRights(Listing listing, User currentUser) {
+
+        validateListingOwnership(listing, currentUser);
 
         /* Prevents modification if listing is rented */
         if (listing.isRented()) {
@@ -325,7 +350,7 @@ public class ListingService {
         /* Makes sure this tenant was not assigned as the renter */
         if (listing.getTenant() != null && listing.getTenant().equals(tenant)) {
             listing.setTenant(null);
-            listing.makeAvailable(); // listing becomes available again
+            listing.setStatus(APPROVED); // listing becomes available again
         }
 
         listingRepository.save(listing);

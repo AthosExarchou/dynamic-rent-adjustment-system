@@ -177,9 +177,8 @@ public class ListingApplicationService {
         if (!user.getRoles().contains(ownerRole)) {
             user.getRoles().add(ownerRole);
             userService.updateUser(user);
+            userService.refreshAuthenticationRoles(user);
         }
-
-        session.invalidate();
     }
 
     /* Delete Listing */
@@ -244,6 +243,41 @@ public class ListingApplicationService {
         }
     }
 
+    /* Disable / Enable Workflows */
+
+    public void disableListing(Integer listingId) {
+
+        User user = requireUser();
+        Listing listing = requireListing(listingId);
+        validateModificationRights(listing, user);
+
+        listingService.disableListing(listingId);
+    }
+
+    public void enableListing(Integer listingId) {
+
+        User user = requireUser();
+        Listing listing = requireListing(listingId);
+        validateModificationRights(listing, user);
+
+        listingService.enableListing(listingId);
+    }
+
+    public void toggleListingStatus(Integer listingId) {
+
+        User user = requireUser();
+        Listing listing = requireListing(listingId);
+        validateModificationRights(listing, user);
+
+        if (listing.getStatus() == ListingStatus.DISABLED) {
+            listingService.enableListing(listingId);
+        } else if (listing.getStatus() == ListingStatus.APPROVED) {
+            listingService.disableListing(listingId);
+        } else {
+            throw new IllegalStateException("Only approved or disabled listings can have their status toggled.");
+        }
+    }
+
     /* Owner Assignment */
 
     public void assignOwner(Integer listingId, Integer ownerId) {
@@ -275,7 +309,7 @@ public class ListingApplicationService {
         User user = requireUser();
         Listing listing = requireListing(listingId);
 
-        validateModificationRights(listing, user); // validates permissions
+        listingService.validateListingOwnership(listing, user); // validates permissions
 
         if (listing.getTenant() == null) {
             throw new IllegalStateException("This listing has no tenant assigned.");
@@ -350,6 +384,7 @@ public class ListingApplicationService {
         if (!user.getRoles().contains(role)) {
             user.getRoles().add(role);
             userService.updateUser(user);
+            userService.refreshAuthenticationRoles(user);
         }
     }
 
@@ -381,7 +416,7 @@ public class ListingApplicationService {
 
         User user = requireUser();
         Listing listing = requireListing(listingId);
-        validateModificationRights(listing, user);
+        listingService.validateListingOwnership(listing, user);
         return listing;
     }
 }

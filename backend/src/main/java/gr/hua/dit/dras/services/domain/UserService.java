@@ -17,7 +17,14 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 
 @Service
 @Transactional
@@ -180,6 +187,36 @@ public class UserService implements UserDetailsService {
         return userRepository.findByEmail(email)
                 .filter(user -> !user.getId().equals(excludeUserId))
                 .isPresent();
+    }
+
+    public void refreshAuthenticationRoles(User user) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
+            if (user.getEmail() != null && user.getEmail().equalsIgnoreCase(auth.getName())) {
+                Set<GrantedAuthority> updatedAuthorities = user.getRoles().stream()
+                        .map(role -> new SimpleGrantedAuthority(role.getName()))
+                        .collect(Collectors.toSet());
+                Authentication newAuth = new UsernamePasswordAuthenticationToken(
+                        auth.getPrincipal(),
+                        auth.getCredentials(),
+                        updatedAuthorities
+                );
+                SecurityContextHolder.getContext().setAuthentication(newAuth);
+
+                try {
+                    ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+                    if (attributes != null) {
+                        HttpServletRequest req = attributes.getRequest();
+                        HttpSession session = req.getSession(false);
+                        if (session != null) {
+                            session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
+                        }
+                    }
+                } catch (Exception ignored) {
+                    // Non-web or test context where RequestContextHolder is unavailable
+                }
+            }
+        }
     }
 
 }

@@ -121,4 +121,12 @@ public class TenantController {
 
         return ResponseEntity.ok().build();
     }
+
+    /* Tenant gets their active applications and rental status */
+    @Secured("USER")
+    @GetMapping("/applications")
+    public ResponseEntity<?> getTenantApplications() {
+        return ResponseEntity.ok(tenantService.getTenantApplicationsInfo());
+    }
+
 }

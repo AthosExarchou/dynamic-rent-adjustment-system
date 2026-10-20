@@ -174,4 +174,20 @@ public class TenantControllerTest {
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
+
+    @Test
+    void getTenantApplications_Success() {
+        Map<String, Object> mockInfo = Map.of(
+                "appliedListingIds", List.of(10, 20),
+                "rentingListingId", 5,
+                "rentalStatus", "APPLIED"
+        );
+        when(tenantService.getTenantApplicationsInfo()).thenReturn(mockInfo);
+
+        ResponseEntity<?> response = tenantController.getTenantApplications();
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(mockInfo, response.getBody());
+        verify(tenantService).getTenantApplicationsInfo();
+    }
 }

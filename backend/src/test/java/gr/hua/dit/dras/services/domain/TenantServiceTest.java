@@ -19,11 +19,13 @@ import org.springframework.security.access.AccessDeniedException;
 import org.junit.jupiter.api.DisplayName;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.HashSet;
 
-import java.util.Optional;
-
+import static gr.hua.dit.dras.model.enums.ListingStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -140,6 +142,7 @@ public class TenantServiceTest {
         
         Listing listing = new Listing();
         ReflectionTestUtils.setField(listing, "id", 10);
+        listing.setStatus(RENTED);
         listing.setTenant(tenant);
         
         when(listingRepository.findById(10)).thenReturn(Optional.of(listing));
@@ -148,6 +151,7 @@ public class TenantServiceTest {
         tenantService.unassignTenantFromListing(10, 1);
 
         assertThat(listing.getTenant()).isNull();
+        assertThat(listing.getStatus()).isEqualTo(APPROVED);
         assertThat(tenant.getRentalStatus()).isEqualTo(RentalStatus.CANCELED);
         verify(tenantRepository).save(tenant);
         verify(listingRepository).save(listing);
@@ -176,7 +180,7 @@ public class TenantServiceTest {
     void validateRentalApplicationRights_shouldThrowWhenListingNotApproved() {
         User user = new User();
         Listing listing = new Listing();
-        listing.setStatus(gr.hua.dit.dras.model.enums.ListingStatus.PENDING);
+        listing.setStatus(PENDING);
         when(userService.currentUserHasRole("ADMIN")).thenReturn(false);
 
         assertThatThrownBy(() -> tenantService.validateRentalApplicationRights(user, listing))
@@ -188,7 +192,7 @@ public class TenantServiceTest {
     void validateRentalApplicationRights_shouldThrowWhenListingIsRented() {
         User user = new User();
         Listing listing = new Listing();
-        listing.setStatus(gr.hua.dit.dras.model.enums.ListingStatus.RENTED);
+        listing.setStatus(RENTED);
         when(userService.currentUserHasRole("ADMIN")).thenReturn(false);
 
         assertThatThrownBy(() -> tenantService.validateRentalApplicationRights(user, listing))
@@ -201,7 +205,7 @@ public class TenantServiceTest {
         User user = new User();
         ReflectionTestUtils.setField(user, "id", 1);
         Listing listing = new Listing();
-        listing.setStatus(gr.hua.dit.dras.model.enums.ListingStatus.APPROVED);
+        listing.setStatus(APPROVED);
         Owner owner = new Owner();
         owner.setUser(user);
         listing.setOwner(owner);
@@ -295,12 +299,50 @@ public class TenantServiceTest {
         owner.setUser(ownerUser);
 
         Listing listing = new Listing();
-        listing.setStatus(gr.hua.dit.dras.model.enums.ListingStatus.APPROVED);
+        listing.setStatus(APPROVED);
         listing.setOwner(owner);
 
         when(userService.currentUserHasRole("ADMIN")).thenReturn(false);
 
         // Should not throw any exception
         tenantService.validateRentalApplicationRights(user, listing);
+    }
+
+    @Test
+    void getTenantApplicationsInfo_UserNotTenant_ReturnsEmpty() {
+        when(userService.getCurrentUserId()).thenReturn(1);
+        when(tenantRepository.findByUserId(1)).thenReturn(Optional.empty());
+
+        Map<String, Object> result = tenantService.getTenantApplicationsInfo();
+
+        assertThat(result).isNotNull();
+        assertThat(result.get("appliedListingIds")).isEqualTo(java.util.Collections.emptyList());
+        assertThat(result.get("rentingListingId")).isNull();
+        assertThat(result.get("rentalStatus")).isEqualTo("NONE");
+    }
+
+    @Test
+    void getTenantApplicationsInfo_UserIsTenant_ReturnsApplicationsInfo() {
+        when(userService.getCurrentUserId()).thenReturn(1);
+
+        Listing listing1 = new Listing();
+        ReflectionTestUtils.setField(listing1, "id", 101);
+
+        Listing rentedListing = new Listing();
+        ReflectionTestUtils.setField(rentedListing, "id", 202);
+
+        Tenant tenant = new Tenant();
+        tenant.setRentalStatus(RentalStatus.RENTING);
+        tenant.setListing(rentedListing);
+        tenant.setAppliedListings(Set.of(listing1));
+
+        when(tenantRepository.findByUserId(1)).thenReturn(Optional.of(tenant));
+
+        Map<String, Object> result = tenantService.getTenantApplicationsInfo();
+
+        assertThat(result).isNotNull();
+        assertThat(result.get("appliedListingIds")).isEqualTo(List.of(101));
+        assertThat(result.get("rentingListingId")).isEqualTo(202);
+        assertThat(result.get("rentalStatus")).isEqualTo("RENTING");
     }
 }

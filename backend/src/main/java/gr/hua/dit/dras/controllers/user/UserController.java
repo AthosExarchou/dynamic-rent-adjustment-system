@@ -62,7 +62,7 @@ public class UserController {
     ) {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(
-                    java.util.Map.of("error", "Validation failed", "details", bindingResult.getAllErrors())
+                    java.util.Map.of("error", "Validation failed", "details", bindingResult.getAllErrors().stream().map(e -> e.getDefaultMessage()).toList())
             );
         }
 
@@ -146,7 +146,7 @@ public class UserController {
 
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(
-                    java.util.Map.of("error", "Validation failed", "details", bindingResult.getAllErrors())
+                    java.util.Map.of("error", "Validation failed", "details", bindingResult.getAllErrors().stream().map(e -> e.getDefaultMessage()).toList())
             );
         }
 
@@ -210,7 +210,7 @@ public class UserController {
             @PathVariable Integer user_id,
             @PathVariable Integer role_id
     ) {
-        /* Fetch user and assert they’re not admin */
+        /* Fetch user and assert they're not admin */
         User user = userService.getUser(user_id);
         userService.assertNotAdmin(user);
 
@@ -279,6 +279,7 @@ public class UserController {
         if (!user.getRoles().contains(role)) {
             user.getRoles().add(role);
             userService.updateUser(user);
+            userService.refreshAuthenticationRoles(user);
         }
     }
 

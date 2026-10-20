@@ -2,7 +2,6 @@ package gr.hua.dit.dras.services.domain;
 
 /* imports */
 import gr.hua.dit.dras.entities.*;
-import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.model.enums.RentalStatus;
 import gr.hua.dit.dras.repositories.TenantRepository;
 import gr.hua.dit.dras.repositories.ListingRepository;
@@ -11,8 +10,14 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static gr.hua.dit.dras.model.enums.ListingStatus.APPROVED;
 
 @Service
 @Transactional
@@ -185,6 +190,7 @@ public class TenantService {
         if (!user.getRoles().contains(tenantRole)) {
             user.getRoles().add(tenantRole);
             userService.updateUser(user);
+            userService.refreshAuthenticationRoles(user);
         }
     }
 
@@ -201,7 +207,8 @@ public class TenantService {
         }
 
         listing.setTenant(null); // unlinks tenant from listing
-        listing.makeAvailable();
+        listing.setStatus(APPROVED);
+        tenant.setListing(null);
         tenant.setRentalStatus(RentalStatus.CANCELED);
 
         tenantRepository.save(tenant);
@@ -241,6 +248,28 @@ public class TenantService {
             listingRepository.save(listing);
         }
         tenant.getAppliedListings().clear();
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getTenantApplicationsInfo() {
+        Integer currentUserId = userService.getCurrentUserId();
+        Optional<Tenant> tenantOpt = tenantRepository.findByUserId(currentUserId);
+        Map<String, Object> response = new HashMap<>();
+        if (tenantOpt.isEmpty()) {
+            response.put("appliedListingIds", Collections.emptyList());
+            response.put("rentingListingId", null);
+            response.put("rentalStatus", "NONE");
+            return response;
+        }
+        Tenant tenant = tenantOpt.get();
+        List<Integer> appliedListingIds = tenant.getAppliedListings().stream()
+                .map(Listing::getId)
+                .collect(Collectors.toList());
+
+        response.put("appliedListingIds", appliedListingIds);
+        response.put("rentingListingId", tenant.getListing() != null ? tenant.getListing().getId() : null);
+        response.put("rentalStatus", tenant.getRentalStatus() != null ? tenant.getRentalStatus().name() : "NONE");
+        return response;
     }
 
 }

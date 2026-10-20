@@ -18,6 +18,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Optional;
 import java.util.HashSet;
 import java.util.Set;
+import jakarta.servlet.http.HttpSession;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -95,6 +96,45 @@ class ListingApplicationServiceTest {
         verify(listingService).rejectListing(100);
         verify(emailService).sendEmailNotification(
                 "test@test.com", "Owner Name", testListing, "adminRejected");
+    }
+
+    @Test
+    @DisplayName("Should disable listing when requested by authorized owner")
+    void shouldDisableListing() {
+        when(userService.getCurrentUserOptional()).thenReturn(Optional.of(testUser));
+        when(listingService.getListing(100)).thenReturn(testListing);
+
+        listingApplicationService.disableListing(100);
+
+        verify(listingService).validateListingModificationRights(testListing, testUser);
+        verify(listingService).disableListing(100);
+    }
+
+    @Test
+    @DisplayName("Should enable listing when requested by authorized owner")
+    void shouldEnableListing() {
+        when(userService.getCurrentUserOptional()).thenReturn(Optional.of(testUser));
+        when(listingService.getListing(100)).thenReturn(testListing);
+
+        listingApplicationService.enableListing(100);
+
+        verify(listingService).validateListingModificationRights(testListing, testUser);
+        verify(listingService).enableListing(100);
+    }
+
+    @Test
+    @DisplayName("Should toggle listing status between disabled and approved")
+    void shouldToggleListingStatus() {
+        when(userService.getCurrentUserOptional()).thenReturn(Optional.of(testUser));
+        when(listingService.getListing(100)).thenReturn(testListing);
+        testListing.setStatus(ListingStatus.APPROVED);
+
+        listingApplicationService.toggleListingStatus(100);
+        verify(listingService).disableListing(100);
+
+        testListing.setStatus(ListingStatus.DISABLED);
+        listingApplicationService.toggleListingStatus(100);
+        verify(listingService).enableListing(100);
     }
 
     @Test
@@ -191,5 +231,38 @@ class ListingApplicationServiceTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Listing has an active rental");
         verify(listingService, never()).deleteListing(anyInt());
+    }
+
+    @Test
+    @DisplayName("Should create listing for owner without invalidating session")
+    void shouldCreateListingWithoutInvalidatingSession() {
+        HttpSession mockSession = mock(HttpSession.class);
+
+        when(userService.getCurrentUserOptional()).thenReturn(Optional.of(testUser));
+        when(userService.isUserOwner()).thenReturn(true);
+        when(ownerService.getOwner(null)).thenReturn(testOwner);
+        when(listingService.isFirstListing(testOwner)).thenReturn(true);
+        when(roleRepository.findByName("OWNER")).thenReturn(Optional.of(new Role("OWNER")));
+
+        Listing newListing = new Listing();
+        newListing.setTitle("New Property");
+
+        listingApplicationService.createListing(newListing, null, null, null, null, mockSession);
+
+        verify(mockSession, never()).invalidate();
+        verify(listingService).saveListing(newListing);
+        verify(ownerService).assignOwnerToListing(newListing.getId(), testOwner);
+    }
+
+    @Test
+    @DisplayName("Should view applications for listing by validating ownership")
+    void shouldViewApplicationsForListing() {
+        when(userService.getCurrentUserOptional()).thenReturn(Optional.of(testUser));
+        when(listingService.getListing(100)).thenReturn(testListing);
+
+        Listing result = listingApplicationService.viewApplications(100);
+
+        assertThat(result).isEqualTo(testListing);
+        verify(listingService).validateListingOwnership(testListing, testUser);
     }
 }
