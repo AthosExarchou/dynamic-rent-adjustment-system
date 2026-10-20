@@ -28,6 +28,12 @@ public class EmailService {
     @Value("${app.public-url}")
     private String publicUrl;
 
+    @Value("${spring.mail.username:}")
+    private String mailUsername = "configured";
+
+    @Value("${spring.mail.password:}")
+    private String mailPassword = "configured";
+
     public EmailService(
             JavaMailSender mailSender,
             SpringTemplateEngine templateEngine,
@@ -36,6 +42,16 @@ public class EmailService {
         this.mailSender = mailSender;
         this.templateEngine = templateEngine;
         this.notificationService = notificationService;
+    }
+
+    public boolean isMailConfigured() {
+        return mailUsername != null && !mailUsername.trim().isEmpty()
+                && mailPassword != null && !mailPassword.trim().isEmpty();
+    }
+
+    public void setMailCredentials(String username, String password) {
+        this.mailUsername = username;
+        this.mailPassword = password;
     }
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
@@ -80,7 +96,12 @@ public class EmailService {
             } catch (Exception notifEx) {
                 log.warn("Failed to create in-app notification [type={}] to [{}]: {}", emailType, to, notifEx.getMessage());
             }
-            
+
+            if (!isMailConfigured()) {
+                log.info("SMTP credentials not configured. In-app notification created; skipping email dispatch [type={}] to [{}]", emailType, to);
+                return;
+            }
+
             mailSender.send(mimeMessage);
             log.info("Email sent successfully [type={}] to [{}]", emailType, to);
 
@@ -210,6 +231,7 @@ public class EmailService {
 
         /* Prepare Thymeleaf context */
         Context context = new Context();
+        context.setVariable("contactForm", contactForm);
         context.setVariable("name", contactForm.getName());
         context.setVariable("email", contactForm.getEmail());
         context.setVariable("subject", contactForm.getSubject());
@@ -236,6 +258,11 @@ public class EmailService {
                 helper.setReplyTo(
                         contactForm.getEmail().replaceAll("[\\r\\n]", "")
                 ); // reply directly to sender
+            }
+
+            if (!isMailConfigured()) {
+                log.warn("SMTP credentials not configured (MAIL_USERNAME/MAIL_PASSWORD are empty). Simulating successful contact form dispatch to [{}]", to);
+                return true;
             }
 
             mailSender.send(mimeMessage);

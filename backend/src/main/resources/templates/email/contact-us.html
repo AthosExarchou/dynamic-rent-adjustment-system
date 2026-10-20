@@ -87,19 +87,19 @@
         <tbody>
           <tr>
             <th>Name:</th>
-            <td th:text="${contactForm.name}">John Doe</td>
+            <td th:text="${contactForm != null ? contactForm.name : name}">John Doe</td>
           </tr>
           <tr>
             <th>Email:</th>
-            <td th:text="${contactForm.email}">john@example.com</td>
+            <td th:text="${contactForm != null ? contactForm.email : email}">john@example.com</td>
           </tr>
           <tr>
             <th>Subject:</th>
-            <td th:text="${contactForm.subject}">Inquiry</td>
+            <td th:text="${contactForm != null ? contactForm.subject : subject}">Inquiry</td>
           </tr>
           <tr>
             <th>Message:</th>
-            <td th:text="${contactForm.message}">Message content goes here.</td>
+            <td th:text="${contactForm != null ? contactForm.message : message}">Message content goes here.</td>
           </tr>
         </tbody>
       </table>
