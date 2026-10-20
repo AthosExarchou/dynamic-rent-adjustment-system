@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../auth';
 import apiClient from '../../../shared/api/client';
 import { LISTING_CONSTRAINTS } from '../models/listing';
+import { OWNER_CONSTRAINTS } from '../../owners/models/owner';
+import PriceSuggestionWidget from './PriceSuggestionWidget';
 import styles from './ListingForm.module.css';
 
 export default function ListingForm() {
-  const { roles } = useAuth();
+  const { roles, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '', subtitle: '', description: '', price: '', address: '',
@@ -17,6 +19,7 @@ export default function ListingForm() {
   const [images, setImages] = useState(['']);
   const maxImages = 10;
   const [error, setError] = useState('');
+  const [errorDetails, setErrorDetails] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const isOwner = roles.includes('OWNER');
@@ -33,6 +36,7 @@ export default function ListingForm() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setErrorDetails([]);
 
     const validUrlRegex = /^(https?:\/\/)/;
     const invalidImage = images.find(url => url.trim() && !validUrlRegex.test(url.trim()));
@@ -78,9 +82,15 @@ export default function ListingForm() {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: params.toString()
       });
-      navigate('/listings');
+      if (refreshUser) {
+        await refreshUser();
+      }
+      navigate('/my-listings');
     } catch (err) {
-      setError('Failed to submit listing. Please correct form validation errors.');
+      setError(err.message || 'Failed to submit listing. Please correct form validation errors.');
+      if (Array.isArray(err.details) && err.details.length > 0) {
+        setErrorDetails(err.details);
+      }
     } finally {
       setLoading(false);
     }
@@ -90,7 +100,18 @@ export default function ListingForm() {
     <div className={styles.container}>
       <div className={`${styles.card} ${styles.cardHover}`}>
         <h2 className={styles.title}>Submit Property Listing</h2>
-        {error && <div className={styles.error}>{error}</div>}
+        {error && (
+          <div className={styles.error}>
+            <div>{error}</div>
+            {errorDetails && errorDetails.length > 1 && (
+              <ul style={{ marginTop: '0.5rem', marginBottom: 0, paddingLeft: '1.25rem' }}>
+                {errorDetails.map((detail, idx) => (
+                  <li key={idx}>{detail}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
         
         <form onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
@@ -134,6 +155,13 @@ export default function ListingForm() {
                      className={styles.input} />
             </div>
           </div>
+
+          <PriceSuggestionWidget
+            formData={formData}
+            onApplyPrice={(suggestedPrice) =>
+              setFormData(prev => ({ ...prev, price: String(suggestedPrice) }))
+            }
+          />
 
           <div className={styles.formGroup}>
             <label htmlFor="address" className={styles.label}>Address</label>
@@ -216,20 +244,25 @@ export default function ListingForm() {
               <div className={styles.grid2}>
                 <div>
                   <label htmlFor="firstName" className={styles.label}>First Name</label>
-                  <input id="firstName" type="text" required value={formData.firstName}
+                  <input id="firstName" type="text" required maxLength={OWNER_CONSTRAINTS.FIRST_NAME_MAX} value={formData.firstName}
                          onChange={e => setFormData(
                              {...formData, firstName: e.target.value})} className={styles.input} />
                 </div>
                 <div>
                   <label htmlFor="lastName" className={styles.label}>Last Name</label>
-                  <input id="lastName" type="text" required value={formData.lastName}
+                  <input id="lastName" type="text" required maxLength={OWNER_CONSTRAINTS.LAST_NAME_MAX} value={formData.lastName}
                          onChange={e => setFormData(
                              {...formData, lastName: e.target.value})} className={styles.input} />
                 </div>
               </div>
               <div>
                 <label htmlFor="phoneNumber" className={styles.label}>Phone Number</label>
-                <input id="phoneNumber" type="text" required value={formData.phoneNumber}
+                <input id="phoneNumber" type="tel" required
+                       minLength={OWNER_CONSTRAINTS.PHONE_MIN}
+                       maxLength={OWNER_CONSTRAINTS.PHONE_MAX}
+                       pattern="^\+?[0-9. ()-]{7,25}$"
+                       title="Enter a valid phone number with 7-25 digits."
+                       value={formData.phoneNumber}
                        onChange={e => setFormData(
                            {...formData, phoneNumber: e.target.value})} className={styles.input} placeholder="+30 690 1234567" />
               </div>

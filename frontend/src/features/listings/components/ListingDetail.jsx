@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { 
   Building2, 
   MapPin, 
@@ -13,7 +13,8 @@ import {
   CheckCircle2,
   Calendar,
   Euro,
-  PenSquare
+  PenSquare,
+  PowerOff
 } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { useAuth } from '../../auth';
@@ -22,13 +23,35 @@ import PriceDropIndicator, { computeAvgPricePerM2 } from './PriceDropIndicator';
 
 export default function ListingDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const location = useLocation();
+  const backPath = location.state?.from || '/listings';
+  const backLabel = location.state?.from === '/my-listings' ? 'Back to My Properties' : 'Back to Listings';
   const { isAuthenticated, roles } = useAuth();
   const [listing, setListing] = useState(null);
   const [avgPricePerM2, setAvgPricePerM2] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const [error, setError] = useState(null);
+  const [appliedListingIds, setAppliedListingIds] = useState([]);
+  const [rentingListingId, setRentingListingId] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    if (isAuthenticated && roles.includes('USER')) {
+      apiClient('/tenant/applications')
+        .then(data => {
+          if (!active) return;
+          if (data?.appliedListingIds) {
+            setAppliedListingIds(data.appliedListingIds);
+          }
+          if (data?.rentingListingId != null) {
+            setRentingListingId(data.rentingListingId);
+          }
+        })
+        .catch(() => {});
+    }
+    return () => { active = false; };
+  }, [isAuthenticated, roles]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -85,9 +108,9 @@ export default function ListingDetail() {
     <div className={styles.container}>
       
       <div className={styles.topActions}>
-        <button onClick={() => navigate(-1)} className={styles.backLink}>
-          <ArrowLeft size={20} /> Back
-        </button>
+        <Link to={backPath} className={styles.backLink}>
+          <ArrowLeft size={20} /> {backLabel}
+        </Link>
       </div>
 
       <div className={`${styles.card} ${styles.cardHover}`}>
@@ -100,6 +123,11 @@ export default function ListingDetail() {
             {listing.status === 'APPROVED' && (
               <span className={styles.statusBadge}>
                 <CheckCircle2 size={16} /> Approved
+              </span>
+            )}
+            {listing.status === 'DISABLED' && (
+              <span className={styles.statusBadge} style={{ backgroundColor: '#f8d7da', color: '#842029', borderColor: '#f5c2c7' }}>
+                <PowerOff size={16} /> Disabled
               </span>
             )}
           </div>
@@ -186,10 +214,28 @@ export default function ListingDetail() {
           </div>
 
           <div className={styles.actionsSection}>
-            {isUserOnly && (
-              <Link to={`/tenant/rent/${listing.id}`} className={`${styles.btn} ${styles.btnPrimary}`}>
-                <PenSquare size={18} /> Apply for Rental
-              </Link>
+            {listing.status === 'DISABLED' ? (
+              <div className={styles.appliedBadge} style={{ backgroundColor: '#f8d7da', borderColor: '#f5c2c7', color: '#842029' }}>
+                <PowerOff size={18} /> Listing Currently Disabled
+              </div>
+            ) : isUserOnly && (
+              rentingListingId === Number(listing.id) ? (
+                <div className={styles.appliedBadge} style={{ backgroundColor: '#198754', borderColor: '#198754' }}>
+                  <CheckCircle2 size={18} /> Currently Renting
+                </div>
+              ) : appliedListingIds.includes(Number(listing.id)) ? (
+                <div className={styles.appliedBadge}>
+                  <CheckCircle2 size={18} /> Application Submitted
+                </div>
+              ) : (
+                <Link 
+                  to={`/tenant/rent/${listing.id}`} 
+                  state={{ fromListingDetail: true }}
+                  className={`${styles.btn} ${styles.btnPrimary}`}
+                >
+                  <PenSquare size={18} /> Apply for Rental
+                </Link>
+              )
             )}
           </div>
         </div>
