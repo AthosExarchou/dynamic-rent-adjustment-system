@@ -76,7 +76,7 @@ Date: 04.04.2026
 
 Disclaimer:
 This pipeline is intended for research and educational purposes only. Users are
-responsible for complying with Spitogatos’s Terms of Service and applicable laws.
+responsible for complying with Spitogatos's Terms of Service and applicable laws.
 """
 
 # Imported Libraries
@@ -126,12 +126,13 @@ __version__ = "2.0.0"
 # CONFIGURATION
 PPM2_MIN = 2
 PPM2_MAX = 80
-DATA_DIR = Path("data")
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
 LATEST_CSV = DATA_DIR / "spitogatos_athens_listings.csv"
 HISTORY_AGG_CSV = DATA_DIR / "spitogatos_history.csv"
 IMAGES_DIR = DATA_DIR / "images"  # Images stored per-listing in subfolders
-FAILED_DIR = Path("failed_payloads")
+FAILED_DIR = BASE_DIR / "failed_payloads"
 FAILED_DIR.mkdir(exist_ok=True)
 DEBUG_DIR = DATA_DIR / "debug"
 

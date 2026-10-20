@@ -4,3 +4,5 @@ beautifulsoup4==4.14.3
 pandas==3.0.2
 requests==2.32.5
 PyVirtualDisplay==3.0
+pmdarima>=2.0.4
+statsmodels>=0.14.0
