@@ -72,7 +72,7 @@ public class SecurityConfig {
                         /* Public Web Endpoints */
                         .requestMatchers(
                                 "/", "/home",
-                                "/listings", "/listings/local", "/listings/filter", "/listings/{id}",
+                                "/listings", "/listings/local", "/listings/filter", "/listings/price-suggestion", "/listings/{id:[0-9]+}",
                                 "/contact/contactus", "/contact/send",
                                 "/privacy", "/about", "/TermsOfService",
                                 "/register", "/saveUser", "/error"

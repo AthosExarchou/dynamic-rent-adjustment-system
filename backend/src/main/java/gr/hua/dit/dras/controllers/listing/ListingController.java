@@ -3,6 +3,8 @@ package gr.hua.dit.dras.controllers.listing;
 /* imports */
 import gr.hua.dit.dras.dto.ListingFilterDTO;
 import gr.hua.dit.dras.dto.ListingCreateDTO;
+import gr.hua.dit.dras.dto.PriceSuggestionDTO;
+import gr.hua.dit.dras.dto.PriceSuggestionRequestDTO;
 import gr.hua.dit.dras.entities.*;
 import gr.hua.dit.dras.services.domain.*;
 import gr.hua.dit.dras.services.application.ListingApplicationService;
@@ -27,19 +29,22 @@ public class ListingController {
     private final ListingService listingService;
     private final OwnerService ownerService;
     private final ListingApplicationService listingApplicationService;
+    private final PriceSuggestionService priceSuggestionService;
 
     public ListingController(
             UserService userService,
             ListingService listingService,
             OwnerService ownerService,
             TenantService tenantService,
-            ListingApplicationService listingApplicationService
+            ListingApplicationService listingApplicationService,
+            PriceSuggestionService priceSuggestionService
     ) {
         this.userService = userService;
         this.listingService = listingService;
         this.ownerService = ownerService;
         this.tenantService = tenantService;
         this.listingApplicationService = listingApplicationService;
+        this.priceSuggestionService = priceSuggestionService;
     }
 
     private Map<String, Object> mapListing(Listing l) {
@@ -60,6 +65,7 @@ public class ListingController {
         map.put("bathrooms", l.getBathrooms());
         map.put("images", l.getImages());
         map.put("status", l.getStatus().name());
+        map.put("rented", l.isRented());
         return map;
     }
 
@@ -74,6 +80,19 @@ public class ListingController {
     public ResponseEntity<?> showLocalListings() {
         List<Map<String, Object>> res = listingService.getLocalListings().stream().map(this::mapListing).collect(Collectors.toList());
         return ResponseEntity.ok(res);
+    }
+
+    /* Price suggestion based on ARIMA forecast and scraped real estate benchmarks */
+    @GetMapping("/price-suggestion")
+    public ResponseEntity<?> getPriceSuggestion(@Valid @ModelAttribute PriceSuggestionRequestDTO request, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed",
+                    "details", bindingResult.getAllErrors().stream().map(e -> e.getDefaultMessage()).toList()
+            ));
+        }
+        PriceSuggestionDTO suggestion = priceSuggestionService.suggestPrice(request);
+        return ResponseEntity.ok(suggestion);
     }
 
     @GetMapping("/{id}")
@@ -108,7 +127,10 @@ public class ListingController {
                               HttpSession session
     ) {
         if (bindingResult.hasErrors()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Validation failed", "details", bindingResult.getAllErrors()));
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed",
+                    "details", bindingResult.getAllErrors().stream().map(e -> e.getDefaultMessage()).toList()
+            ));
         }
 
         Listing listing = new Listing();
@@ -141,6 +163,28 @@ public class ListingController {
     public ResponseEntity<?> deleteListing(@PathVariable Integer id) {
         listingApplicationService.deleteListing(id);
         return ResponseEntity.ok().build();
+    }
+
+    /* Disable / Enable listing */
+    @PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")
+    @PostMapping("/disable/{id}")
+    public ResponseEntity<?> disableListing(@PathVariable Integer id) {
+        listingApplicationService.disableListing(id);
+        return ResponseEntity.ok(Map.of("message", "Listing disabled successfully"));
+    }
+
+    @PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")
+    @PostMapping("/enable/{id}")
+    public ResponseEntity<?> enableListing(@PathVariable Integer id) {
+        listingApplicationService.enableListing(id);
+        return ResponseEntity.ok(Map.of("message", "Listing enabled successfully"));
+    }
+
+    @PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")
+    @PostMapping("/toggle-status/{id}")
+    public ResponseEntity<?> toggleListingStatus(@PathVariable Integer id) {
+        listingApplicationService.toggleListingStatus(id);
+        return ResponseEntity.ok(Map.of("message", "Listing status toggled successfully"));
     }
 
     /* Approve listings (admin) */
@@ -205,11 +249,28 @@ public class ListingController {
                 map.put("firstName", t.getFirstName());
                 map.put("lastName", t.getLastName());
                 map.put("phoneNumber", t.getPhoneNumber());
+                map.put("email", t.getUser() != null ? t.getUser().getEmail() : "");
                 map.put("status", t.getRentalStatus().name());
                 return map;
             })
             .collect(Collectors.toList());
 
-        return ResponseEntity.ok(Map.of("listing", mapListing(listing), "applicants", applicants));
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("listing", mapListing(listing));
+        response.put("applicants", applicants);
+
+        if (listing.getTenant() != null) {
+            Tenant t = listing.getTenant();
+            Map<String, Object> tenantMap = new java.util.HashMap<>();
+            tenantMap.put("id", t.getId());
+            tenantMap.put("firstName", t.getFirstName());
+            tenantMap.put("lastName", t.getLastName());
+            tenantMap.put("phoneNumber", t.getPhoneNumber());
+            tenantMap.put("email", t.getUser() != null ? t.getUser().getEmail() : "");
+            tenantMap.put("status", t.getRentalStatus() != null ? t.getRentalStatus().name() : "RENTING");
+            response.put("tenant", tenantMap);
+        }
+
+        return ResponseEntity.ok(response);
     }
 }

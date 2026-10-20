@@ -29,6 +29,7 @@ This document serves as a comprehensive reference for the endpoint mappings and 
 |----------|--------|----------|
 | /listings | GET | `permitAll` (SecurityConfig) |
 | /listings/local | GET | `permitAll` (SecurityConfig) |
+| /listings/price-suggestion | GET | `permitAll` (SecurityConfig) |
 | /listings/{id} | GET | `permitAll` (SecurityConfig) |
 | /listings/filter | GET | `permitAll` (SecurityConfig) |
 | /listings/mylisting | GET | `@Secured("OWNER")` |
