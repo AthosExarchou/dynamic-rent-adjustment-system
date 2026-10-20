@@ -3,6 +3,7 @@ import { Outlet, useNavigate, Link, useLocation, ScrollRestoration } from 'react
 import { Sun, Moon, UserCircle, LogIn, UserPlus, LogOut, Building2, ChevronRight, Search, Bell, X } from 'lucide-react';
 import { useAuth } from '../../features/auth';
 import apiClient from '../api/client';
+import { isNavigablePath } from '../utils/routeUtils';
 import Sidebar from './Sidebar';
 import styles from './MainLayout.module.css';
 
@@ -128,14 +129,17 @@ export default function MainLayout() {
           const last = index === pathnames.length - 1;
           const to = `/${pathnames.slice(0, index + 1).join('/')}`;
           const title = value.charAt(0).toUpperCase() + value.slice(1).replace(/-/g, ' ');
+          const isClickable = !last && isNavigablePath(to);
           
           return (
             <React.Fragment key={to}>
               <ChevronRight size={14} className={styles.breadcrumbSeparator} />
               {last ? (
-                <span className={styles.breadcrumbActive}>{title}</span>
-              ) : (
+                <span className={styles.breadcrumbActive} aria-current="page">{title}</span>
+              ) : isClickable ? (
                 <Link to={to} className={styles.breadcrumbLink}>{title}</Link>
+              ) : (
+                <span className={styles.breadcrumbDisabled} aria-disabled="true">{title}</span>
               )}
             </React.Fragment>
           );

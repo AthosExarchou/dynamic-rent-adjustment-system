@@ -136,6 +136,14 @@
   font-weight: 600;
 }
 
+.breadcrumbDisabled {
+  color: var(--text-secondary);
+  font-weight: 500;
+  cursor: default;
+  opacity: 0.75;
+  user-select: text;
+}
+
 /* Center Search */
 .topbarCenter {
   display: flex;
