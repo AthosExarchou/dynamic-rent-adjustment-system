@@ -107,13 +107,14 @@ Nginx acts as a reverse proxy, routing traffic to the frontend and backend conta
 - **Start everything:** Run `docker compose up -d`.
 - **Rebuild (backend / dependency changes):** Run `docker compose up -d --build`.
 - **Rebuild (frontend changes):** The React build is served from a named Docker volume (`frontend_dist`),
-  which is **populated from the baked-in image contents** when first created.
-
-- **Rebuild the Docker image:**
+  which Docker only populates from the baked-in image contents when the volume is first created. To remove the containers, run:
   ```bash
-  docker compose up -d --build frontend
+  docker compose down
+  docker volume rm dynamic-rent-adjustment-system_frontend_dist
+  docker compose up -d --build
   ```
-  > **Note:** This only applies to the local Docker environment. When running via **Vagrant** or a VM, frontend rebuilds are handled automatically by the Jenkins pipeline's Deploy stage. Simply click **Build Now** in Jenkins.
+  *(Alternatively, to keep `db` and `backend` running: `docker compose rm -f -s nginx frontend && docker volume rm dynamic-rent-adjustment-system_frontend_dist && docker compose up -d --build frontend nginx`)*
+  > **Note:** This only applies to the local Docker environment. When running via **Vagrant** or a VM, frontend rebuilds and volume clearing are handled automatically by the Jenkins pipeline's Deploy stage. Simply click **Build Now** in Jenkins.
 - **Reset database (wipe all data):** `docker compose down -v` removes all named volumes - this means both the database **and** the frontend build are deleted. The subsequent `docker compose up -d` will take longer as both must be re-created from scratch. To wipe only the database and preserve the frontend volume, run:
   ```bash
   docker compose down
