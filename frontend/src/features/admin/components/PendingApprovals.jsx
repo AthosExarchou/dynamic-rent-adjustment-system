@@ -32,26 +32,26 @@ export default function PendingApprovals() {
   };
 
   const handleApprove = async (id) => {
-    setActionLoading(id);
+    setActionLoading({ id, type: 'approve' });
     try {
       await apiClient(`/listings/approve/${id}`, { method: 'POST' });
       alert('Listing approved successfully.');
       await fetchPendingListings();
-    } catch {
-      alert('Failed to approve listing.');
+    } catch (err) {
+      alert(err.message || 'Failed to approve listing.');
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleReject = async (id) => {
-    setActionLoading(id);
+    setActionLoading({ id, type: 'reject' });
     try {
       await apiClient(`/listings/reject/${id}`, { method: 'POST' });
       alert('Listing rejected.');
       await fetchPendingListings();
-    } catch {
-      alert('Failed to reject listing.');
+    } catch (err) {
+      alert(err.message || 'Failed to reject listing.');
     } finally {
       setActionLoading(null);
     }
@@ -85,11 +85,19 @@ export default function PendingApprovals() {
               </div>
 
               <div className={styles.actions}>
-                <button onClick={() => handleApprove(l.id)} disabled={actionLoading === l.id} className={styles.approveBtn}>
-                  {actionLoading === l.id ? 'Approving...' : 'Approve Listing'}
+                <button
+                  onClick={() => handleApprove(l.id)}
+                  disabled={actionLoading?.id === l.id}
+                  className={styles.approveBtn}
+                >
+                  {actionLoading?.id === l.id && actionLoading?.type === 'approve' ? 'Approving...' : 'Approve Listing'}
                 </button>
-                <button onClick={() => handleReject(l.id)} disabled={actionLoading === l.id} className={styles.rejectBtn}>
-                  {actionLoading === l.id ? 'Rejecting...' : 'Reject Listing'}
+                <button
+                  onClick={() => handleReject(l.id)}
+                  disabled={actionLoading?.id === l.id}
+                  className={styles.rejectBtn}
+                >
+                  {actionLoading?.id === l.id && actionLoading?.type === 'reject' ? 'Rejecting...' : 'Reject Listing'}
                 </button>
               </div>
             </div>

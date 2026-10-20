@@ -53,21 +53,39 @@
 }
 
 .header {
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  min-width: 0;
 }
 
 .title {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  align-items: flex-start;
+  gap: 0.75rem;
   margin: 0;
   color: var(--text-primary);
+  min-width: 0;
+  line-height: 1.35;
 }
 
 .titleIcon {
   color: #0d6efd;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.titleText {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  max-height: 2.8em;
 }
 
 .divider {
@@ -91,6 +109,7 @@
   transition: all 0.3s ease-in-out;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .cardHover:hover {
@@ -102,6 +121,7 @@
   background-color: #f8f9fa;
   padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--border-color);
+  min-width: 0;
 }
 
 .applicantName {
@@ -112,10 +132,21 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.applicantName span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .iconPrimary {
   color: #0d6efd;
+  flex-shrink: 0;
 }
 
 .cardBody {
@@ -123,6 +154,7 @@
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-width: 0;
 }
 
 .contactInfo {
@@ -132,10 +164,19 @@
   gap: 0.5rem;
   color: var(--text-secondary);
   font-size: 0.95rem;
+  min-width: 0;
+}
+
+.contactInfo span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .iconSecondary {
   color: #6c757d;
+  flex-shrink: 0;
 }
 
 .actions {
@@ -161,16 +202,23 @@
   flex: 1;
 }
 
-.btn:hover {
+.btn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .btnSuccess {
   background-color: #198754;
   color: #fff;
 }
-.btnSuccess:hover {
+.btnSuccess:hover:not(:disabled) {
   filter: brightness(1.1);
   color: #fff;
 }
@@ -179,7 +227,7 @@
   background-color: #dc3545;
   color: #fff;
 }
-.btnDanger:hover {
+.btnDanger:hover:not(:disabled) {
   filter: brightness(1.1);
   color: #fff;
 }
@@ -198,6 +246,106 @@
   font-size: 0.9rem;
   font-weight: 600;
   display: inline-block;
+}
+
+.activeRentalSection {
+  background-color: var(--background-paper);
+  border: 1px solid #a7f3d0;
+  border-left: 5px solid #10b981;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease-in-out;
+  min-width: 0;
+}
+
+.activeRentalSection:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.75rem 1.5rem rgba(16, 185, 129, 0.2), 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.activeRentalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.activeRentalTitle {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #065f46;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rentedBadgeActive {
+  background-color: #d1fae5;
+  color: #065f46;
+  padding: 0.35rem 0.85rem;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 1px solid #a7f3d0;
+}
+
+.activeRentalGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  min-width: 0;
+}
+
+.activeRentalItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  min-width: 0;
+}
+
+.activeRentalItem span {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  min-width: 0;
+}
+
+.activeRentalItem svg {
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+.unassignBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #dc3545;
+  background-color: transparent;
+  border: 1px solid #dc3545;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.unassignBtn:hover:not(:disabled) {
+  background-color: #dc3545;
+  color: #fff;
+}
+
+.unassignBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .emptyState {
