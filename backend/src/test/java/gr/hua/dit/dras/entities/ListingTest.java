@@ -89,6 +89,26 @@ class ListingTest {
     }
 
     @Test
+    void testEnable() {
+        listing.setStatus(ListingStatus.DISABLED);
+        listing.enable();
+        assertThat(listing.getStatus()).isEqualTo(ListingStatus.APPROVED);
+        assertThat(listing.isApproved()).isTrue();
+    }
+
+    @Test
+    void testEnableThrowsWhenNotDisabled() {
+        listing.setStatus(ListingStatus.PENDING);
+        assertThrows(IllegalStateException.class, () -> listing.enable());
+    }
+
+    @Test
+    void testEnableThrowsWhenRented() {
+        listing.setStatus(ListingStatus.RENTED);
+        assertThrows(IllegalStateException.class, () -> listing.enable());
+    }
+
+    @Test
     void testMakeAvailable() {
         listing.setStatus(ListingStatus.PENDING);
         listing.makeAvailable();

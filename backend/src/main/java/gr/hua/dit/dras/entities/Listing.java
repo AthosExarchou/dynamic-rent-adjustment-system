@@ -414,6 +414,16 @@ public class Listing {
         this.status = ListingStatus.DISABLED;
     }
 
+    public void enable() {
+        if (this.status == ListingStatus.RENTED) {
+            throw new IllegalStateException("Cannot enable rented listing");
+        }
+        if (this.status != ListingStatus.DISABLED) {
+            throw new IllegalStateException("Only disabled listings can be enabled");
+        }
+        this.status = ListingStatus.APPROVED;
+    }
+
     public void approve() {
         if (!isPending()) {
             throw new IllegalStateException("Only pending listings can be approved");
