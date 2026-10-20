@@ -46,7 +46,7 @@ Date: 24.10.2025
 
 Disclaimer:
 This script is intended for research and educational purposes only. Users are
-responsible for complying with Rentola’s Terms of Service and applicable laws.
+responsible for complying with Rentola's Terms of Service and applicable laws.
 """
 
 # Imported Libraries
