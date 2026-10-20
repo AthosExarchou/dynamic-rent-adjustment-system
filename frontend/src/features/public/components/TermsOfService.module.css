@@ -26,36 +26,166 @@
 .layout {
   display: flex;
   flex-direction: column;
-  gap: 3rem;
+  gap: 2rem;
 }
 
 @media (min-width: 992px) {
   .layout {
     flex-direction: row;
     align-items: flex-start;
+    gap: 3rem;
   }
 }
 
 .sidebar {
-  flex: 0 0 25%;
-  position: sticky;
-  top: 5rem;
+  width: 100%;
 }
 
-.nav {
-  display: flex;
-  flex-direction: column;
+@media (min-width: 992px) {
+  .sidebar {
+    flex: 0 0 280px;
+    width: 280px;
+    position: sticky;
+    top: 5rem;
+    max-height: calc(100vh - 6rem);
+  }
+}
+
+.sidebarWrapper {
   background-color: var(--background-paper);
   border-radius: var(--radius-lg);
-  padding: 1rem 0;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+/* Mobile collapsible toggle */
+.mobileToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.2s ease;
+}
+
+.mobileToggle:hover {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+.mobileToggleLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.mobileToggleRight {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tocIcon {
+  color: #004aad;
+  flex-shrink: 0;
+}
+
+.mobileToggleLabel {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.activeBadge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background-color: rgba(0, 74, 173, 0.1);
+  color: #004aad;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  line-height: 1.2;
+}
+
+.chevron {
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+/* Desktop sidebar header */
+.desktopSidebarTitle {
+  display: none;
+}
+
+@media (min-width: 992px) {
+  .mobileToggle {
+    display: none;
+  }
+
+  .desktopSidebarTitle {
+    display: block;
+    padding: 1.25rem 1.5rem 0.5rem 1.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+  }
+}
+
+/* Navigation items */
+.nav {
+  display: none;
+  flex-direction: column;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.navOpen {
+  display: flex;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+@media (min-width: 992px) {
+  .nav {
+    display: flex;
+    border-top: none;
+    padding: 0.25rem 0 1rem 0;
+    max-height: calc(100vh - 10rem);
+    overflow-y: auto;
+  }
+
+  .navOpen {
+    max-height: calc(100vh - 10rem);
+  }
+}
+
+.nav::-webkit-scrollbar {
+  width: 5px;
+}
+
+.nav::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
 }
 
 .navLink {
-  padding: 0.75rem 1.5rem;
+  padding: 0.65rem 1.5rem;
   color: var(--text-secondary);
   text-decoration: none;
+  font-size: 0.92rem;
   font-weight: 500;
   border-left: 3px solid transparent;
   transition: all 0.2s ease;
@@ -68,17 +198,18 @@
 
 .navLink.active {
   color: #004aad;
-  background-color: rgba(0, 74, 173, 0.05);
+  background-color: rgba(0, 74, 173, 0.06);
   border-left-color: #004aad;
+  font-weight: 600;
 }
 
 .mainContent {
   flex: 1;
+  min-width: 0;
 }
 
 .section {
-  padding-top: 5rem; /* Offset for anchor jumps */
-  margin-top: -4rem;
+  scroll-margin-top: 6rem;
   margin-bottom: 3rem;
   color: var(--text-secondary);
   line-height: 1.7;
@@ -119,4 +250,39 @@
   text-align: center;
   color: rgba(128, 128, 128, 0.7);
   font-size: 0.9rem;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .container {
+    margin: 1.5rem auto;
+    padding: 0 1rem;
+  }
+
+  .header {
+    padding-bottom: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .title {
+    font-size: 2.25rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .layout {
+    gap: 1.5rem;
+  }
+
+  .section {
+    scroll-margin-top: 5rem;
+    margin-bottom: 2rem;
+  }
+
+  .sectionTitle {
+    font-size: 1.35rem;
+    margin-bottom: 1rem;
+  }
 }

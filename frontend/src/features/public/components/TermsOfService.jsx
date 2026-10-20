@@ -1,9 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { ChevronDown, List } from 'lucide-react';
 import styles from './TermsOfService.module.css';
+
+const SECTIONS = [
+  { id: 'section1', label: '1. Agreement to Terms' },
+  { id: 'section2', label: '2. User Accounts' },
+  { id: 'section3', label: '3. Use of the Service' },
+  { id: 'section4', label: '4. User-Generated Content' },
+  { id: 'section5', label: '5. Intellectual Property' },
+  { id: 'section6', label: '6. Disclaimers' },
+  { id: 'section7', label: '7. Limitation of Liability' },
+  { id: 'section8', label: '8. Termination' },
+  { id: 'section9', label: '9. Governing Law' },
+  { id: 'section10', label: '10. Changes to Terms' },
+  { id: 'section11', label: '11. Contact Us' },
+];
 
 export default function TermsOfService() {
   const [activeSection, setActiveSection] = useState('section1');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const sectionRefs = useRef({});
 
@@ -22,7 +38,7 @@ export default function TermsOfService() {
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -34,8 +50,11 @@ export default function TermsOfService() {
         behavior: 'smooth'
       });
       setActiveSection(id);
+      setMobileMenuOpen(false);
     }
   };
+
+  const currentSection = SECTIONS.find(s => s.id === activeSection) || SECTIONS[0];
 
   return (
     <div className={styles.container}>
@@ -46,30 +65,46 @@ export default function TermsOfService() {
 
       <div className={styles.layout}>
         <aside className={styles.sidebar}>
-          <nav className={styles.nav}>
-            <a href="#section1" className={`${styles.navLink} ${activeSection === 'section1' ? styles.active : ''}`}
-               onClick={(e) => scrollToSection(e, 'section1')}>1. Agreement to Terms</a>
-            <a href="#section2" className={`${styles.navLink} ${activeSection === 'section2' ? styles.active : ''}`}
-               onClick={(e) => scrollToSection(e, 'section2')}>2. User Accounts</a>
-            <a href="#section3" className={`${styles.navLink} ${activeSection === 'section3' ? styles.active : ''}`}
-               onClick={(e) => scrollToSection(e, 'section3')}>3. Use of the Service</a>
-            <a href="#section4" className={`${styles.navLink} ${activeSection === 'section4' ? styles.active : ''}`}
-               onClick={(e) => scrollToSection(e, 'section4')}>4. User-Generated Content</a>
-            <a href="#section5" className={`${styles.navLink} ${activeSection === 'section5' ? styles.active : ''}`}
-               onClick={(e) => scrollToSection(e, 'section5')}>5. Intellectual Property</a>
-            <a href="#section6" className={`${styles.navLink} ${activeSection === 'section6' ? styles.active : ''}`}
-               onClick={(e) => scrollToSection(e, 'section6')}>6. Disclaimers</a>
-            <a href="#section7" className={`${styles.navLink} ${activeSection === 'section7' ? styles.active : ''}`}
-               onClick={(e) => scrollToSection(e, 'section7')}>7. Limitation of Liability</a>
-            <a href="#section8" className={`${styles.navLink} ${activeSection === 'section8' ? styles.active : ''}`}
-               onClick={(e) => scrollToSection(e, 'section8')}>8. Termination</a>
-            <a href="#section9" className={`${styles.navLink} ${activeSection === 'section9' ? styles.active : ''}`}
-               onClick={(e) => scrollToSection(e, 'section9')}>9. Governing Law</a>
-            <a href="#section10" className={`${styles.navLink} ${activeSection === 'section10' ? styles.active : ''}`}
-               onClick={(e) => scrollToSection(e, 'section10')}>10. Changes to Terms</a>
-            <a href="#section11" className={`${styles.navLink} ${activeSection === 'section11' ? styles.active : ''}`}
-               onClick={(e) => scrollToSection(e, 'section11')}>11. Contact Us</a>
-          </nav>
+          <div className={styles.sidebarWrapper}>
+            <button
+              type="button"
+              className={styles.mobileToggle}
+              onClick={() => setMobileMenuOpen(prev => !prev)}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="terms-toc-nav"
+              aria-label="Toggle Table of Contents"
+            >
+              <div className={styles.mobileToggleLeft}>
+                <List size={18} className={styles.tocIcon} />
+                <span className={styles.mobileToggleLabel}>Table of Contents</span>
+              </div>
+              <div className={styles.mobileToggleRight}>
+                <span className={styles.activeBadge}>{currentSection.label.split('.')[0]}</span>
+                <ChevronDown
+                  size={18}
+                  className={`${styles.chevron} ${mobileMenuOpen ? styles.chevronOpen : ''}`}
+                />
+              </div>
+            </button>
+
+            <nav
+              id="terms-toc-nav"
+              className={`${styles.nav} ${mobileMenuOpen ? styles.navOpen : ''}`}
+              aria-label="Table of Contents"
+            >
+              <div className={styles.desktopSidebarTitle}>Table of Contents</div>
+              {SECTIONS.map((sec) => (
+                <a
+                  key={sec.id}
+                  href={`#${sec.id}`}
+                  className={`${styles.navLink} ${activeSection === sec.id ? styles.active : ''}`}
+                  onClick={(e) => scrollToSection(e, sec.id)}
+                >
+                  {sec.label}
+                </a>
+              ))}
+            </nav>
+          </div>
         </aside>
 
         <main className={styles.mainContent}>
