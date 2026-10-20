@@ -3,6 +3,7 @@ package gr.hua.dit.dras.services.application;
 /* imports */
 import gr.hua.dit.dras.dto.UserEditRequest;
 import gr.hua.dit.dras.services.domain.ListingService;
+import gr.hua.dit.dras.services.domain.NotificationService;
 import gr.hua.dit.dras.services.domain.TenantService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,14 +23,14 @@ import org.springframework.stereotype.Service;
  * Application service responsible for orchestrating user-related account workflows.
  *
  * This service coordinates multiple domain services (UserService, ListingService,
- * TenantService) and infrastructure components (EmailService, PasswordEncoder)
+ * TenantService, NotificationService) and infrastructure components (EmailService, PasswordEncoder)
  * to execute user account management use cases.
  *
  * Responsibilities include:
  * - Handling secure self-service account deletion / editing
  * - Allowing administrators to delete user accounts
  * - Performing security checks such as password re-authentication
- * - Ensuring proper cleanup of associated domain data (listings, tenant data)
+ * - Ensuring proper cleanup of associated domain data (listings, tenant data, notifications)
  * - Triggering notification emails related to account deletion
  * - Recording security-relevant audit logs
  *
@@ -52,19 +53,22 @@ public class UserApplicationService {
     private final EmailService emailService;
     private final ListingService listingService;
     private final TenantService tenantService;
+    private final NotificationService notificationService;
 
     public UserApplicationService(
             UserService userService,
             PasswordEncoder passwordEncoder,
             EmailService emailService,
             ListingService listingService,
-            TenantService tenantService
+            TenantService tenantService,
+            NotificationService notificationService
     ) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.listingService = listingService;
         this.tenantService = tenantService;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -110,17 +114,26 @@ public class UserApplicationService {
         }
 
         /* Send Email */
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                try {
-                    emailService.sendAccountDeletionEmail(actorEmail, currentUser);
-                } catch (Exception e) {
-                    log.error("SECURITY_AUDIT | event=SELF_DELETE | result=EMAIL_FAILED | actorId={} | actorEmail={}",
-                            actorId, actorEmail, e);
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        emailService.sendAccountDeletionEmail(actorEmail, currentUser);
+                    } catch (Exception e) {
+                        log.error("SECURITY_AUDIT | event=SELF_DELETE | result=EMAIL_FAILED | actorId={} | actorEmail={}",
+                                actorId, actorEmail, e);
+                    }
                 }
+            });
+        } else {
+            try {
+                emailService.sendAccountDeletionEmail(actorEmail, currentUser);
+            } catch (Exception e) {
+                log.error("SECURITY_AUDIT | event=SELF_DELETE | result=EMAIL_FAILED | actorId={} | actorEmail={}",
+                        actorId, actorEmail, e);
             }
-        });
+        }
     }
 
     @Transactional
@@ -167,18 +180,28 @@ public class UserApplicationService {
         }
 
         /* Send Email */
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                try {
-                    emailService.sendAccountDeletionEmail(targetUser.getEmail(), targetUser);
-                } catch (Exception e) {
-                    log.error("SECURITY_AUDIT | event=ADMIN_DELETE | result=EMAIL_FAILED | actorId={} " +
-                                    "| actorEmail={} | targetId={} | targetEmail={}",
-                            actorId, actorEmail, targetId, targetEmail, e);
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        emailService.sendAccountDeletionEmail(targetUser.getEmail(), targetUser);
+                    } catch (Exception e) {
+                        log.error("SECURITY_AUDIT | event=ADMIN_DELETE | result=EMAIL_FAILED | actorId={} " +
+                                        "| actorEmail={} | targetId={} | targetEmail={}",
+                                actorId, actorEmail, targetId, targetEmail, e);
+                    }
                 }
+            });
+        } else {
+            try {
+                emailService.sendAccountDeletionEmail(targetUser.getEmail(), targetUser);
+            } catch (Exception e) {
+                log.error("SECURITY_AUDIT | event=ADMIN_DELETE | result=EMAIL_FAILED | actorId={} " +
+                                "| actorEmail={} | targetId={} | targetEmail={}",
+                        actorId, actorEmail, targetId, targetEmail, e);
             }
-        });
+        }
     }
 
     @Transactional
@@ -280,6 +303,14 @@ public class UserApplicationService {
 
         if (user.getTenant() != null) {
             tenantService.prepareTenantForDeletion(user.getTenant());
+        }
+
+        if (user.getNotifications() != null) {
+            user.getNotifications().clear();
+        }
+
+        if (user.getId() != null) {
+            notificationService.deleteNotificationsForUser(user.getId());
         }
     }
 

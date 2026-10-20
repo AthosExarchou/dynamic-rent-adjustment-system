@@ -65,4 +65,11 @@ public class NotificationService {
     public void markAllAsRead(Integer userId) {
         notificationRepository.markAllReadForUser(userId);
     }
+
+    @Transactional
+    public void deleteNotificationsForUser(Integer userId) {
+        if (userId != null) {
+            notificationRepository.deleteAllByUserId(userId);
+        }
+    }
 }
