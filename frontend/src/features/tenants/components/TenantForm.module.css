@@ -55,10 +55,60 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+.topActions {
+  margin-bottom: 1.5rem;
+}
+
+.backLink {
+  background: none;
+  border: none;
+  color: #0d6efd;
+  font-size: 1rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.backLink:hover {
+  color: #004aad;
+  text-decoration: underline;
+}
+
 .alertDanger {
   background-color: #fdf2f2;
   color: #ef4444;
   border: 1px solid #fecaca;
+}
+
+.alertInfo {
+  background-color: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.backLinkBtn {
+  display: inline-block;
+  padding: 0.4rem 0.9rem;
+  background-color: #0d6efd;
+  color: #fff;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
+}
+
+.backLinkBtn:hover {
+  background-color: #0b5ed7;
+  color: #fff;
 }
 
 .sectionNotice {
@@ -190,4 +240,10 @@
 .btnSuccess {
   background-color: #198754;
   color: #fff;
+}
+
+.btnDisabled {
+  background-color: #6c757d;
+  color: #fff;
+  cursor: not-allowed;
 }

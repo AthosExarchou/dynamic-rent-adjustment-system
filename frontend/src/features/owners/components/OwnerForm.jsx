@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Phone, CheckCircle, ChevronRight, Briefcase } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { useAuth } from '../../auth';
+import { OWNER_CONSTRAINTS } from '../models/owner';
 import styles from './OwnerForm.module.css';
 
 export default function OwnerForm() {
@@ -10,12 +11,14 @@ export default function OwnerForm() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ firstName: '', lastName: '', phoneNumber: '' });
   const [error, setError] = useState('');
+  const [errorDetails, setErrorDetails] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setErrorDetails([]);
 
     try {
       await apiClient(`/owner/new`, {
@@ -27,7 +30,10 @@ export default function OwnerForm() {
       alert('Owner profile created successfully!');
       navigate('/profile'); 
     } catch (err) {
-      setError('Failed to create owner profile. Please check your details or you might already have one.');
+      setError(err.message || 'Failed to create owner profile. Please check your details or you might already have one.');
+      if (Array.isArray(err.details) && err.details.length > 0) {
+        setErrorDetails(err.details);
+      }
     } finally {
       setLoading(false);
     }
@@ -44,10 +50,21 @@ export default function OwnerForm() {
         </div>
         
         <div className={styles.body}>
-          {error && <div className={`${styles.alert} ${styles.alertDanger}`}>{error}</div>}
+          {error && (
+            <div className={`${styles.alert} ${styles.alertDanger}`}>
+              <div>{error}</div>
+              {errorDetails.length > 1 && (
+                <ul style={{ marginTop: '0.5rem', marginBottom: 0, paddingLeft: '1.25rem' }}>
+                  {errorDetails.map((detail, idx) => (
+                    <li key={idx}>{detail}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
           
           <div className={styles.sectionNotice}>
-            <p>Become a property owner on DRAS and start listing your apartments to thousands of verified tenants today.</p>
+            <p>Register as a property owner on DRAS to create and manage apartment listings.</p>
           </div>
           
           <form onSubmit={handleSubmit} className={styles.form}>
@@ -58,6 +75,7 @@ export default function OwnerForm() {
                   id="ownerFirstName" 
                   type="text" 
                   required 
+                  maxLength={OWNER_CONSTRAINTS.FIRST_NAME_MAX}
                   value={formData.firstName}
                   onChange={e => setFormData({...formData, firstName: e.target.value})} 
                   className={styles.input} 
@@ -71,6 +89,7 @@ export default function OwnerForm() {
                   id="ownerLastName" 
                   type="text" 
                   required 
+                  maxLength={OWNER_CONSTRAINTS.LAST_NAME_MAX}
                   value={formData.lastName}
                   onChange={e => setFormData({...formData, lastName: e.target.value})} 
                   className={styles.input} 
@@ -86,6 +105,8 @@ export default function OwnerForm() {
                   id="ownerPhone" 
                   type="tel" 
                   required 
+                  minLength={OWNER_CONSTRAINTS.PHONE_MIN}
+                  maxLength={OWNER_CONSTRAINTS.PHONE_MAX}
                   value={formData.phoneNumber}
                   onChange={e => setFormData({...formData, phoneNumber: e.target.value})} 
                   className={styles.input} 
