@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
-import { 
+import {
   Building2, 
   ShieldCheck, 
   Headset, 
@@ -21,6 +21,106 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../auth';
 import styles from './LandingPage.module.css';
+
+const FAQ_ITEMS = [
+  {
+    question: 'How can I search for property listings on DRAS?',
+    answer: (
+      <>
+        <p>DRAS makes it easy and quick to find your ideal place. Here is how you can search for property listings:</p>
+        <ol>
+          <li>Visit the DRAS website.</li>
+          <li>Go to the Listings page.</li>
+          <li>Refine your search further by using the available filters (price range, area size, property type, etc.).</li>
+          <li>Click &quot;Search&quot; to display listings that match your criteria.</li>
+          <li>Browse the listings you are interested in, and click &quot;Apply&quot; to submit your rental application.</li>
+        </ol>
+      </>
+    )
+  },
+  {
+    question: 'What is the process for listing a property on DRAS?',
+    answer: (
+      <>
+        <p>If you want to publish a rental property on DRAS, the process is straightforward:</p>
+        <ol>
+          <li>Register or sign in to your account.</li>
+          <li>Navigate to the Listings page. If you are not yet an owner, click &quot;Become an Owner to List&quot; to register your Owner Profile.</li>
+          <li>Once registered as an owner, the button changes to &quot;Create New Apartment&quot; - click it to open the listing form.</li>
+          <li>Complete all the required fields with your property details (and optionally apply our real-time Market Price Suggestion).</li>
+          <li>Submit your listing. Once reviewed and approved by administrators, it becomes available to prospective tenants.</li>
+        </ol>
+      </>
+    )
+  },
+  {
+    question: 'How does the Market Price Suggestion tool work for property owners?',
+    answer: (
+      <>
+        <p>When creating or editing a listing, DRAS provides an intelligent, automated price recommendation calculated from:</p>
+        <ul>
+          <li><strong>Auto-ARIMA Micro-Forecasts:</strong> Statistical time-series trend forecasting with 95% confidence intervals.</li>
+          <li><strong>Scraped Market Benchmarks:</strong> Live comparative market benchmarks aggregated from residential rental platforms in Athens.</li>
+          <li><strong>Property Micro-Adjustments:</strong> Feature-level evaluations based on area size (m²), floor level, year built, bedrooms, and bathrooms.</li>
+        </ul>
+        <p>Owners can view the estimated fair market range, inspect trend signals, and apply the suggested competitive rate with a single click.</p>
+      </>
+    )
+  },
+  {
+    question: 'What do the "Price recently lowered" and "Below market average" badges mean?',
+    answer: (
+      <>
+        <p>DRAS automatically analyzes rental prices across all active listings to help tenants discover great opportunities:</p>
+        <ul>
+          <li><strong>Price recently lowered:</strong> Highlighted when a property owner has reduced the monthly rent within the past 30 days.</li>
+          <li><strong>Below market average:</strong> Indicated when a listing&#39;s rent per square meter (€/m²) is lower than the prevailing citywide benchmark for comparable properties.</li>
+        </ul>
+        <p>These badges allow tenants to quickly spot high-value deals and promote transparent, market-aligned pricing.</p>
+      </>
+    )
+  },
+  {
+    question: 'How do rental applications work for tenants and owners?',
+    answer: (
+      <>
+        <p>DRAS connects prospective tenants and property owners through a streamlined application workflow:</p>
+        <ul>
+          <li><strong>For Tenants:</strong> Click &quot;Apply&quot; on any available apartment to submit your tenant application with your contact information and rental notes. You can monitor all your pending and approved applications from your profile.</li>
+          <li><strong>For Owners:</strong> Review incoming applicant profiles, contact information, and lease notes directly from your Listings &amp; Applications Dashboard to approve or reject candidates with one click.</li>
+        </ul>
+      </>
+    )
+  },
+  {
+    question: 'Can I be both a tenant and a property owner on the same account?',
+    answer: (
+      <>
+        <p>Yes! DRAS features a flexible multi-role system designed for modern renters and owners:</p>
+        <ul>
+          <li>Every registered user can explore apartments and apply as a tenant.</li>
+          <li>To list a property, click &quot;Become an Owner to List&quot; on the Listings page to add an Owner profile to your existing account.</li>
+          <li>Once registered, you can use &quot;Create New Apartment&quot; to post properties while maintaining all your tenant applications from a single unified account.</li>
+        </ul>
+      </>
+    )
+  },
+  {
+    question: 'What additional services or tools can help me?',
+    answer: (
+      <>
+        <p>By creating an account on DRAS, your personal dashboard allows you to:</p>
+        <ul>
+          <li>Seamlessly manage both tenant and owner activities from a single profile.</li>
+          <li>Track all your pending, approved, and rejected rental applications.</li>
+          <li>Monitor applicant pipelines and property statuses in real time.</li>
+          <li>Access automated price suggestions and data-driven market forecasts.</li>
+        </ul>
+        <p>This provides complete visibility and control over your rental journey in one place.</p>
+      </>
+    )
+  }
+];
 
 export default function LandingPage() {
   const { isAuthenticated } = useAuth();
@@ -54,6 +154,7 @@ export default function LandingPage() {
     {
       id: 1,
       title: "Luxury Downtown Loft",
+      subtitle: "Spacious loft in prime city center",
       address: "123 Main St, Metropolis",
       bedrooms: 2,
       bathrooms: 2,
@@ -64,6 +165,7 @@ export default function LandingPage() {
     {
       id: 2,
       title: "Cozy Suburb Apartment",
+      subtitle: "Quiet neighborhood with beautiful garden",
       address: "45 Elm St, Springfield",
       bedrooms: 3,
       bathrooms: 1,
@@ -74,6 +176,7 @@ export default function LandingPage() {
     {
       id: 3,
       title: "Modern Studio",
+      subtitle: "Compact and modern living space",
       address: "88 Tech Blvd, Metropolis",
       bedrooms: 1,
       bathrooms: 1,
@@ -145,8 +248,11 @@ export default function LandingPage() {
               {featuredApartments.map(apt => (
                 <div key={apt.id} className={styles.apartmentCard}>
                   <div className={styles.apartmentBody}>
-                    <h5 className={styles.apartmentTitle}>{apt.title}</h5>
-                    <p className={styles.apartmentLocation}>{apt.address}</p>
+                    <h5 className={styles.apartmentTitle} title={apt.title}>{apt.title}</h5>
+                    {apt.subtitle && (
+                      <p className={styles.apartmentSubtitle} title={apt.subtitle}>{apt.subtitle}</p>
+                    )}
+                    <p className={styles.apartmentLocation} title={apt.address}>{apt.address}</p>
 
                     <div className={styles.badgesWrapper}>
                       <span className={`${styles.badge} ${styles.badgePremium}`}>
@@ -215,61 +321,24 @@ export default function LandingPage() {
         <section className={`${styles.section} ${styles.faqSection}`}>
           <h2 className={styles.sectionTitle}>Frequently Asked Questions</h2>
           <div className={styles.faqList}>
-            <div className={styles.faqItem}>
-              <button className={styles.faqQuestion} onClick={() => setOpenFaq(openFaq === 0 ? null : 0)}>
-                How can I search for property listings on DRAS?
-                {openFaq === 0 ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-              </button>
-              {openFaq === 0 && (
-                <div className={styles.faqAnswer}>
-                  <p>DRAS makes it easy and quick to find your ideal place in the world. Here's how you can search for property listings:</p>
-                  <ol>
-                    <li>Visit the DRAS website.</li>
-                    <li>Go to the Listings page.</li>
-                    <li>Refine your search further by using the available filters (price, area, property type, etc).</li>
-                    <li>Click "Search" to display listings that match your criteria.</li>
-                    <li>Browse the listings you're interested in. If a property catches your attention, click Apply to submit your tenant application.</li>
-                  </ol>
-                </div>
-              )}
-            </div>
-
-            <div className={styles.faqItem}>
-              <button className={styles.faqQuestion} onClick={() => setOpenFaq(openFaq === 1 ? null : 1)}>
-                What is the process for listing a property on DRAS?
-                {openFaq === 1 ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-              </button>
-              {openFaq === 1 && (
-                <div className={styles.faqAnswer}>
-                  <p>If you're a property owner and want to publish a property for rent on DRAS, the process is very straightforward:</p>
-                  <ol>
-                    <li>Register or sign in to your account.</li>
-                    <li>Navigate to the Listings page and click "Submit Property."</li>
-                    <li>Complete all the required fields with your property's details.</li>
-                    <li>If this is your first time, you will automatically be registered with an Owner Profile.</li>
-                    <li>Click "Submit" to post your listing. It will be reviewed by administrators and then made available to prospective tenants.</li>
-                  </ol>
-                </div>
-              )}
-            </div>
-
-            <div className={styles.faqItem}>
-              <button className={styles.faqQuestion} onClick={() => setOpenFaq(openFaq === 2 ? null : 2)}>
-                What additional services or tools can help me?
-                {openFaq === 2 ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-              </button>
-              {openFaq === 2 && (
-                <div className={styles.faqAnswer}>
-                  <p>By creating an account on DRAS, you can use your personal profile to:</p>
-                  <ul>
-                    <li>Become a tenant or an owner simply by interacting with the platform.</li>
-                    <li>Manage all your pending and approved rental applications.</li>
-                    <li>Track applicants for your properties in a single Dashboard.</li>
-                  </ul>
-                  <p>This gives you complete control over your rental workflows, with everything organized in one place just for you.</p>
-                </div>
-              )}
-            </div>
+            {FAQ_ITEMS.map((item, index) => (
+              <div key={index} className={styles.faqItem}>
+                <button
+                  type="button"
+                  className={styles.faqQuestion}
+                  onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                  aria-expanded={openFaq === index}
+                >
+                  <span>{item.question}</span>
+                  {openFaq === index ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </button>
+                {openFaq === index && (
+                  <div className={styles.faqAnswer}>
+                    {item.answer}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </section>
       </div>

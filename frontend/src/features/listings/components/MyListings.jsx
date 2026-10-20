@@ -1,14 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Building2, Eye, Trash2, Users } from 'lucide-react';
+import { MapPin, Building2, Eye, Trash2, Users, Power, PowerOff } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import styles from './MyListings.module.css';
+
+const truncateTitle = (title, maxLength = 35) => {
+  if (!title) return 'this property';
+  const trimmed = title.trim();
+  if (trimmed.length <= maxLength) return trimmed;
+  return `${trimmed.substring(0, maxLength)}...`;
+};
 
 export default function MyListings() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [listingToDelete, setListingToDelete] = useState(null);
+  const [listingToToggle, setListingToToggle] = useState(null);
+  const [actionLoading, setActionLoading] = useState(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -32,17 +41,37 @@ export default function MyListings() {
     }
   };
 
-  const confirmDelete = (id) => setListingToDelete(id);
+  const confirmDelete = (id, title) => setListingToDelete({ id, title });
 
   const handleDelete = async () => {
     if (!listingToDelete) return;
     try {
-      await apiClient(`/listings/delete/${listingToDelete}`, { method: 'POST' });
+      await apiClient(`/listings/delete/${listingToDelete.id}`, { method: 'POST' });
       fetchMyListings();
       setListingToDelete(null);
-    } catch {
-      alert('Failed to delete listing.');
+    } catch (err) {
+      alert(err.message || 'Failed to delete listing.');
       setListingToDelete(null);
+    }
+  };
+
+  const confirmToggle = (id, title, action) => {
+    setListingToToggle({ id, title, action });
+  };
+
+  const handleToggle = async () => {
+    if (!listingToToggle) return;
+    const { id, action } = listingToToggle;
+    setActionLoading(id);
+    try {
+      await apiClient(`/listings/${action}/${id}`, { method: 'POST' });
+      await fetchMyListings();
+      setListingToToggle(null);
+    } catch (err) {
+      alert(err.message || `Failed to ${action} listing.`);
+      setListingToToggle(null);
+    } finally {
+      setActionLoading(null);
     }
   };
 
@@ -74,10 +103,12 @@ export default function MyListings() {
                   {l.status}
                 </span>
               </div>
+
+              {l.subtitle && <p className={styles.subtitle}>{l.subtitle}</p>}
               
               <div className={styles.apartmentInfo}>
                 <p className={styles.address}>
-                  <MapPin size={16} /> {l.address}
+                  <MapPin size={16} /> <span>{l.address}</span>
                 </p>
                 <p className={styles.priceInfo}>
                   <span className={styles.priceBadge}>{l.price} € /mo</span>
@@ -85,7 +116,7 @@ export default function MyListings() {
               </div>
               
               <div className={styles.cardFooter}>
-                <Link to={`/listings/${l.id}`} className={`${styles.btn} ${styles.btnOutlineSecondary}`}>
+                <Link to={`/listings/${l.id}`} state={{ from: '/my-listings' }} className={`${styles.btn} ${styles.btnOutlineSecondary}`}>
                   <Eye size={16} /> View
                 </Link>
                 
@@ -93,7 +124,29 @@ export default function MyListings() {
                   <Users size={16} /> Applications
                 </Link>
 
-                <button onClick={() => confirmDelete(l.id)} className={`${styles.btn} ${styles.btnDanger}`}>
+                {l.status === 'APPROVED' && (
+                  <button
+                    onClick={() => confirmToggle(l.id, l.title, 'disable')}
+                    className={`${styles.btn} ${styles.btnDisable}`}
+                    disabled={actionLoading === l.id}
+                    title="Pause listing (hide from public search)"
+                  >
+                    <PowerOff size={16} /> Disable
+                  </button>
+                )}
+
+                {l.status === 'DISABLED' && (
+                  <button
+                    onClick={() => confirmToggle(l.id, l.title, 'enable')}
+                    className={`${styles.btn} ${styles.btnEnable}`}
+                    disabled={actionLoading === l.id}
+                    title="Re-enable listing (publish to public search)"
+                  >
+                    <Power size={16} /> Enable
+                  </button>
+                )}
+
+                <button onClick={() => confirmDelete(l.id, l.title)} className={`${styles.btn} ${styles.btnDanger}`}>
                   <Trash2 size={16} /> Delete
                 </button>
               </div>
@@ -117,13 +170,47 @@ export default function MyListings() {
         </div>
       )}
 
+      {listingToToggle && (
+        <div className={styles.modalBackdrop}>
+          <div className={styles.modalContent}>
+            <h3 className={styles.modalTitle}>
+              {listingToToggle.action === 'disable' ? 'Disable Listing' : 'Enable Listing'}
+            </h3>
+            <p className={styles.modalText}>
+              Are you sure you want to {listingToToggle.action}{' '}
+              <strong className={styles.modalHighlight}>
+                &ldquo;{truncateTitle(listingToToggle.title)}&rdquo;
+              </strong>
+              ?{' '}
+              {listingToToggle.action === 'disable'
+                ? 'It will be hidden from public searches and cannot receive new rental applications.'
+                : 'It will be published back to public searches.'}
+            </p>
+            <div className={styles.modalActions}>
+              <button onClick={() => setListingToToggle(null)} className={styles.btn}>Cancel</button>
+              <button
+                onClick={handleToggle}
+                className={`${styles.btn} ${listingToToggle.action === 'disable' ? styles.btnDisable : styles.btnEnable}`}
+              >
+                {listingToToggle.action === 'disable' ? 'Confirm Disable' : 'Confirm Enable'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {listingToDelete && (
-        <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000}}>
-          <div style={{backgroundColor: 'white', padding: '2rem', borderRadius: '8px', maxWidth: '400px', color: '#333'}}>
-            <h3 style={{marginTop: 0}}>Confirm Deletion</h3>
-            <p>Are you sure you want to delete this listing? This action cannot be undone.</p>
-            <div style={{display: 'flex', gap: '1rem', marginTop: '1.5rem', justifyContent: 'flex-end'}}>
+        <div className={styles.modalBackdrop}>
+          <div className={styles.modalContent}>
+            <h3 className={styles.modalTitle}>Confirm Deletion</h3>
+            <p className={styles.modalText}>
+              Are you sure you want to delete{' '}
+              <strong className={styles.modalHighlight}>
+                &ldquo;{truncateTitle(listingToDelete.title)}&rdquo;
+              </strong>
+              ? This action cannot be undone.
+            </p>
+            <div className={styles.modalActions}>
               <button onClick={() => setListingToDelete(null)} className={styles.btn}>Cancel</button>
               <button onClick={handleDelete} className={`${styles.btn} ${styles.btnDanger}`}>Confirm Delete</button>
             </div>

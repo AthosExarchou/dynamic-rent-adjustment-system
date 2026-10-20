@@ -145,10 +145,11 @@
 }
 
 .cardContent {
-  padding: 1.25rem;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-width: 0;
 }
 
 .cardTop {
@@ -157,6 +158,7 @@
   align-items: flex-start;
   margin-bottom: 1rem;
   gap: 1rem;
+  min-width: 0;
 }
 
 .cardTitle {
@@ -168,11 +170,10 @@
   align-items: flex-start;
   gap: 0.5rem;
   line-height: 1.4;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  min-width: 0;
+  flex: 1;
 }
 
 .cardIcon {
@@ -187,6 +188,7 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 0.35rem;
+  flex-shrink: 0;
 }
 
 .priceBadge {
@@ -205,16 +207,24 @@
   font-size: 0.95rem;
   margin-bottom: 1.5rem;
   color: var(--text-secondary);
+  min-width: 0;
 }
 
 .infoItem {
   display: flex;
   align-items: center;
   gap: 0.35rem;
+  min-width: 0;
 }
 
 .infoItem svg {
   color: #0d6efd;
+  flex-shrink: 0;
+}
+
+.infoItem span {
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .cardFooter {
@@ -293,6 +303,18 @@
 
 .btnOutlineSecondary { border-color: #6c757d; color: #6c757d; background: transparent; }
 .btnOutlineSecondary:hover { background-color: #6c757d; color: #fff; }
+
+.btnApplied {
+  background-color: #d1fae5;
+  color: #065f46;
+  border-color: #a7f3d0;
+  cursor: default;
+}
+.btnApplied:hover {
+  transform: none;
+  box-shadow: none;
+  color: #065f46;
+}
 
 /* Pulse animation */
 @media (min-width: 768px) {

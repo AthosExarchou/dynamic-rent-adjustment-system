@@ -47,6 +47,7 @@
   transition: all 0.3s ease-in-out;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .cardHover:hover {
@@ -59,6 +60,7 @@
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-width: 0;
 }
 
 .cardTop {
@@ -67,6 +69,7 @@
   align-items: flex-start;
   margin-bottom: 1rem;
   gap: 1rem;
+  min-width: 0;
 }
 
 .cardTitle {
@@ -75,11 +78,20 @@
   color: var(--text-primary);
   margin: 0;
   line-height: 1.4;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: -0.5rem 0 1rem 0;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  min-width: 0;
 }
 
 .badge {
@@ -89,6 +101,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  flex-shrink: 0;
 }
 
 .badgeApproved { background-color: #d1e7dd; color: #0f5132; }
@@ -99,19 +112,30 @@
 
 .apartmentInfo {
   margin-bottom: 1.5rem;
+  min-width: 0;
 }
 
 .address {
   color: var(--text-secondary);
   font-size: 0.95rem;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.4rem;
   margin-bottom: 0.75rem;
+  min-width: 0;
 }
 
 .address svg {
   color: #0d6efd;
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+}
+
+.address span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .priceBadge {
@@ -162,6 +186,26 @@
 .btnDanger { background-color: #dc3545; color: #fff; }
 .btnDanger:hover { filter: brightness(1.1); color: #fff; }
 
+.btnDisable, .btnWarning {
+  background-color: #475569;
+  color: #ffffff;
+  border: 1px solid #334155;
+}
+.btnDisable:hover, .btnWarning:hover {
+  background-color: #334155;
+  color: #ffffff;
+}
+
+.btnEnable, .btnSuccessSm {
+  background-color: #198754;
+  color: #ffffff;
+  border: 1px solid #157347;
+}
+.btnEnable:hover, .btnSuccessSm:hover {
+  background-color: #157347;
+  color: #ffffff;
+}
+
 .btnSuccess { background-color: #198754; color: #fff; padding: 0.75rem 1.5rem; font-size: 1rem; }
 .btnSuccess:hover { filter: brightness(1.1); color: #fff; }
 
@@ -174,4 +218,57 @@
 
 .emptyState p {
   margin-bottom: 1.5rem;
+}
+
+/* Confirmation Modal */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1.25rem;
+  backdrop-filter: blur(2px);
+}
+
+.modalContent {
+  background-color: var(--background-paper, #ffffff);
+  color: var(--text-primary, #333333);
+  padding: 2rem;
+  border-radius: 0.65rem;
+  max-width: 440px;
+  width: 100%;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-color, #e2e8f0);
+}
+
+.modalTitle {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+}
+
+.modalText {
+  margin: 0 0 1.5rem 0;
+  line-height: 1.55;
+  font-size: 0.95rem;
+  color: var(--text-secondary, #475569);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.modalHighlight {
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.modalActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
 }

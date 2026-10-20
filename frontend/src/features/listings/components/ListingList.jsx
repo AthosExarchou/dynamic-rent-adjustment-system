@@ -31,6 +31,26 @@ export default function ListingList() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [appliedListingIds, setAppliedListingIds] = useState([]);
+  const [rentingListingId, setRentingListingId] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    if (isAuthenticated && roles.includes('USER')) {
+      apiClient('/tenant/applications')
+        .then(data => {
+          if (!active) return;
+          if (data?.appliedListingIds) {
+            setAppliedListingIds(data.appliedListingIds);
+          }
+          if (data?.rentingListingId != null) {
+            setRentingListingId(data.rentingListingId);
+          }
+        })
+        .catch(() => {});
+    }
+    return () => { active = false; };
+  }, [isAuthenticated, roles]);
 
   // On mount: if the header search bar navigated here with ?search=... or ?title=..., auto-apply it
   useEffect(() => {
@@ -218,9 +238,19 @@ export default function ListingList() {
                     <Search size={16} /> View Details
                   </Link>
                   {isUserOnly && (
-                    <Link to={`/tenant/rent/${l.id}`} className={`${styles.btn} ${styles.btnPrimary} ${styles.actionBtn}`}>
-                      Apply for Rental
-                    </Link>
+                    rentingListingId === Number(l.id) ? (
+                      <span className={`${styles.btn} ${styles.btnApplied} ${styles.actionBtn}`} style={{ backgroundColor: '#198754', borderColor: '#198754' }} title="You are currently renting this property">
+                        <Check size={16} /> Renting
+                      </span>
+                    ) : appliedListingIds.includes(Number(l.id)) ? (
+                      <span className={`${styles.btn} ${styles.btnApplied} ${styles.actionBtn}`} title="You have already applied for this property">
+                        <Check size={16} /> Applied
+                      </span>
+                    ) : (
+                      <Link to={`/tenant/rent/${l.id}`} className={`${styles.btn} ${styles.btnPrimary} ${styles.actionBtn}`}>
+                        Apply for Rental
+                      </Link>
+                    )
                   )}
                 </div>
               </div>
