@@ -29,6 +29,8 @@ services:
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - APP_PUBLIC_URL=http://89.168.95.36
+    volumes:
+      - ./analytics/outputs:/app/analytics/outputs:ro
     depends_on:
       db:
         condition: service_healthy

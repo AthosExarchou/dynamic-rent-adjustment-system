@@ -24,8 +24,13 @@ services:
       - DATABASE_URL=jdbc:postgresql://db:5432/dras_db
       - DATABASE_USERNAME=postgres
       - DATABASE_PASSWORD=postgrespassword
+      - MAIL_USERNAME=${MAIL_USERNAME:-}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-}
+      - APP_PUBLIC_URL=${APP_PUBLIC_URL:-http://localhost:5173}
     ports:
       - "8081:8080"
+    volumes:
+      - ./analytics/outputs:/app/analytics/outputs:ro
     depends_on:
       db:
         condition: service_healthy
