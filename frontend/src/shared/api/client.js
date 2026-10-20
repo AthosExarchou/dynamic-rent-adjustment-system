@@ -71,16 +71,60 @@ async function apiClient(endpoint, options = {}) {
 
     if (!response.ok) {
       let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+      let errorDetails = null;
+      let errorBody = null;
 
       try {
-        const errorBody = await response.json();
-        errorMessage = errorBody.message || errorBody.error || errorMessage;
+        errorBody = await response.json();
+
+        const formatDetail = (d) => {
+          if (typeof d === 'string') return d;
+          if (d && typeof d === 'object') {
+            const msg = d.defaultMessage || d.message;
+            if (d.field && msg) {
+              return `${d.field}: ${msg}`;
+            }
+            return msg || (d.field ? `${d.field} is invalid` : JSON.stringify(d));
+          }
+          return String(d);
+        };
+
+        if (Array.isArray(errorBody.details) && errorBody.details.length > 0) {
+          errorDetails = errorBody.details.map(formatDetail).filter(Boolean);
+        } else if (typeof errorBody.details === 'string') {
+          errorDetails = [errorBody.details];
+        } else if (Array.isArray(errorBody.errors) && errorBody.errors.length > 0) {
+          errorDetails = errorBody.errors.map(formatDetail).filter(Boolean);
+        } else if (errorBody.errors && typeof errorBody.errors === 'object') {
+          errorDetails = Object.entries(errorBody.errors).map(([field, msg]) => `${field}: ${msg}`);
+        } else if (Array.isArray(errorBody.fieldErrors) && errorBody.fieldErrors.length > 0) {
+          errorDetails = errorBody.fieldErrors.map(formatDetail).filter(Boolean);
+        }
+
+        const baseMessage = errorBody.message || errorBody.error;
+
+        if (errorDetails && errorDetails.length > 0) {
+          const detailText = errorDetails.join(', ');
+          if (baseMessage && baseMessage.toLowerCase() !== 'validation failed' && baseMessage.toLowerCase() !== 'bad request') {
+            errorMessage = `${baseMessage}: ${detailText}`;
+          } else {
+            errorMessage = `Validation failed: ${detailText}`;
+          }
+        } else if (baseMessage) {
+          errorMessage = baseMessage;
+        }
       } catch {
         /* Response body is not JSON - use default message */
       }
 
       const error = new Error(errorMessage);
       error.status = response.status;
+      if (errorDetails) {
+        error.details = errorDetails;
+      }
+      if (errorBody) {
+        error.body = errorBody;
+      }
       throw error;
     }
 

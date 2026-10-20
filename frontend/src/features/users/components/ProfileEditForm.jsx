@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../auth';
 import { Settings, User, Mail, CheckCircle, ArrowLeft } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
+import { USER_CONSTRAINTS } from '../models/user';
 import styles from './ProfileForm.module.css';
 
 export default function ProfileEditForm() {
@@ -10,6 +11,7 @@ export default function ProfileEditForm() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ username: user?.username || '', email: user?.email || '' });
   const [error, setError] = useState('');
+  const [errorDetails, setErrorDetails] = useState([]);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -50,6 +52,7 @@ export default function ProfileEditForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setErrorDetails([]);
     setLoading(true);
     try {
       await apiClient(`/user/${user?.id}`, {
@@ -64,6 +67,9 @@ export default function ProfileEditForm() {
       if (refreshUser) await refreshUser();
     } catch (err) {
       setError(err.message || 'Failed to update details. Email or Username may be taken.');
+      if (Array.isArray(err.details) && err.details.length > 0) {
+        setErrorDetails(err.details);
+      }
     } finally {
       setLoading(false);
     }
@@ -85,7 +91,18 @@ export default function ProfileEditForm() {
         </div>
         
         <div className={styles.body}>
-          {error && <div className={`${styles.alert} ${styles.alertDanger}`}>{error}</div>}
+          {error && (
+            <div className={`${styles.alert} ${styles.alertDanger}`}>
+              <div>{error}</div>
+              {errorDetails && errorDetails.length > 1 && (
+                <ul style={{ marginTop: '0.5rem', marginBottom: 0, paddingLeft: '1.25rem' }}>
+                  {errorDetails.map((detail, idx) => (
+                    <li key={idx}>{detail}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
           {success && (
             <div className={`${styles.alert} ${styles.alertSuccess}`}>
               <CheckCircle size={18} /> Profile details updated successfully! Redirecting...
@@ -101,6 +118,7 @@ export default function ProfileEditForm() {
                 id="username" 
                 type="text" 
                 required 
+                maxLength={USER_CONSTRAINTS.USERNAME_MAX}
                 value={formData.username} 
                 onChange={e => setFormData({...formData, username: e.target.value})} 
                 className={styles.input} 
@@ -115,6 +133,7 @@ export default function ProfileEditForm() {
                 id="email" 
                 type="email" 
                 required 
+                maxLength={USER_CONSTRAINTS.EMAIL_MAX}
                 value={formData.email} 
                 onChange={e => setFormData({...formData, email: e.target.value})} 
                 className={styles.input} 

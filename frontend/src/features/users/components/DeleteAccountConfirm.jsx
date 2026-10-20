@@ -32,8 +32,8 @@ export default function DeleteAccountConfirm() {
       });
       await logout();
       navigate('/');
-    } catch {
-      setError('Failed to delete account. Incorrect password.');
+    } catch (err) {
+      setError(err.message || 'Failed to delete account. Incorrect password.');
     } finally {
       setLoading(false);
     }
@@ -73,6 +73,7 @@ export default function DeleteAccountConfirm() {
                 id="confirmationPhrase" 
                 type="text" 
                 required 
+                maxLength={30}
                 value={formData.confirmationPhrase} 
                 onChange={e => setFormData({...formData, confirmationPhrase: e.target.value})} 
                 className={`${styles.input} ${styles.inputDanger}`} 
@@ -88,6 +89,7 @@ export default function DeleteAccountConfirm() {
                 id="password" 
                 type="password" 
                 required 
+                maxLength={100}
                 value={formData.password} 
                 onChange={e => setFormData({...formData, password: e.target.value})} 
                 className={styles.input} 

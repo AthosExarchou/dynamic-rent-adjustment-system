@@ -71,8 +71,8 @@ export default function UserManagement() {
     try {
       await apiClient(`/user/role/delete/${userId}/${roleId}`, { method: 'POST' });
       fetchUsersAndRoles();
-    } catch {
-      alert('Failed to remove role.');
+    } catch (err) {
+      alert(err.message || 'Failed to remove role.');
       fetchUsersAndRoles();
     }
   };
@@ -85,8 +85,8 @@ export default function UserManagement() {
       await apiClient(`/user/delete/${userToDelete}`, { method: 'POST' });
       fetchUsersAndRoles();
       setUserToDelete(null);
-    } catch {
-      alert('Failed to delete user.');
+    } catch (err) {
+      alert(err.message || 'Failed to delete user.');
       setUserToDelete(null);
     }
   };

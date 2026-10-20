@@ -82,6 +82,7 @@ export default function RegisterForm() {
                 id="password"
                 type={showPassword ? 'text' : 'password'} 
                 required 
+                maxLength="100"
                 value={formData.password} 
                 onChange={handleChange} 
                 className={styles.input} 

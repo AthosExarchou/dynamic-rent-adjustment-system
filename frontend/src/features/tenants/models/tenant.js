@@ -23,5 +23,7 @@
 export const TENANT_CONSTRAINTS = Object.freeze({
   FIRST_NAME_MAX: 20,
   LAST_NAME_MAX: 20,
+  PHONE_MIN: 7,
+  PHONE_MAX: 25,
   PHONE_REGEX: /^\+?[0-9. ()-]{7,25}$/,
 });

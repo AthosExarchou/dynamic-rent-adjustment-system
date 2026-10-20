@@ -77,6 +77,7 @@ export default function ChangePasswordForm() {
                 id="oldPassword" 
                 type="password" 
                 required 
+                maxLength={100}
                 value={formData.oldPassword} 
                 onChange={e => setFormData({...formData, oldPassword: e.target.value})} 
                 className={styles.input} 
@@ -91,6 +92,7 @@ export default function ChangePasswordForm() {
                 id="newPassword" 
                 type="password" 
                 required 
+                maxLength={100}
                 value={formData.newPassword} 
                 onChange={e => setFormData({...formData, newPassword: e.target.value})} 
                 className={styles.input} 
@@ -105,6 +107,7 @@ export default function ChangePasswordForm() {
                 id="confirmPassword" 
                 type="password" 
                 required 
+                maxLength={100}
                 value={formData.confirmPassword} 
                 onChange={e => setFormData({...formData, confirmPassword: e.target.value})} 
                 className={styles.input} 

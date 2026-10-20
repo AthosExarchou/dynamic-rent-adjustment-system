@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../../shared/api/client';
+import { USER_CONSTRAINTS } from '../../users/models/user';
 import styles from './AdminModals.module.css';
 
 export default function EditUserModal({ user, onClose, onRefresh }) {
@@ -28,8 +29,8 @@ export default function EditUserModal({ user, onClose, onRefresh }) {
       });
       onRefresh();
       onClose();
-    } catch {
-      setError('Failed to update user. Username or email may be taken.');
+    } catch (err) {
+      setError(err.message || 'Failed to update user. Username or email may be taken.');
     } finally {
       setLoading(false);
     }
@@ -47,13 +48,13 @@ export default function EditUserModal({ user, onClose, onRefresh }) {
           <form onSubmit={handleSubmit}>
             <div className={styles.formGroup}>
               <label htmlFor="editUsername" className={styles.label}>Username</label>
-              <input id="editUsername" type="text" required value={formData.username}
+              <input id="editUsername" type="text" required maxLength={USER_CONSTRAINTS.USERNAME_MAX} value={formData.username}
                      onChange={e => setFormData(
                          {...formData, username: e.target.value})} className={styles.input} />
             </div>
             <div className={styles.formGroup}>
               <label htmlFor="editEmail" className={styles.label}>Email Address</label>
-              <input id="editEmail" type="email" required value={formData.email}
+              <input id="editEmail" type="email" required maxLength={USER_CONSTRAINTS.EMAIL_MAX} value={formData.email}
                      onChange={e => setFormData(
                          {...formData, email: e.target.value})} className={styles.input} />
             </div>

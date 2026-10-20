@@ -21,7 +21,11 @@ export default function LoginForm() {
       await login(email, password);
       navigate('/');
     } catch (err) {
-      setError('Invalid username or password.');
+      if (err?.message && err.message !== 'Invalid credentials' && !err.message.startsWith('API Error')) {
+        setError(err.message);
+      } else {
+        setError('Invalid email or password.');
+      }
     } finally {
       setLoading(false);
     }
@@ -48,6 +52,7 @@ export default function LoginForm() {
               id="loginEmail"
               type="email" 
               required 
+              maxLength="50"
               value={email} 
               onChange={e => setEmail(e.target.value)} 
               className={styles.input} 
@@ -62,6 +67,7 @@ export default function LoginForm() {
                 id="loginPassword"
                 type={showPassword ? 'text' : 'password'} 
                 required 
+                maxLength="100"
                 value={password} 
                 onChange={e => setPassword(e.target.value)} 
                 className={styles.input} 
