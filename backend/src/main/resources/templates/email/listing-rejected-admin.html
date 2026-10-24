@@ -84,6 +84,10 @@
     <div class="email-body">
       <p>Dear <strong th:text="${name}">Owner</strong>,</p>
       <p>We regret to inform you that your listing has been <span style="color: #ef4444; font-weight: bold;">rejected</span> by the administrator.</p>
+      <div th:if="${listing.rejectionReason != null and !listing.rejectionReason.isEmpty()}" style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <strong style="color: #991b1b; display: block; margin-bottom: 6px;">Reason for Rejection:</strong>
+        <p style="margin: 0; color: #7f1d1d; white-space: pre-wrap;" th:text="${listing.rejectionReason}">Listing does not meet publication criteria</p>
+      </div>
       <table class="listing-table">
         <tbody>
           <tr>
@@ -128,7 +132,8 @@
           </tr>
         </tbody>
       </table>
-      <p>Please review our community guidelines and ensure your property details are accurate before submitting a new listing.</p>
+      <p>You can edit your listing from your <strong>My Listings</strong> dashboard to address the feedback above and resubmit it for admin review.</p>
+      <p>Please review our community guidelines and ensure your property details are accurate before submitting.</p>
     </div>
     <div class="email-footer">
       <p>&copy; 2025 Dynamic Rent Adjustment System (DRAS). All rights reserved.</p>

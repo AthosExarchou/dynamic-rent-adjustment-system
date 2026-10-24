@@ -115,6 +115,9 @@ public class Listing {
     @Column(nullable = false)
     private boolean external = false;
 
+    @Column(name = "rejection_reason", length = 500)
+    private String rejectionReason;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
@@ -361,7 +364,7 @@ public class Listing {
     }
 
     public boolean isRented() {
-        return status == ListingStatus.RENTED;
+        return status == ListingStatus.RENTED || tenant != null;
     }
 
     public boolean isExternal() {
@@ -429,16 +432,34 @@ public class Listing {
             throw new IllegalStateException("Only pending listings can be approved");
         }
         this.status = ListingStatus.APPROVED;
+        this.rejectionReason = null;
     }
 
-    public void reject() {
+    public void reject(String reason) {
         if (!isPending()) {
             throw new IllegalStateException("Only pending listings can be rejected");
         }
+        if (reason == null || reason.trim().isBlank()) {
+            throw new IllegalArgumentException("Rejection reason is required");
+        }
+        if (reason.trim().length() > 500) {
+            throw new IllegalArgumentException("Rejection reason cannot exceed 500 characters");
+        }
         this.status = ListingStatus.REJECTED;
+        this.rejectionReason = reason.trim();
     }
 
+    public void reject() {
+        reject("Listing does not meet publication criteria");
+    }
 
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
+    }
 
     public void makeAvailable() {
         if (status == ListingStatus.RENTED) {
@@ -530,6 +551,7 @@ public class Listing {
         this.description = safeTrim(this.description);
         this.address = safeTrim(this.address);
         this.sourceUrl = safeTrim(this.sourceUrl);
+        this.rejectionReason = safeTrim(this.rejectionReason);
     }
 
     private String safeTrim(String s) {

@@ -1,15 +1,16 @@
 package gr.hua.dit.dras.services.application;
 
 /* imports */
+import gr.hua.dit.dras.dto.ListingCreateDTO;
 import gr.hua.dit.dras.entities.*;
 import gr.hua.dit.dras.model.enums.ListingStatus;
-import gr.hua.dit.dras.model.enums.RentalStatus;
 import gr.hua.dit.dras.repositories.*;
 import gr.hua.dit.dras.services.domain.ListingService;
 import gr.hua.dit.dras.services.domain.OwnerService;
 import gr.hua.dit.dras.services.domain.TenantService;
 import gr.hua.dit.dras.services.domain.UserService;
 import gr.hua.dit.dras.services.infrastructure.EmailService;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
@@ -107,6 +108,10 @@ public class ListingApplicationService {
     ) {
         User user = requireUser();
 
+        if (user.getRoles().stream().anyMatch(r -> "ADMIN".equals(r.getName()))) {
+            throw new AccessDeniedException("Administrators are not permitted to create listings.");
+        }
+
         Owner owner;
         if (!userService.isUserOwner()) {
 
@@ -162,6 +167,79 @@ public class ListingApplicationService {
                         "ownerCreated"
                 )
         );
+    }
+
+    public Listing editListing(Integer listingId, ListingCreateDTO dto) {
+        User user = requireUser();
+        Listing listing = requireListing(listingId);
+
+        validateModificationRights(listing, user);
+
+        boolean wasRejected = listing.getStatus() == ListingStatus.REJECTED;
+        boolean wasApproved = listing.getStatus() == ListingStatus.APPROVED;
+        boolean isAdmin = user.getRoles().stream().anyMatch(r -> "ADMIN".equals(r.getName()));
+
+        listing.setTitle(dto.getTitle());
+        listing.setSubtitle(dto.getSubtitle());
+        listing.setDescription(dto.getDescription());
+        listing.setPrice(dto.getPrice());
+        listing.setPricePerM2(dto.getPricePerM2());
+        listing.setAddress(dto.getAddress());
+        listing.setPropertyType(dto.getPropertyType());
+        listing.setRentalDuration(dto.getRentalDuration());
+        listing.setYearBuilt(dto.getYearBuilt());
+        listing.setSizeM2(dto.getSizeM2());
+        listing.setFloor(dto.getFloor());
+        listing.setBedrooms(dto.getBedrooms());
+        listing.setBathrooms(dto.getBathrooms());
+        if (dto.getImages() != null) {
+            listing.setImages(new ArrayList<>(
+                    dto.getImages().stream()
+                            .filter(img -> img != null && !img.isBlank())
+                            .toList()
+            ));
+        }
+
+        /* Reset status to PENDING for admin review if an owner edits an APPROVED or REJECTED listing */
+        if (!isAdmin && (wasRejected || wasApproved)) {
+            listing.setStatus(ListingStatus.PENDING);
+            if (wasRejected) {
+                listing.setRejectionReason(null);
+            }
+        }
+
+        Listing updated = listingService.updateListing(listing);
+
+        if (wasRejected) {
+            notifyAdminsOfResubmittedListing(updated);
+        }
+
+        return updated;
+    }
+
+    private void notifyAdminsOfResubmittedListing(Listing listing) {
+        List<User> admins = userService.getAdminUsers();
+        if (admins == null || admins.isEmpty()) {
+            trySendEmail(() -> emailService.sendEmailNotification(
+                    "admin@gmail.com",
+                    "Administrator",
+                    listing,
+                    "listingResubmittedAdmin"
+            ));
+            return;
+        }
+
+        for (User admin : admins) {
+            if (admin.getEmail() != null && !admin.getEmail().isBlank()) {
+                String adminName = admin.getUsername() != null ? admin.getUsername() : "Administrator";
+                trySendEmail(() -> emailService.sendEmailNotification(
+                        admin.getEmail(),
+                        adminName,
+                        listing,
+                        "listingResubmittedAdmin"
+                ));
+            }
+        }
     }
 
     private void assignOwnerRoleIfFirstListing(Owner owner, HttpSession session) {
@@ -225,10 +303,16 @@ public class ListingApplicationService {
         }
     }
 
-    public void rejectListing(Integer listingId) {
+    public void rejectListing(Integer listingId, String reason) {
 
-        Listing listing = requireListing(listingId);
-        listingService.rejectListing(listingId);
+        if (reason == null || reason.trim().isBlank()) {
+            throw new IllegalArgumentException("Rejection reason is required");
+        }
+        if (reason.trim().length() > 500) {
+            throw new IllegalArgumentException("Rejection reason cannot exceed 500 characters");
+        }
+
+        Listing listing = listingService.rejectListing(listingId, reason.trim());
 
         Owner owner = listing.getOwner();
         if (owner != null && owner.getUser() != null) {
@@ -241,6 +325,10 @@ public class ListingApplicationService {
                     )
             );
         }
+    }
+
+    public void rejectListing(Integer listingId) {
+        rejectListing(listingId, "Listing does not meet publication criteria");
     }
 
     /* Disable / Enable Workflows */

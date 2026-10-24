@@ -66,6 +66,15 @@ public class ListingController {
         map.put("images", l.getImages());
         map.put("status", l.getStatus().name());
         map.put("rented", l.isRented());
+        map.put("rejectionReason", l.getRejectionReason());
+        if (l.getOwner() != null) {
+            Map<String, Object> ownerMap = new java.util.HashMap<>();
+            ownerMap.put("id", l.getOwner().getId());
+            if (l.getOwner().getUser() != null) {
+                ownerMap.put("userId", l.getOwner().getUser().getId());
+            }
+            map.put("owner", ownerMap);
+        }
         return map;
     }
 
@@ -116,7 +125,7 @@ public class ListingController {
     }
 
     /* Save new listing */
-    @PreAuthorize("hasAuthority('USER')")
+    @PreAuthorize("hasAuthority('USER') and !hasAuthority('ADMIN')")
     @PostMapping("/new")
     public ResponseEntity<?> saveListing(@Valid @ModelAttribute ListingCreateDTO listingDTO,
                               BindingResult bindingResult,
@@ -155,6 +164,25 @@ public class ListingController {
                 listing, ownerId, firstName, lastName, phoneNumber, session
         );
         return ResponseEntity.ok().build();
+    }
+
+    /* Edit listing */
+    @PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")
+    @PostMapping("/edit/{id}")
+    public ResponseEntity<?> editListing(
+            @PathVariable Integer id,
+            @Valid @ModelAttribute ListingCreateDTO listingDTO,
+            BindingResult bindingResult
+    ) {
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Validation failed",
+                    "details", bindingResult.getAllErrors().stream().map(e -> e.getDefaultMessage()).toList()
+            ));
+        }
+
+        Listing updated = listingApplicationService.editListing(id, listingDTO);
+        return ResponseEntity.ok(mapListing(updated));
     }
 
     /* Delete listing */
@@ -205,9 +233,27 @@ public class ListingController {
     /* Reject listings (admin) */
     @Secured("ADMIN")
     @PostMapping("/reject/{id}")
-    public ResponseEntity<?> rejectListing(@PathVariable Integer id) {
-        listingApplicationService.rejectListing(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<?> rejectListing(
+            @PathVariable Integer id,
+            @RequestParam(value = "reason", required = false) String reasonParam,
+            @RequestBody(required = false) Map<String, String> body
+    ) {
+        String reason = null;
+        if (reasonParam != null && !reasonParam.trim().isBlank()) {
+            reason = reasonParam.trim();
+        } else if (body != null && body.containsKey("reason") && body.get("reason") != null && !body.get("reason").trim().isBlank()) {
+            reason = body.get("reason").trim();
+        }
+
+        if (reason == null || reason.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Rejection reason is required"));
+        }
+        if (reason.length() > 500) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Rejection reason cannot exceed 500 characters"));
+        }
+
+        listingApplicationService.rejectListing(id, reason);
+        return ResponseEntity.ok(Map.of("message", "Listing rejected successfully"));
     }
 
     /* Assign/Unassign Owner */

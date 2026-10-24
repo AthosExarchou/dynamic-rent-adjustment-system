@@ -81,6 +81,11 @@ public class ListingService {
     }
 
     @Transactional
+    public Listing updateListing(Listing listing) {
+        return listingRepository.save(listing);
+    }
+
+    @Transactional
     public void deleteListing(Integer listingId) {
 
         Listing listing = getListing(listingId);
@@ -363,12 +368,17 @@ public class ListingService {
     }
 
     @Transactional
-    public void rejectListing(Integer listingId) {
+    public Listing rejectListing(Integer listingId, String reason) {
 
         Listing listing = getListing(listingId);
-        listing.reject();
+        listing.reject(reason);
 
-        listingRepository.save(listing);
+        return listingRepository.save(listing);
+    }
+
+    @Transactional
+    public Listing rejectListing(Integer listingId) {
+        return rejectListing(listingId, "Listing does not meet publication criteria");
     }
 
     @Transactional

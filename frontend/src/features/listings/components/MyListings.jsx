@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Building2, Eye, Trash2, Users, Power, PowerOff } from 'lucide-react';
+import { MapPin, Building2, Eye, Pencil, Trash2, Users, Power, PowerOff, AlertCircle } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
+import { useAuth } from '../../auth';
 import styles from './MyListings.module.css';
 
 const truncateTitle = (title, maxLength = 35) => {
@@ -12,6 +13,7 @@ const truncateTitle = (title, maxLength = 35) => {
 };
 
 export default function MyListings() {
+  const { roles } = useAuth();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -78,7 +80,8 @@ export default function MyListings() {
   const getStatusBadgeClass = (status) => {
     if (status === 'APPROVED') return styles.badgeApproved;
     if (status === 'PENDING') return styles.badgePending;
-    if (status === 'DISABLED' || status === 'REJECTED') return styles.badgeDisabled;
+    if (status === 'REJECTED') return styles.badgeRejected;
+    if (status === 'DISABLED') return styles.badgeDisabled;
     if (status === 'RENTED') return styles.badgeRented;
     return styles.badgeOther;
   };
@@ -114,11 +117,27 @@ export default function MyListings() {
                   <span className={styles.priceBadge}>{l.price} € /mo</span>
                 </p>
               </div>
+
+              {l.status === 'REJECTED' && l.rejectionReason && (
+                <div className={styles.rejectionNotice}>
+                  <AlertCircle size={16} className={styles.rejectionIcon} />
+                  <div>
+                    <strong>Rejection Reason:</strong>
+                    <p>{l.rejectionReason}</p>
+                  </div>
+                </div>
+              )}
               
               <div className={styles.cardFooter}>
                 <Link to={`/listings/${l.id}`} state={{ from: '/my-listings' }} className={`${styles.btn} ${styles.btnOutlineSecondary}`}>
                   <Eye size={16} /> View
                 </Link>
+
+                {!l.rented && l.status !== 'RENTED' && (
+                  <Link to={`/listings/edit/${l.id}`} className={`${styles.btn} ${styles.btnEdit}`} title="Edit property details">
+                    <Pencil size={16} /> Edit
+                  </Link>
+                )}
                 
                 <Link to={`/my-listings/${l.id}/apps`} className={`${styles.btn} ${styles.btnPrimary}`}>
                   <Users size={16} /> Applications
@@ -166,7 +185,9 @@ export default function MyListings() {
       ) : listings.length === 0 && (
         <div className={styles.emptyState}>
           <p>You have not listed any properties yet.</p>
-          <Link to="/listings/new" className={`${styles.btn} ${styles.btnSuccess}`}>Create New Apartment</Link>
+          {!roles.includes('ADMIN') && (
+            <Link to="/listings/new" className={`${styles.btn} ${styles.btnSuccess}`}>Create New Apartment</Link>
+          )}
         </div>
       )}
 

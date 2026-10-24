@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { MapPin, ClipboardCheck } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
+import { LISTING_CONSTRAINTS } from '../../listings/models/listing';
 import styles from './AdminDashboard.module.css';
+import modalStyles from './AdminModals.module.css';
 
 export default function PendingApprovals() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
+  const [rejectTarget, setRejectTarget] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [rejectionError, setRejectionError] = useState('');
 
   useEffect(() => {
     const controller = new AbortController();
@@ -44,14 +49,52 @@ export default function PendingApprovals() {
     }
   };
 
-  const handleReject = async (id) => {
-    setActionLoading({ id, type: 'reject' });
+  const openRejectModal = (listing) => {
+    setRejectTarget(listing);
+    setRejectionReason('');
+    setRejectionError('');
+  };
+
+  const closeRejectModal = () => {
+    setRejectTarget(null);
+    setRejectionReason('');
+    setRejectionError('');
+  };
+
+  const handleReasonChange = (e) => {
+    let value = e.target.value;
+    if (value.length > LISTING_CONSTRAINTS.REJECTION_REASON_MAX) {
+      value = value.slice(0, LISTING_CONSTRAINTS.REJECTION_REASON_MAX);
+    }
+    setRejectionReason(value);
+    if (rejectionError) setRejectionError('');
+  };
+
+  const handleConfirmReject = async (e) => {
+    e.preventDefault();
+    const trimmed = rejectionReason.trim();
+    if (!trimmed) {
+      setRejectionError('Rejection reason is required.');
+      return;
+    }
+    if (trimmed.length > LISTING_CONSTRAINTS.REJECTION_REASON_MAX) {
+      setRejectionError(`Rejection reason cannot exceed ${LISTING_CONSTRAINTS.REJECTION_REASON_MAX} characters.`);
+      return;
+    }
+
+    setActionLoading({ id: rejectTarget.id, type: 'reject' });
+    setRejectionError('');
     try {
-      await apiClient(`/listings/reject/${id}`, { method: 'POST' });
+      await apiClient(`/listings/reject/${rejectTarget.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: trimmed })
+      });
       alert('Listing rejected.');
+      closeRejectModal();
       await fetchPendingListings();
     } catch (err) {
-      alert(err.message || 'Failed to reject listing.');
+      setRejectionError(err.message || 'Failed to reject listing.');
     } finally {
       setActionLoading(null);
     }
@@ -93,11 +136,11 @@ export default function PendingApprovals() {
                   {actionLoading?.id === l.id && actionLoading?.type === 'approve' ? 'Approving...' : 'Approve Listing'}
                 </button>
                 <button
-                  onClick={() => handleReject(l.id)}
+                  onClick={() => openRejectModal(l)}
                   disabled={actionLoading?.id === l.id}
                   className={styles.rejectBtn}
                 >
-                  {actionLoading?.id === l.id && actionLoading?.type === 'reject' ? 'Rejecting...' : 'Reject Listing'}
+                  Reject Listing
                 </button>
               </div>
             </div>
@@ -111,6 +154,78 @@ export default function PendingApprovals() {
           <p className={styles.emptyState}>No listings pending approval at this moment.</p>
         )}
       </div>
+
+      {rejectTarget && (
+        <div className={modalStyles.modalOverlay}>
+          <div className={modalStyles.modalCard}>
+            <div className={modalStyles.modalHeader}>
+              <h3>Reject Listing</h3>
+              <button onClick={closeRejectModal} className={modalStyles.closeBtn} disabled={actionLoading?.id === rejectTarget.id}>&times;</button>
+            </div>
+            <div className={modalStyles.modalBody}>
+              {rejectionError && <div className={modalStyles.error}>{rejectionError}</div>}
+              <p className={modalStyles.instruction}>
+                Please specify the reason for rejecting <strong>"{rejectTarget.title}"</strong>. The owner will see this feedback so they can correct and resubmit their listing.
+              </p>
+              <form onSubmit={handleConfirmReject}>
+                <div className={modalStyles.formGroup}>
+                  <label htmlFor="rejectionReasonInput" className={modalStyles.label}>
+                    Reason for Rejection <span style={{ color: 'var(--color-danger, #ef4444)' }}>*</span>
+                    <span style={{ fontWeight: 400, color: 'var(--text-secondary)', marginLeft: '0.5rem', fontSize: '0.8rem' }}>
+                      (max {LISTING_CONSTRAINTS.REJECTION_REASON_MAX} characters)
+                    </span>
+                  </label>
+                  <textarea
+                    id="rejectionReasonInput"
+                    className={modalStyles.input}
+                    rows={4}
+                    required
+                    maxLength={LISTING_CONSTRAINTS.REJECTION_REASON_MAX}
+                    placeholder="e.g. Please provide photos of all bedrooms and verify that the listed square footage matches official property documents."
+                    value={rejectionReason}
+                    onChange={handleReasonChange}
+                    style={{ resize: 'vertical' }}
+                    autoFocus
+                  />
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '0.8rem',
+                    color: rejectionReason.length >= LISTING_CONSTRAINTS.REJECTION_REASON_MAX ? 'var(--color-danger, #ef4444)' : 'var(--text-secondary)',
+                    marginTop: '0.25rem'
+                  }}>
+                    <span>
+                      {rejectionReason.length >= LISTING_CONSTRAINTS.REJECTION_REASON_MAX
+                        ? 'Maximum limit reached (500 characters)'
+                        : `${LISTING_CONSTRAINTS.REJECTION_REASON_MAX - rejectionReason.length} characters remaining`}
+                    </span>
+                    <span>
+                      {rejectionReason.length} / {LISTING_CONSTRAINTS.REJECTION_REASON_MAX}
+                    </span>
+                  </div>
+                </div>
+                <div className={modalStyles.modalFooter}>
+                  <button
+                    type="button"
+                    onClick={closeRejectModal}
+                    className={modalStyles.cancelBtn}
+                    disabled={actionLoading?.id === rejectTarget.id}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className={modalStyles.dangerBtn}
+                    disabled={actionLoading?.id === rejectTarget.id || !rejectionReason.trim() || rejectionReason.length > LISTING_CONSTRAINTS.REJECTION_REASON_MAX}
+                  >
+                    {actionLoading?.id === rejectTarget.id && actionLoading?.type === 'reject' ? 'Rejecting...' : 'Confirm Rejection'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

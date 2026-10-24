@@ -1,8 +1,11 @@
 package gr.hua.dit.dras.services.application;
 
 /* imports */
+import gr.hua.dit.dras.dto.ListingCreateDTO;
 import gr.hua.dit.dras.entities.*;
 import gr.hua.dit.dras.model.enums.ListingStatus;
+import gr.hua.dit.dras.model.enums.PropertyType;
+import gr.hua.dit.dras.model.enums.RentalDuration;
 import gr.hua.dit.dras.repositories.RoleRepository;
 import gr.hua.dit.dras.services.domain.*;
 import gr.hua.dit.dras.services.infrastructure.EmailService;
@@ -13,10 +16,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.util.ReflectionTestUtils;
-
 import java.util.Optional;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import jakarta.servlet.http.HttpSession;
 
@@ -87,15 +91,53 @@ class ListingApplicationServiceTest {
     }
 
     @Test
-    @DisplayName("Should reject listing and send email")
+    @DisplayName("Should reject listing with reason and send email")
     void shouldRejectListing() {
-        when(listingService.getListing(100)).thenReturn(testListing);
+        testListing.setStatus(ListingStatus.REJECTED);
+        testListing.setRejectionReason("Incomplete address and incorrect price");
+        when(listingService.rejectListing(100, "Incomplete address and incorrect price")).thenReturn(testListing);
+
+        listingApplicationService.rejectListing(100, "Incomplete address and incorrect price");
+
+        verify(listingService).rejectListing(100, "Incomplete address and incorrect price");
+        verify(emailService).sendEmailNotification(
+                "test@test.com", "Owner Name", testListing, "adminRejected");
+    }
+
+    @Test
+    @DisplayName("Should reject listing with default reason when overloaded method called")
+    void shouldRejectListingWithDefaultReason() {
+        testListing.setStatus(ListingStatus.REJECTED);
+        testListing.setRejectionReason("Listing does not meet publication criteria");
+        when(listingService.rejectListing(100, "Listing does not meet publication criteria")).thenReturn(testListing);
 
         listingApplicationService.rejectListing(100);
 
-        verify(listingService).rejectListing(100);
+        verify(listingService).rejectListing(100, "Listing does not meet publication criteria");
         verify(emailService).sendEmailNotification(
                 "test@test.com", "Owner Name", testListing, "adminRejected");
+    }
+
+    @Test
+    @DisplayName("Should throw IllegalArgumentException when rejection reason is null or blank")
+    void shouldThrowWhenRejectionReasonIsBlank() {
+        assertThatThrownBy(() -> listingApplicationService.rejectListing(100, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Rejection reason is required");
+
+        assertThatThrownBy(() -> listingApplicationService.rejectListing(100, "   "))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Rejection reason is required");
+    }
+
+    @Test
+    @DisplayName("Should throw IllegalArgumentException when rejection reason exceeds 500 characters")
+    void shouldThrowWhenRejectionReasonExceeds500Characters() {
+        String longReason = "a".repeat(501);
+
+        assertThatThrownBy(() -> listingApplicationService.rejectListing(100, longReason))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Rejection reason cannot exceed 500 characters");
     }
 
     @Test
@@ -264,5 +306,120 @@ class ListingApplicationServiceTest {
 
         assertThat(result).isEqualTo(testListing);
         verify(listingService).validateListingOwnership(testListing, testUser);
+    }
+
+    @Test
+    @DisplayName("Should edit listing successfully, reset REJECTED to PENDING, and notify admins")
+    void shouldEditListing() {
+        testListing.setStatus(ListingStatus.REJECTED);
+
+        ListingCreateDTO dto = new ListingCreateDTO();
+        dto.setTitle("Updated Title");
+        dto.setSubtitle("Updated Subtitle");
+        dto.setDescription("Updated Description");
+        dto.setPrice(750);
+        dto.setPricePerM2(12);
+        dto.setAddress("Updated St 456");
+        dto.setPropertyType(PropertyType.HOUSE);
+        dto.setRentalDuration(RentalDuration.SHORT_TERM);
+        dto.setYearBuilt(2015);
+        dto.setSizeM2(85);
+        dto.setFloor(3);
+        dto.setBedrooms(2);
+        dto.setBathrooms(1);
+        dto.setImages(List.of("https://example.com/updated.jpg"));
+
+        User adminUser = new User();
+        adminUser.setUsername("admin");
+        adminUser.setEmail("admin@test.com");
+
+        when(userService.getCurrentUserOptional()).thenReturn(Optional.of(testUser));
+        when(listingService.getListing(100)).thenReturn(testListing);
+        when(listingService.updateListing(testListing)).thenReturn(testListing);
+        when(userService.getAdminUsers()).thenReturn(List.of(adminUser));
+
+        Listing updated = listingApplicationService.editListing(100, dto);
+
+        assertThat(updated).isEqualTo(testListing);
+        assertThat(testListing.getTitle()).isEqualTo("Updated Title");
+        assertThat(testListing.getSubtitle()).isEqualTo("Updated Subtitle");
+        assertThat(testListing.getPrice()).isEqualTo(750);
+        assertThat(testListing.getStatus()).isEqualTo(ListingStatus.PENDING);
+        assertThat(testListing.getImages()).containsExactly("https://example.com/updated.jpg");
+
+        verify(listingService).validateListingModificationRights(testListing, testUser);
+        verify(listingService).updateListing(testListing);
+        verify(emailService).sendEmailNotification("admin@test.com", "admin", testListing, "listingResubmittedAdmin");
+    }
+
+    @Test
+    @DisplayName("Should reset APPROVED to PENDING when owner edits, without notifying admin")
+    void shouldResetApprovedToPendingWhenOwnerEdits() {
+        testListing.setStatus(ListingStatus.APPROVED);
+
+        ListingCreateDTO dto = new ListingCreateDTO();
+        dto.setTitle("Minor Update");
+        dto.setDescription("Minor update desc");
+        dto.setPrice(650);
+        dto.setAddress("Athens 123");
+        dto.setSizeM2(50);
+        dto.setPropertyType(PropertyType.APARTMENT);
+        dto.setRentalDuration(RentalDuration.LONG_TERM);
+
+        when(userService.getCurrentUserOptional()).thenReturn(Optional.of(testUser));
+        when(listingService.getListing(100)).thenReturn(testListing);
+        when(listingService.updateListing(testListing)).thenReturn(testListing);
+
+        Listing updated = listingApplicationService.editListing(100, dto);
+
+        assertThat(updated.getStatus()).isEqualTo(ListingStatus.PENDING);
+        verify(emailService, never()).sendEmailNotification(any(), any(), any(), eq("listingResubmittedAdmin"));
+    }
+
+    @Test
+    @DisplayName("Should preserve APPROVED status when admin edits an approved listing")
+    void shouldPreserveApprovedStatusWhenAdminEdits() {
+        testListing.setStatus(ListingStatus.APPROVED);
+
+        User adminUser = new User();
+        ReflectionTestUtils.setField(adminUser, "id", 99);
+        adminUser.setRoles(Set.of(new Role("ADMIN")));
+
+        ListingCreateDTO dto = new ListingCreateDTO();
+        dto.setTitle("Admin Typo Fix");
+        dto.setDescription("Admin updated desc");
+        dto.setPrice(650);
+        dto.setAddress("Athens 123");
+        dto.setSizeM2(50);
+        dto.setPropertyType(PropertyType.APARTMENT);
+        dto.setRentalDuration(RentalDuration.LONG_TERM);
+
+        when(userService.getCurrentUserOptional()).thenReturn(Optional.of(adminUser));
+        when(listingService.getListing(100)).thenReturn(testListing);
+        when(listingService.updateListing(testListing)).thenReturn(testListing);
+
+        Listing updated = listingApplicationService.editListing(100, dto);
+
+        assertThat(updated.getStatus()).isEqualTo(ListingStatus.APPROVED);
+        verify(emailService, never()).sendEmailNotification(any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Should throw AccessDeniedException when admin attempts to create listing")
+    void shouldThrowWhenAdminAttemptsToCreateListing() {
+        User adminUser = new User();
+        ReflectionTestUtils.setField(adminUser, "id", 99);
+        adminUser.setRoles(Set.of(new Role("ADMIN")));
+
+        when(userService.getCurrentUserOptional()).thenReturn(Optional.of(adminUser));
+
+        Listing newListing = new Listing();
+
+        assertThatThrownBy(() -> listingApplicationService
+                .createListing(newListing, null, null, null, null, null))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessageContaining("Administrators are not permitted to create listings");
+
+        verifyNoInteractions(listingService, ownerService);
     }
 }

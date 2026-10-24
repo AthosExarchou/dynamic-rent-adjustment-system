@@ -3,6 +3,7 @@ package gr.hua.dit.dras.controllers.listing;
 /* imports */
 import gr.hua.dit.dras.config.LoginSuccessHandler;
 import gr.hua.dit.dras.config.SecurityConfig;
+import gr.hua.dit.dras.dto.ListingCreateDTO;
 import gr.hua.dit.dras.dto.ListingFilterDTO;
 import gr.hua.dit.dras.entities.Listing;
 import gr.hua.dit.dras.model.enums.ListingStatus;
@@ -17,6 +18,7 @@ import gr.hua.dit.dras.web.exception.RestExceptionHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -29,6 +31,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -145,14 +148,70 @@ class ListingControllerWebMvcTest {
     }
 
     @Test
-    @DisplayName("POST /listings/reject/{id} by admin returns 200 OK")
+    @DisplayName("POST /listings/reject/{id} with reason exceeding 500 characters returns 400 Bad Request")
     @WithMockUser(authorities = "ADMIN")
-    void rejectListing_Admin_ReturnsOk() throws Exception {
+    void rejectListing_Admin_WithReasonExceeding500Characters_ReturnsBadRequest() throws Exception {
+        String longReason = "a".repeat(501);
+
         mockMvc.perform(post("/listings/reject/5")
-                        .with(csrf()))
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\": \"" + longReason + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Rejection reason cannot exceed 500 characters"));
+
+        verifyNoInteractions(listingApplicationService);
+    }
+
+    @Test
+    @DisplayName("POST /listings/reject/{id} by admin with JSON reason returns 200 OK")
+    @WithMockUser(authorities = "ADMIN")
+    void rejectListing_Admin_WithJsonReason_ReturnsOk() throws Exception {
+        mockMvc.perform(post("/listings/reject/5")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\": \"Blurry photos and price too high\"}"))
                 .andExpect(status().isOk());
 
-        verify(listingApplicationService).rejectListing(5);
+        verify(listingApplicationService).rejectListing(5, "Blurry photos and price too high");
+    }
+
+    @Test
+    @DisplayName("POST /listings/reject/{id} by admin with request param reason returns 200 OK")
+    @WithMockUser(authorities = "ADMIN")
+    void rejectListing_Admin_WithParamReason_ReturnsOk() throws Exception {
+        mockMvc.perform(post("/listings/reject/5")
+                        .with(csrf())
+                        .param("reason", "Incomplete address details"))
+                .andExpect(status().isOk());
+
+        verify(listingApplicationService).rejectListing(5, "Incomplete address details");
+    }
+
+    @Test
+    @DisplayName("POST /listings/reject/{id} without reason returns 400 Bad Request")
+    @WithMockUser(authorities = "ADMIN")
+    void rejectListing_Admin_WithoutReason_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/listings/reject/5")
+                        .with(csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Rejection reason is required"));
+
+        verifyNoInteractions(listingApplicationService);
+    }
+
+    @Test
+    @DisplayName("POST /listings/reject/{id} with blank reason returns 400 Bad Request")
+    @WithMockUser(authorities = "ADMIN")
+    void rejectListing_Admin_WithBlankReason_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/listings/reject/5")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\": \"   \"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Rejection reason is required"));
+
+        verifyNoInteractions(listingApplicationService);
     }
 
     @Test
@@ -383,5 +442,118 @@ class ListingControllerWebMvcTest {
                 .andExpect(jsonPath("$.error").value("Validation failed"));
 
         verifyNoInteractions(listingService);
+    }
+
+    @Test
+    @DisplayName("POST /listings/edit/{id} by authorized OWNER returns 200 OK")
+    @WithMockUser(authorities = "OWNER")
+    void editListing_AuthorizedOwner_ReturnsOk() throws Exception {
+        Listing updatedListing = createTestListing(10, "Updated Apartment", ListingStatus.PENDING);
+        when(listingApplicationService.editListing(eq(10), any(ListingCreateDTO.class))).thenReturn(updatedListing);
+
+        mockMvc.perform(post("/listings/edit/10")
+                        .with(csrf())
+                        .param("title", "Updated Apartment")
+                        .param("description", "A renovated modern flat")
+                        .param("price", "700")
+                        .param("pricePerM2", "14")
+                        .param("address", "Patision 100")
+                        .param("propertyType", "APARTMENT")
+                        .param("rentalDuration", "LONG_TERM")
+                        .param("sizeM2", "50"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(10))
+                .andExpect(jsonPath("$.title").value("Updated Apartment"));
+
+        verify(listingApplicationService).editListing(eq(10), any(ListingCreateDTO.class));
+    }
+
+    @Test
+    @DisplayName("POST /listings/edit/{id} with missing required fields returns 400 Bad Request")
+    @WithMockUser(authorities = "OWNER")
+    void editListing_ValidationFailure_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/listings/edit/10")
+                        .with(csrf())
+                        .param("title", "") // blank title violates @NotBlank
+                        .param("price", "-10"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Validation failed"));
+
+        verifyNoInteractions(listingApplicationService);
+    }
+
+    @Test
+    @DisplayName("POST /listings/edit/{id} unauthenticated redirects to login")
+    void editListing_Unauthenticated_RedirectsToLogin() throws Exception {
+        mockMvc.perform(post("/listings/edit/10")
+                        .with(csrf())
+                        .param("title", "New Title"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("http://localhost/login"));
+
+        verifyNoInteractions(listingApplicationService);
+    }
+
+    @Test
+    @DisplayName("POST /listings/new by ADMIN returns 403 Forbidden")
+    @WithMockUser(authorities = {"ADMIN", "USER"})
+    void saveListing_Admin_ReturnsForbidden() throws Exception {
+        mockMvc.perform(post("/listings/new")
+                        .with(csrf())
+                        .param("title", "New Admin Apartment")
+                        .param("description", "Admin apartment")
+                        .param("price", "700")
+                        .param("pricePerM2", "14")
+                        .param("address", "Patision 100")
+                        .param("propertyType", "APARTMENT")
+                        .param("rentalDuration", "LONG_TERM")
+                        .param("sizeM2", "50"))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(listingApplicationService);
+    }
+
+    @Test
+    @DisplayName("POST /listings/edit/{id} by ADMIN returns 200 OK")
+    @WithMockUser(authorities = "ADMIN")
+    void editListing_AuthorizedAdmin_ReturnsOk() throws Exception {
+        Listing updatedListing = createTestListing(10, "Admin Edited Apartment", ListingStatus.APPROVED);
+        when(listingApplicationService.editListing(eq(10), any(ListingCreateDTO.class))).thenReturn(updatedListing);
+
+        mockMvc.perform(post("/listings/edit/10")
+                        .with(csrf())
+                        .param("title", "Admin Edited Apartment")
+                        .param("description", "A renovated modern flat")
+                        .param("price", "800")
+                        .param("pricePerM2", "16")
+                        .param("address", "Patision 100")
+                        .param("propertyType", "APARTMENT")
+                        .param("rentalDuration", "LONG_TERM")
+                        .param("sizeM2", "50"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(10))
+                .andExpect(jsonPath("$.title").value("Admin Edited Apartment"));
+
+        verify(listingApplicationService).editListing(eq(10), any(ListingCreateDTO.class));
+    }
+
+    @Test
+    @DisplayName("POST /listings/edit/{id} by non-owner returns 403 Forbidden")
+    @WithMockUser(authorities = "OWNER")
+    void editListing_NonOwner_ReturnsForbidden() throws Exception {
+        when(listingApplicationService.editListing(eq(10), any(ListingCreateDTO.class)))
+                .thenThrow(new org.springframework.security.access.AccessDeniedException("Not owner of this listing"));
+
+        mockMvc.perform(post("/listings/edit/10")
+                        .with(csrf())
+                        .param("title", "Updated Apartment")
+                        .param("description", "A modern flat")
+                        .param("price", "700")
+                        .param("pricePerM2", "14")
+                        .param("address", "Patision 100")
+                        .param("propertyType", "APARTMENT")
+                        .param("rentalDuration", "LONG_TERM")
+                        .param("sizeM2", "50"))
+                .andExpect(status().isForbidden());
     }
 }
