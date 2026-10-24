@@ -162,11 +162,22 @@ If you ever need to manually fix things on the production server, SSH in and go 
 - **Watch live production logs:** Run `docker compose -f docker-compose.prod.yml logs --tail=100 -f`.
 - **Force a manual redeploy from scratch:** If the frontend isn't updating properly, run `docker compose -f docker-compose.prod.yml build`, followed by `docker compose -f docker-compose.prod.yml down --remove-orphans`, optionally `docker volume rm dras_frontend_dist || true`, and finally `docker compose -f docker-compose.prod.yml up -d`.
 
-## 7. Database Backups
+## 7. Scheduled Host Maintenance & Cron Jobs (OCI VM)
 
-There is a backup script located at `infrastructure/scripts/backup-db.sh`.
-- It is set up on the Oracle server to run automatically every night at 3:00 AM using a cron job, saving backups to `/opt/dras/backups/`.
-- To take a manual backup before doing something risky, run `/opt/dras/repository/infrastructure/scripts/backup-db.sh`.
+The Oracle Cloud VM host runs the following automated scheduled tasks (`crontab -l`):
+
+```cron
+# 1. Weekly Docker cleanup (Sundays at 03:00)
+0 3 * * 0 docker system prune -f >> /home/opc/docker-prune.log 2>&1
+
+# 2. Daily automated database backup (Daily at 03:00)
+0 3 * * * /opt/dras/repository/infrastructure/scripts/backup-db.sh >> /opt/dras/backups/backup.log 2>&1
+
+# 3. Weekly ARIMA model retraining & predictions export (Sundays at 22:00)
+0 22 * * 0 cd /var/lib/jenkins/workspace/dras-prod/analytics && ./venv/bin/python models/arima_micro.py >> /var/log/dras_arima.log 2>&1
+```
+
+- **Manual Backups:** To take an immediate database snapshot before major changes, execute `/opt/dras/repository/infrastructure/scripts/backup-db.sh`. Backups are saved to `/opt/dras/backups/`.
 
 ## 8. Troubleshooting
 
