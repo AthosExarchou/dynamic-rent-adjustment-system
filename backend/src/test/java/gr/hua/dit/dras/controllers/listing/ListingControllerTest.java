@@ -1,5 +1,6 @@
 package gr.hua.dit.dras.controllers.listing;
 
+/* imports */
 import gr.hua.dit.dras.dto.PriceSuggestionDTO;
 import gr.hua.dit.dras.dto.PriceSuggestionRequestDTO;
 import gr.hua.dit.dras.model.enums.PropertyType;
@@ -15,7 +16,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
