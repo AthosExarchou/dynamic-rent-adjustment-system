@@ -145,6 +145,20 @@ public class ListingServiceTest {
     }
 
     @Test
+    void filterListings_withSearchKeyword_shouldCallRepositoryWithSpecification() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setSearch("Athens Studio");
+
+        List<Listing> expectedListings = List.of(new Listing());
+        when(listingRepository.findAll(anyListingSpecification())).thenReturn(expectedListings);
+
+        List<Listing> result = listingService.filterListings(filter);
+
+        assertThat(result).isEqualTo(expectedListings);
+        verify(listingRepository).findAll(anyListingSpecification());
+    }
+
+    @Test
     void filterListings_shouldThrowOnInvalidPriceRange() {
         ListingFilterDTO filter = new ListingFilterDTO();
         filter.setMinPrice(500);

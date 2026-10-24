@@ -136,11 +136,33 @@ public class ListingService {
 
         Specification<Listing> spec = Specification.where(null); // starts with an empty specification
 
-        /* Case-insensitive partial match on title */
-        if (hasText(filter.getTitle())) {
-            spec = spec.and((root, query, cb) ->
-                    cb.like(cb.lower(root.get("title")),
-                            "%" + filter.getTitle().trim().toLowerCase() + "%"));
+        /* Keyword search matching title, subtitle, address, or description */
+        if (hasText(filter.getSearch())) {
+            String[] tokens = filter.getSearch().trim().toLowerCase().split("\\s+");
+            for (String token : tokens) {
+                if (!token.isEmpty()) {
+                    String pattern = "%" + token + "%";
+                    spec = spec.and((root, query, cb) -> cb.or(
+                            cb.like(cb.lower(root.get("title")), pattern),
+                            cb.and(cb.isNotNull(root.get("subtitle")), cb.like(cb.lower(root.get("subtitle")), pattern)),
+                            cb.and(cb.isNotNull(root.get("address")), cb.like(cb.lower(root.get("address")), pattern)),
+                            cb.and(cb.isNotNull(root.get("description")), cb.like(cb.lower(root.get("description")), pattern))
+                    ));
+                }
+            }
+        } else if (hasText(filter.getTitle())) {
+            /* Case-insensitive partial match on title, subtitle, or address */
+            String[] tokens = filter.getTitle().trim().toLowerCase().split("\\s+");
+            for (String token : tokens) {
+                if (!token.isEmpty()) {
+                    String pattern = "%" + token + "%";
+                    spec = spec.and((root, query, cb) -> cb.or(
+                            cb.like(cb.lower(root.get("title")), pattern),
+                            cb.and(cb.isNotNull(root.get("subtitle")), cb.like(cb.lower(root.get("subtitle")), pattern)),
+                            cb.and(cb.isNotNull(root.get("address")), cb.like(cb.lower(root.get("address")), pattern))
+                    ));
+                }
+            }
         }
 
         /* Price range filters */
@@ -167,6 +189,15 @@ public class ListingService {
             spec = spec.and((root, query, cb) ->
                     cb.like(cb.lower(root.get("address")),
                             "%" + filter.getMunicipality().trim().toLowerCase() + "%"));
+        }
+
+        /* Case-insensitive partial match on district (address or subtitle) */
+        if (hasText(filter.getDistrict())) {
+            String term = "%" + filter.getDistrict().trim().toLowerCase() + "%";
+            spec = spec.and((root, query, cb) -> cb.or(
+                    cb.like(cb.lower(root.get("address")), term),
+                    cb.and(cb.isNotNull(root.get("subtitle")), cb.like(cb.lower(root.get("subtitle")), term))
+            ));
         }
 
         /* Bedroom range filters */
@@ -226,11 +257,15 @@ public class ListingService {
                     cb.lessThanOrEqualTo(root.get("updatedAt"), to));
         }
 
-        /* Includes only externally sourced listings */
-        if (Boolean.TRUE.equals(filter.getExternalOnly())) {
+        /* Filter by origin (externally scraped vs directly posted) */
+        if (filter.getExternalOnly() != null) {
             spec = spec.and((root, query, cb) ->
-                    cb.isTrue(root.get("external")));
+                    cb.equal(root.get("external"), filter.getExternalOnly()));
         }
+
+        /* Enforce APPROVED status for publicly filtered listings */
+        spec = spec.and((root, query, cb) ->
+                cb.equal(root.get("status"), APPROVED));
 
         return listingRepository.findAll(spec);
     }

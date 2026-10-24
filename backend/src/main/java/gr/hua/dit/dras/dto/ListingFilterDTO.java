@@ -7,6 +7,7 @@ import java.time.LocalDate;
 public class ListingFilterDTO {
 
     private String title;
+    private String search;
 
     private Integer minPrice;
     private Integer maxPrice;
@@ -36,6 +37,14 @@ public class ListingFilterDTO {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getSearch() {
+        return search;
+    }
+
+    public void setSearch(String search) {
+        this.search = search;
     }
 
     public LocalDate getUpdatedBefore() {
