@@ -52,6 +52,67 @@
   overflow-y: auto;
 }
 
+.mobileSearchForm {
+  margin-bottom: 0.75rem;
+  padding: 0 0.25rem;
+}
+
+.mobileSearchContainer {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 0.5rem 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.mobileSearchContainer:focus-within {
+  border-color: #3b82f6;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.mobileSearchIcon {
+  color: #94a3b8;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+}
+
+.mobileSearchInput {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  width: 100%;
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+
+.mobileSearchInput::placeholder {
+  color: #94a3b8;
+}
+
+.mobileSearchClearBtn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobileSearchClearBtn:hover {
+  color: white;
+}
+
+@media (min-width: 769px) {
+  .mobileSearchForm {
+    display: none;
+  }
+}
+
 .sidebarLink {
   display: flex;
   align-items: center;

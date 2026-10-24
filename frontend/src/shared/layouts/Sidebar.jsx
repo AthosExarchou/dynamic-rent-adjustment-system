@@ -1,14 +1,45 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { Home, Building2, Key, CheckSquare, Users, Info, MessageSquare, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { Home, Building2, Key, CheckSquare, Users, Info, MessageSquare, X, Search } from 'lucide-react';
 import { useAuth } from '../../features/auth';
 import styles from './Sidebar.module.css';
 
 export default function Sidebar({ isOpen, onClose }) {
-  const { isAuthenticated, roles } = useAuth();
-  
+  const { roles } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [mobileSearch, setMobileSearch] = useState('');
+
   const isAdmin = roles.includes('ADMIN');
   const isOwner = roles.includes('OWNER');
+
+  useEffect(() => {
+    if (location.pathname === '/listings') {
+      const params = new URLSearchParams(location.search);
+      setMobileSearch(params.get('search') || params.get('title') || '');
+    } else {
+      setMobileSearch('');
+    }
+  }, [location.pathname, location.search]);
+
+  const handleMobileSearch = (e) => {
+    e.preventDefault();
+    onClose();
+    const query = mobileSearch.trim();
+    if (query) {
+      navigate(`/listings?search=${encodeURIComponent(query)}`);
+    } else {
+      navigate('/listings');
+    }
+  };
+
+  const handleMobileClear = () => {
+    setMobileSearch('');
+    onClose();
+    if (location.pathname === '/listings') {
+      navigate('/listings');
+    }
+  };
 
   return (
     <>
@@ -24,6 +55,30 @@ export default function Sidebar({ isOpen, onClose }) {
         </div>
 
         <nav className={styles.sidebarNav}>
+          {/* Mobile Search Bar */}
+          <form className={styles.mobileSearchForm} onSubmit={handleMobileSearch} role="search">
+            <div className={styles.mobileSearchContainer}>
+              <Search size={16} className={styles.mobileSearchIcon} />
+              <input
+                type="text"
+                placeholder="Search listings..."
+                value={mobileSearch}
+                onChange={(e) => setMobileSearch(e.target.value)}
+                className={styles.mobileSearchInput}
+              />
+              {mobileSearch && (
+                <button
+                  type="button"
+                  onClick={handleMobileClear}
+                  className={styles.mobileSearchClearBtn}
+                  aria-label="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </form>
+
           <NavLink to="/" className={({ isActive }) =>
               isActive ? `${styles.sidebarLink} ${styles.active}` : styles.sidebarLink} onClick={onClose} end>
             <Home size={20} />

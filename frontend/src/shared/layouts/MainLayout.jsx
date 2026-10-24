@@ -60,10 +60,31 @@ export default function MainLayout() {
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
+  // Synchronize the search bar with the active URL search param when on /listings
+  useEffect(() => {
+    if (location.pathname === '/listings') {
+      const params = new URLSearchParams(location.search);
+      const query = params.get('search') || params.get('title') || '';
+      setSearchQuery(query);
+    } else {
+      setSearchQuery('');
+    }
+  }, [location.pathname, location.search]);
+
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/listings?search=${encodeURIComponent(searchQuery.trim())}`);
+    const query = searchQuery.trim();
+    if (query) {
+      navigate(`/listings?search=${encodeURIComponent(query)}`);
+    } else if (location.pathname === '/listings') {
+      navigate('/listings');
+    }
+  };
+
+  const handleSearchClear = () => {
+    setSearchQuery('');
+    if (location.pathname === '/listings') {
+      navigate('/listings');
     }
   };
 
@@ -183,26 +204,30 @@ export default function MainLayout() {
 
               {/* Center Search Bar */}
               <div className={styles.topbarCenter}>
-                <form className={styles.searchContainer} onSubmit={handleSearchSubmit}>
-                  <Search 
-                    className={styles.searchIcon} 
-                    size={16} 
-                    onClick={handleSearchSubmit}
-                    style={{ cursor: 'pointer' }}
-                  />
-                  <input 
-                    type="text" 
-                    placeholder="Search apartments..." 
-                    className={styles.searchInput} 
+                <form className={styles.searchContainer} onSubmit={handleSearchSubmit} role="search">
+                  <button
+                    type="submit"
+                    className={styles.searchBtn} 
+                    aria-label="Search"
+                  >
+                    <Search className={styles.searchIcon} size={16} />
+                  </button>
+                  <input
+                    type="text"
+                    placeholder="Search listings..."
+                    className={styles.searchInput}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                   {searchQuery && (
-                    <X 
-                      size={16} 
-                      onClick={() => setSearchQuery('')}
-                      style={{ cursor: 'pointer', color: 'var(--text-secondary)' }}
-                    />
+                    <button
+                      type="button"
+                      onClick={handleSearchClear}
+                      className={styles.searchClearBtn}
+                      aria-label="Clear search"
+                    >
+                      <X size={16} />
+                    </button>
                   )}
                 </form>
               </div>
