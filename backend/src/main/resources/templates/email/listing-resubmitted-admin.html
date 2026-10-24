@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 40px 0;
+    }
+    .email-wrapper {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    .email-header {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      padding: 30px 20px;
+      text-align: center;
+      color: #ffffff;
+    }
+    .email-header h1 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: 1px;
+    }
+    .email-body {
+      padding: 30px;
+      color: #333333;
+      line-height: 1.6;
+    }
+    .email-footer {
+      background-color: #f8f9fa;
+      padding: 20px;
+      text-align: center;
+      font-size: 13px;
+      color: #6c757d;
+      border-top: 1px solid #eeeeee;
+    }
+    .listing-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      background-color: #f8f9fa;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .listing-table th, .listing-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #eeeeee;
+      text-align: left;
+      font-size: 14px;
+    }
+    .listing-table th {
+      width: 35%;
+      color: #555555;
+      font-weight: 600;
+    }
+    .listing-table tr:last-child th, .listing-table tr:last-child td {
+      border-bottom: none;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      background-color: #f59e0b;
+      color: #ffffff !important;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 600;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <div class="email-header">
+      <h1>Listing Revised &amp; Re-submitted</h1>
+    </div>
+    <div class="email-body">
+      <p>Dear <strong th:text="${name}">Administrator</strong>,</p>
+      <p>A property listing that was previously <strong style="color: #ef4444;">REJECTED</strong> has been updated by its owner and <strong>re-submitted for approval</strong>.</p>
+      <table class="listing-table">
+        <tbody>
+          <tr>
+            <th>Title:</th>
+            <td th:text="${listing.title}">Beautiful Listing</td>
+          </tr>
+          <tr>
+            <th>Address:</th>
+            <td th:text="${listing.address}">Athens</td>
+          </tr>
+          <tr>
+            <th>Floor:</th>
+            <td th:text="${listing.floor}">3</td>
+          </tr>
+          <tr>
+            <th>Bedrooms:</th>
+            <td th:text="${listing.bedrooms}">3</td>
+          </tr>
+          <tr>
+            <th>Bathrooms:</th>
+            <td th:text="${listing.bathrooms}">2</td>
+          </tr>
+          <tr>
+            <th>Area:</th>
+            <td th:text="${listing.sizeM2} + ' m²'">95 m²</td>
+          </tr>
+          <tr>
+            <th>Price:</th>
+            <td th:text="${listing.price} + ' €'">950 €</td>
+          </tr>
+          <tr>
+            <th>Property Type:</th>
+            <td th:text="${listing.propertyType}">APARTMENT</td>
+          </tr>
+          <tr>
+            <th>Duration:</th>
+            <td th:text="${listing.rentalDuration}">LONG_TERM</td>
+          </tr>
+          <tr>
+            <th>Year Built:</th>
+            <td th:text="${listing.yearBuilt}">2007</td>
+          </tr>
+        </tbody>
+      </table>
+      <p>Please review the revised listing details in your administrator approval queue.</p>
+      <a th:href="${publicUrl} + '/admin/approvals'" class="btn">Review in Approvals Queue</a>
+    </div>
+    <div class="email-footer">
+      <p>&copy; 2025 Dynamic Rent Adjustment System (DRAS). All rights reserved.</p>
+      <p>If you have any questions, contact support at <a href="mailto:dras.system@gmail.com" style="color: #0062ff;">dras.system@gmail.com</a></p>
+    </div>
+  </div>
+</body>
+</html>

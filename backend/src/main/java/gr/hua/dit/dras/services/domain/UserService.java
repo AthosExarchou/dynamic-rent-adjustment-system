@@ -127,6 +127,13 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional(readOnly = true)
+    public List<User> getAdminUsers() {
+        return userRepository.findAll().stream()
+                .filter(u -> u.getRoles() != null && u.getRoles().stream().anyMatch(r -> "ADMIN".equals(r.getName())))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public User getUser(Integer userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException(

@@ -90,6 +90,7 @@ public class EmailService {
                 else if (emailType.equals("listingRentedToSomeoneElse")) notifMessage = "A listing you applied for has been rented to someone else.";
                 else if (emailType.equals("userDetailsChanged")) notifMessage = "Your account details have been updated successfully.";
                 else if (emailType.equals("accountDeleted")) notifMessage = "Your account has been deleted. We hope to see you again.";
+                else if (emailType.equals("listingResubmittedAdmin")) notifMessage = "A previously rejected listing has been updated and re-submitted for approval.";
                 else notifMessage = subject;
 
                 notificationService.createNotificationByEmail(to, subject, notifMessage);
@@ -159,6 +160,10 @@ public class EmailService {
             case "listingRentedToSomeoneElse":
                 subject = "A listing you applied for has been rented";
                 template = "email/listing-rented-to-someone-else.html";
+                break;
+            case "listingResubmittedAdmin":
+                subject = "A rejected listing has been edited and re-submitted for approval";
+                template = "email/listing-resubmitted-admin.html";
                 break;
             default:
                 log.error("Unsupported email type requested: {}", emailType);
