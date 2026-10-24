@@ -35,12 +35,13 @@
 
 /* Filter Card */
 .filterCard {
+  position: relative;
+  z-index: 20;
   background-color: var(--background-paper);
   border-radius: 0.5rem;
   box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease-in-out;
   margin-bottom: 2rem;
-  overflow: hidden;
   border: none;
 }
 
@@ -53,6 +54,8 @@
   background-color: #0d6efd;
   color: #fff;
   padding: 1rem 1.5rem;
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
 }
 
 .filterTitle {
@@ -107,12 +110,50 @@
   box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
 }
 
+.advancedToggleWrapper {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  margin: 0.25rem 0;
+}
+
+.advancedToggleBtn {
+  background: transparent;
+  border: 1px dashed rgba(128, 128, 128, 0.4);
+  color: var(--text-primary);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.advancedToggleBtn:hover {
+  background: rgba(13, 110, 253, 0.08);
+  border-color: #0d6efd;
+  color: #0d6efd;
+}
+
+.advancedGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  width: 100%;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
 .filterBtnWrapper {
   display: flex;
   align-items: flex-end;
   min-width: 100%;
   justify-content: flex-end;
   margin-top: 0.5rem;
+  gap: 0.5rem;
 }
 
 @media (min-width: 992px) {
