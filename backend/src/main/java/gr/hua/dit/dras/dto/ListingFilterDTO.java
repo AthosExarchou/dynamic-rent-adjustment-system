@@ -2,31 +2,61 @@ package gr.hua.dit.dras.dto;
 
 /* imports */
 import gr.hua.dit.dras.model.enums.PropertyType;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 public class ListingFilterDTO {
 
+    @Size(max = 150)
     private String title;
+
+    @Size(max = 150)
     private String search;
 
+    @Min(0)
+    @Max(20000)
     private Integer minPrice;
+
+    @Min(0)
+    @Max(20000)
     private Integer maxPrice;
 
     private PropertyType type;
 
+    @Size(max = 255)
     private String municipality;
+
+    @Size(max = 250)
     private String district;
 
+    @Min(0)
+    @Max(10)
     private Integer minBedrooms;
+
+    @Min(0)
+    @Max(10)
     private Integer maxBedrooms;
 
+    @Min(0)
+    @Max(5)
     private Integer minBathrooms;
+
+    @Min(0)
+    @Max(5)
     private Integer maxBathrooms;
 
+    @Min(1800)
     private Integer minYear;
+
     private Integer maxYear;
 
+    @PastOrPresent
     private LocalDate updatedAfter;
+
+    @PastOrPresent
     private LocalDate updatedBefore;
 
     private Boolean externalOnly;

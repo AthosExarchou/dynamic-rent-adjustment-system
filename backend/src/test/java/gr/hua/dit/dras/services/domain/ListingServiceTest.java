@@ -183,6 +183,65 @@ public class ListingServiceTest {
     }
 
     @Test
+    void filterListings_shouldThrowWhenUpdatedAfterEqualsUpdatedBefore() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setUpdatedAfter(LocalDate.of(2026, 6, 20));
+        filter.setUpdatedBefore(LocalDate.of(2026, 6, 20));
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid date range");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowWhenUpdatedAfterIsInFuture() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setUpdatedAfter(LocalDate.now().plusDays(2));
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("cannot be in the future");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowOnInvalidBedroomsRange() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setMinBedrooms(4);
+        filter.setMaxBedrooms(2);
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid bedroom range");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowOnInvalidBathroomsRange() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setMinBathrooms(3);
+        filter.setMaxBathrooms(1);
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid bathroom range");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowOnInvalidYearBuiltRange() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setMinYear(2020);
+        filter.setMaxYear(2010);
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid year built range");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
     @DisplayName("Should approve listing")
     void shouldApproveListing() {
         Listing listing = new Listing();

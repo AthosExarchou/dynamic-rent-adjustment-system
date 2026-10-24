@@ -10,6 +10,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.Year;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -134,7 +136,7 @@ public class ListingService {
         /* Validates numeric and date ranges before building the query */
         validateRanges(filter);
 
-        Specification<Listing> spec = Specification.where(null); // starts with an empty specification
+        Specification<Listing> spec = Specification.allOf(); // starts with an empty specification
 
         /* Keyword search matching title, subtitle, address, or description */
         if (hasText(filter.getSearch())) {
@@ -278,20 +280,76 @@ public class ListingService {
     }
 
     /**
-     * Validates that provided numeric and date ranges are logically correct.
-     * Throws IllegalArgumentException if a range is invalid.
+     * Validates that provided numeric and date ranges are logically correct and adhere to listing constraints.
+     * Throws IllegalArgumentException if a range or constraint is violated.
      */
     private void validateRanges(ListingFilterDTO filter) {
+        LocalDate today = LocalDate.now();
+        int maxYear = Year.now().getValue() + 5;
+
+        // Price constraints
+        if (filter.getMinPrice() != null && (filter.getMinPrice() < 0 || filter.getMinPrice() > 20000)) {
+            throw new IllegalArgumentException("Minimum price must be between 0 and 20000.");
+        }
+        if (filter.getMaxPrice() != null && (filter.getMaxPrice() < 0 || filter.getMaxPrice() > 20000)) {
+            throw new IllegalArgumentException("Maximum price must be between 0 and 20000.");
+        }
         if (filter.getMinPrice() != null &&
                 filter.getMaxPrice() != null &&
                 filter.getMinPrice() > filter.getMaxPrice()) {
             throw new IllegalArgumentException("Invalid price range.");
         }
 
+        // Bedroom constraints
+        if (filter.getMinBedrooms() != null && (filter.getMinBedrooms() < 0 || filter.getMinBedrooms() > 10)) {
+            throw new IllegalArgumentException("Bedrooms must be between 0 and 10.");
+        }
+        if (filter.getMaxBedrooms() != null && (filter.getMaxBedrooms() < 0 || filter.getMaxBedrooms() > 10)) {
+            throw new IllegalArgumentException("Bedrooms must be between 0 and 10.");
+        }
+        if (filter.getMinBedrooms() != null &&
+                filter.getMaxBedrooms() != null &&
+                filter.getMinBedrooms() > filter.getMaxBedrooms()) {
+            throw new IllegalArgumentException("Invalid bedroom range.");
+        }
+
+        // Bathroom constraints (0 - 5)
+        if (filter.getMinBathrooms() != null && (filter.getMinBathrooms() < 0 || filter.getMinBathrooms() > 5)) {
+            throw new IllegalArgumentException("Bathrooms must be between 0 and 5.");
+        }
+        if (filter.getMaxBathrooms() != null && (filter.getMaxBathrooms() < 0 || filter.getMaxBathrooms() > 5)) {
+            throw new IllegalArgumentException("Bathrooms must be between 0 and 5.");
+        }
+        if (filter.getMinBathrooms() != null &&
+                filter.getMaxBathrooms() != null &&
+                filter.getMinBathrooms() > filter.getMaxBathrooms()) {
+            throw new IllegalArgumentException("Invalid bathroom range.");
+        }
+
+        // Year built constraints (1800 - currentYear + 5)
+        if (filter.getMinYear() != null && (filter.getMinYear() < 1800 || filter.getMinYear() > maxYear)) {
+            throw new IllegalArgumentException("Year built must be between 1800 and " + maxYear + ".");
+        }
+        if (filter.getMaxYear() != null && (filter.getMaxYear() < 1800 || filter.getMaxYear() > maxYear)) {
+            throw new IllegalArgumentException("Year built must be between 1800 and " + maxYear + ".");
+        }
+        if (filter.getMinYear() != null &&
+                filter.getMaxYear() != null &&
+                filter.getMinYear() > filter.getMaxYear()) {
+            throw new IllegalArgumentException("Invalid year built range.");
+        }
+
+        // Date constraints (cannot be in future, and updatedAfter must be before updatedBefore)
+        if (filter.getUpdatedAfter() != null && filter.getUpdatedAfter().isAfter(today)) {
+            throw new IllegalArgumentException("Updated After date cannot be in the future.");
+        }
+        if (filter.getUpdatedBefore() != null && filter.getUpdatedBefore().isAfter(today)) {
+            throw new IllegalArgumentException("Updated Before date cannot be in the future.");
+        }
         if (filter.getUpdatedAfter() != null &&
                 filter.getUpdatedBefore() != null &&
-                filter.getUpdatedAfter().isAfter(filter.getUpdatedBefore())) {
-            throw new IllegalArgumentException("Invalid date range.");
+                !filter.getUpdatedAfter().isBefore(filter.getUpdatedBefore())) {
+            throw new IllegalArgumentException("Invalid date range: Updated After must be earlier than Updated Before.");
         }
     }
 

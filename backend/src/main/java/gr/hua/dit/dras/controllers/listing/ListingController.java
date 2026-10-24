@@ -102,7 +102,7 @@ public class ListingController {
     }
 
     @GetMapping("/filter")
-    public ResponseEntity<?> filterListings(@ModelAttribute ListingFilterDTO filter) {
+    public ResponseEntity<?> filterListings(@Valid @ModelAttribute ListingFilterDTO filter) {
         List<Map<String, Object>> res = listingService.filterListings(filter).stream().map(this::mapListing).collect(Collectors.toList());
         return ResponseEntity.ok(res);
     }
