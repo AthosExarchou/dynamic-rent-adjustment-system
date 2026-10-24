@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Building2, Eye, Pencil, Trash2, Users, Power, PowerOff, AlertCircle } from 'lucide-react';
+import { MapPin, Building2, Eye, Pencil, Trash2, Users, Power, PowerOff, AlertCircle, Lock } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { useAuth } from '../../auth';
 import styles from './MyListings.module.css';
@@ -97,81 +97,108 @@ export default function MyListings() {
       <hr className={styles.divider} />
 
       <div className={styles.grid}>
-        {listings.map(l => (
-          <div key={l.id} className={`${styles.card} ${styles.cardHover}`}>
-            <div className={styles.cardContent}>
-              <div className={styles.cardTop}>
-                <h3 className={styles.cardTitle}>{l.title}</h3>
-                <span className={`${styles.badge} ${getStatusBadgeClass(l.status)}`}>
-                  {l.status}
-                </span>
-              </div>
+        {listings.map(l => {
+          const isRented = Boolean(l.rented || l.status === 'RENTED');
 
-              {l.subtitle && <p className={styles.subtitle}>{l.subtitle}</p>}
-              
-              <div className={styles.apartmentInfo}>
-                <p className={styles.address}>
-                  <MapPin size={16} /> <span>{l.address}</span>
-                </p>
-                <p className={styles.priceInfo}>
-                  <span className={styles.priceBadge}>{l.price} € /mo</span>
-                </p>
-              </div>
-
-              {l.status === 'REJECTED' && l.rejectionReason && (
-                <div className={styles.rejectionNotice}>
-                  <AlertCircle size={16} className={styles.rejectionIcon} />
-                  <div>
-                    <strong>Rejection Reason:</strong>
-                    <p>{l.rejectionReason}</p>
-                  </div>
+          return (
+            <div key={l.id} className={`${styles.card} ${styles.cardHover}`}>
+              <div className={styles.cardContent}>
+                <div className={styles.cardTop}>
+                  <h3 className={styles.cardTitle}>{l.title}</h3>
+                  <span className={`${styles.badge} ${getStatusBadgeClass(l.status)}`}>
+                    {l.status}
+                  </span>
                 </div>
-              )}
-              
-              <div className={styles.cardFooter}>
-                <Link to={`/listings/${l.id}`} state={{ from: '/my-listings' }} className={`${styles.btn} ${styles.btnOutlineSecondary}`}>
-                  <Eye size={16} /> View
-                </Link>
 
-                {!l.rented && l.status !== 'RENTED' && (
-                  <Link to={`/listings/edit/${l.id}`} className={`${styles.btn} ${styles.btnEdit}`} title="Edit property details">
-                    <Pencil size={16} /> Edit
-                  </Link>
+                {l.subtitle && <p className={styles.subtitle}>{l.subtitle}</p>}
+                
+                <div className={styles.apartmentInfo}>
+                  <p className={styles.address}>
+                    <MapPin size={16} /> <span>{l.address}</span>
+                  </p>
+                  <p className={styles.priceInfo}>
+                    <span className={styles.priceBadge}>{l.price} € /mo</span>
+                  </p>
+                </div>
+
+                {l.status === 'REJECTED' && l.rejectionReason && (
+                  <div className={styles.rejectionNotice}>
+                    <AlertCircle size={16} className={styles.rejectionIcon} />
+                    <div>
+                      <strong>Rejection Reason:</strong>
+                      <p>{l.rejectionReason}</p>
+                    </div>
+                  </div>
+                )}
+
+                {isRented && (
+                  <div className={styles.rentedNotice}>
+                    <Lock size={16} className={styles.rentedNoticeIcon} />
+                    <div>
+                      <strong>Active Lease</strong>
+                      <p>This property is currently rented. Editing and deletion are locked during the active lease.</p>
+                    </div>
+                  </div>
                 )}
                 
-                <Link to={`/my-listings/${l.id}/apps`} className={`${styles.btn} ${styles.btnPrimary}`}>
-                  <Users size={16} /> Applications
-                </Link>
+                <div className={styles.cardFooter}>
+                  <Link to={`/listings/${l.id}`} state={{ from: '/my-listings' }} className={`${styles.btn} ${styles.btnOutlineSecondary}`}>
+                    <Eye size={16} /> View
+                  </Link>
 
-                {l.status === 'APPROVED' && (
+                  {isRented ? (
+                    <button
+                      className={`${styles.btn} ${styles.btnDisabledAction}`}
+                      disabled
+                      title="This property has an active rental agreement and cannot be edited"
+                    >
+                      <Lock size={14} /> Edit
+                    </button>
+                  ) : (
+                    <Link to={`/listings/edit/${l.id}`} className={`${styles.btn} ${styles.btnEdit}`} title="Edit property details">
+                      <Pencil size={16} /> Edit
+                    </Link>
+                  )}
+                  
+                  <Link to={`/my-listings/${l.id}/apps`} className={`${styles.btn} ${styles.btnPrimary}`}>
+                    <Users size={16} /> Applications
+                  </Link>
+
+                  {l.status === 'APPROVED' && (
+                    <button
+                      onClick={() => confirmToggle(l.id, l.title, 'disable')}
+                      className={`${styles.btn} ${styles.btnDisable}`}
+                      disabled={actionLoading === l.id}
+                      title="Pause listing (hide from public search)"
+                    >
+                      <PowerOff size={16} /> Disable
+                    </button>
+                  )}
+
+                  {l.status === 'DISABLED' && (
+                    <button
+                      onClick={() => confirmToggle(l.id, l.title, 'enable')}
+                      className={`${styles.btn} ${styles.btnEnable}`}
+                      disabled={actionLoading === l.id}
+                      title="Re-enable listing (publish to public search)"
+                    >
+                      <Power size={16} /> Enable
+                    </button>
+                  )}
+
                   <button
-                    onClick={() => confirmToggle(l.id, l.title, 'disable')}
-                    className={`${styles.btn} ${styles.btnDisable}`}
-                    disabled={actionLoading === l.id}
-                    title="Pause listing (hide from public search)"
+                    onClick={() => confirmDelete(l.id, l.title)}
+                    className={`${styles.btn} ${isRented ? styles.btnDisabledAction : styles.btnDanger}`}
+                    disabled={isRented}
+                    title={isRented ? "Rented listings cannot be deleted during an active lease" : "Delete listing"}
                   >
-                    <PowerOff size={16} /> Disable
+                    <Trash2 size={16} /> Delete
                   </button>
-                )}
-
-                {l.status === 'DISABLED' && (
-                  <button
-                    onClick={() => confirmToggle(l.id, l.title, 'enable')}
-                    className={`${styles.btn} ${styles.btnEnable}`}
-                    disabled={actionLoading === l.id}
-                    title="Re-enable listing (publish to public search)"
-                  >
-                    <Power size={16} /> Enable
-                  </button>
-                )}
-
-                <button onClick={() => confirmDelete(l.id, l.title)} className={`${styles.btn} ${styles.btnDanger}`}>
-                  <Trash2 size={16} /> Delete
-                </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       
       {loading ? (

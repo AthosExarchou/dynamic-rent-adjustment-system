@@ -145,6 +145,68 @@
   word-break: break-word;
 }
 
+.rentedNotice {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: #1e40af;
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+[data-theme="dark"] .rentedNotice {
+  background-color: rgba(30, 64, 175, 0.2);
+  border-color: rgba(147, 197, 253, 0.3);
+  color: #93c5fd;
+}
+
+.rentedNoticeIcon {
+  color: #2563eb;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+[data-theme="dark"] .rentedNoticeIcon {
+  color: #60a5fa;
+}
+
+.rentedNotice strong {
+  display: block;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 0.2rem;
+}
+
+.rentedNotice p {
+  margin: 0;
+  color: #1e3a8a;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+[data-theme="dark"] .rentedNotice p {
+  color: #bfdbfe;
+}
+
+.btnDisabledAction {
+  background-color: var(--background-default, #f1f5f9) !important;
+  color: var(--text-muted, #94a3b8) !important;
+  border: 1px solid var(--border-color, #cbd5e1) !important;
+  cursor: not-allowed !important;
+  opacity: 0.65;
+}
+
+.btnDisabledAction:hover {
+  filter: none !important;
+  color: var(--text-muted, #94a3b8) !important;
+  background-color: var(--background-default, #f1f5f9) !important;
+}
+
 .apartmentInfo {
   margin-bottom: 1.5rem;
   min-width: 0;
