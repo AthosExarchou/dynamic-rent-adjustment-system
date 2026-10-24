@@ -141,10 +141,12 @@ export default function DatePicker({
 
   const handleToday = () => {
     const today = new Date();
-    const todayStr = toDateString(today.getFullYear(), today.getMonth(), today.getDate());
+    const currentTodayStr = toDateString(today.getFullYear(), today.getMonth(), today.getDate());
+    if (min && currentTodayStr < min) return;
+    if (max && currentTodayStr > max) return;
     setViewYear(today.getFullYear());
     setViewMonth(today.getMonth());
-    onChange(todayStr);
+    onChange(currentTodayStr);
     setIsOpen(false);
   };
 
@@ -262,6 +264,7 @@ export default function DatePicker({
               type="button"
               className={styles.footerBtn}
               onClick={handleToday}
+              disabled={(min && todayStr < min) || (max && todayStr > max)}
             >
               Today
             </button>

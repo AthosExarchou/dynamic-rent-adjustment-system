@@ -27,7 +27,26 @@ import apiClient from '../../../shared/api/client';
 import styles from './ListingList.module.css';
 import PriceDropIndicator, { computeAvgPricePerM2 } from './PriceDropIndicator';
 import DatePicker from '../../../shared/components/DatePicker';
+import { LISTING_CONSTRAINTS } from '../models/listing';
 
+const getTodayStr = () => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+const offsetDateStr = (dateStr, daysOffset) => {
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() + daysOffset);
+  const nextY = date.getFullYear();
+  const nextM = String(date.getMonth() + 1).padStart(2, '0');
+  const nextD = String(date.getDate()).padStart(2, '0');
+  return `${nextY}-${nextM}-${nextD}`;
+};
 
 export default function ListingList() {
   const { isAuthenticated, roles } = useAuth();
@@ -57,6 +76,9 @@ export default function ListingList() {
   const [error, setError] = useState(null);
   const [appliedListingIds, setAppliedListingIds] = useState([]);
   const [rentingListingId, setRentingListingId] = useState(null);
+
+  const todayStr = getTodayStr();
+  const currentMaxYear = new Date().getFullYear() + LISTING_CONSTRAINTS.YEAR_BUILT_MAX_OFFSET;
 
   const searchTerm = searchParams.get('search') || searchParams.get('title') || '';
   const hasActiveFilters = Array.from(searchParams.keys()).length > 0 || Object.values(filter).some(v => v !== '');
@@ -178,26 +200,83 @@ export default function ListingList() {
     }
   };
 
+  /** Clamps a numeric filter field to [min, max] when the input loses focus (mirrors ListingForm). */
+  const clampField = (field, min, max) => () => {
+    const val = filter[field];
+    if (val === '' || val === null || val === undefined) return;
+    const num = Number(val);
+    if (isNaN(num)) return;
+    const clamped = String(Math.min(Math.max(num, min), max));
+    if (clamped !== String(val)) {
+      setFilter(prev => ({ ...prev, [field]: clamped }));
+    }
+  };
+
+  /** Helper to clamp a value to [min, max] */
+  const clampValue = (val, min, max) => {
+    if (val === '' || val === null || val === undefined) return val;
+    const num = Number(val);
+    if (isNaN(num)) return val;
+    return String(Math.min(Math.max(num, min), max));
+  };
+
   const handleFilterSubmit = (e) => {
     e.preventDefault();
-    if (filter.minPrice && filter.maxPrice && Number(filter.minPrice) > Number(filter.maxPrice)) {
+    const currentMaxYear = new Date().getFullYear() + LISTING_CONSTRAINTS.YEAR_BUILT_MAX_OFFSET;
+    const todayStr = getTodayStr();
+
+    // Auto-clamp numeric values if user submitted directly via Enter key
+    const clampedMinPrice = clampValue(filter.minPrice, LISTING_CONSTRAINTS.PRICE_MIN, LISTING_CONSTRAINTS.PRICE_MAX);
+    const clampedMaxPrice = clampValue(filter.maxPrice, LISTING_CONSTRAINTS.PRICE_MIN, LISTING_CONSTRAINTS.PRICE_MAX);
+    const clampedMinBedrooms = clampValue(filter.minBedrooms, LISTING_CONSTRAINTS.BEDROOMS_MIN, LISTING_CONSTRAINTS.BEDROOMS_MAX);
+    const clampedMaxBedrooms = clampValue(filter.maxBedrooms, LISTING_CONSTRAINTS.BEDROOMS_MIN, LISTING_CONSTRAINTS.BEDROOMS_MAX);
+    const clampedMinBathrooms = clampValue(filter.minBathrooms, LISTING_CONSTRAINTS.BATHROOMS_MIN, LISTING_CONSTRAINTS.BATHROOMS_MAX);
+    const clampedMaxBathrooms = clampValue(filter.maxBathrooms, LISTING_CONSTRAINTS.BATHROOMS_MIN, LISTING_CONSTRAINTS.BATHROOMS_MAX);
+    const clampedMinYear = clampValue(filter.minYear, LISTING_CONSTRAINTS.YEAR_BUILT_MIN, currentMaxYear);
+    const clampedMaxYear = clampValue(filter.maxYear, LISTING_CONSTRAINTS.YEAR_BUILT_MIN, currentMaxYear);
+
+    const activeFilter = {
+      ...filter,
+      minPrice: clampedMinPrice,
+      maxPrice: clampedMaxPrice,
+      minBedrooms: clampedMinBedrooms,
+      maxBedrooms: clampedMaxBedrooms,
+      minBathrooms: clampedMinBathrooms,
+      maxBathrooms: clampedMaxBathrooms,
+      minYear: clampedMinYear,
+      maxYear: clampedMaxYear,
+    };
+    setFilter(activeFilter);
+
+    // Range relationships
+    if (activeFilter.minPrice !== '' && activeFilter.maxPrice !== '' && Number(activeFilter.minPrice) > Number(activeFilter.maxPrice)) {
       setError("Minimum rent cannot be greater than maximum rent.");
       return;
     }
-    if (filter.minBedrooms && filter.maxBedrooms && Number(filter.minBedrooms) > Number(filter.maxBedrooms)) {
+    if (activeFilter.minBedrooms !== '' && activeFilter.maxBedrooms !== '' && Number(activeFilter.minBedrooms) > Number(activeFilter.maxBedrooms)) {
       setError("Minimum bedrooms cannot be greater than maximum bedrooms.");
       return;
     }
-    if (filter.minBathrooms && filter.maxBathrooms && Number(filter.minBathrooms) > Number(filter.maxBathrooms)) {
+    if (activeFilter.minBathrooms !== '' && activeFilter.maxBathrooms !== '' && Number(activeFilter.minBathrooms) > Number(activeFilter.maxBathrooms)) {
       setError("Minimum bathrooms cannot be greater than maximum bathrooms.");
       return;
     }
-    if (filter.minYear && filter.maxYear && Number(filter.minYear) > Number(filter.maxYear)) {
+    if (activeFilter.minYear !== '' && activeFilter.maxYear !== '' && Number(activeFilter.minYear) > Number(activeFilter.maxYear)) {
       setError("Minimum year cannot be greater than maximum year.");
       return;
     }
-    if (filter.updatedAfter && filter.updatedBefore && filter.updatedAfter > filter.updatedBefore) {
-      setError("Updated After date cannot be later than Updated Before date.");
+
+    // Updated Dates bounds & range
+    if (activeFilter.updatedAfter && activeFilter.updatedAfter > todayStr) {
+      setError("Updated After date cannot be in the future.");
+      return;
+    }
+    if (activeFilter.updatedBefore && activeFilter.updatedBefore > todayStr) {
+      setError("Updated Before date cannot be in the future.");
+      return;
+    }
+    if (activeFilter.updatedAfter && activeFilter.updatedBefore && activeFilter.updatedAfter >= activeFilter.updatedBefore) {
+      setError("Updated After date must be earlier than Updated Before date.");
       return;
     }
     setError(null);
@@ -277,6 +356,7 @@ export default function ListingList() {
                 value={filter.title} 
                 onChange={e => setFilter({...filter, title: e.target.value})} 
                 className={styles.input} 
+                maxLength={LISTING_CONSTRAINTS.TITLE_MAX}
                 placeholder="e.g. Studio, Athens..." 
               />
             </div>
@@ -307,9 +387,11 @@ export default function ListingList() {
               </label>
               <input 
                 type="number" 
-                min="0"
+                min={LISTING_CONSTRAINTS.PRICE_MIN}
+                max={LISTING_CONSTRAINTS.PRICE_MAX}
                 value={filter.minPrice} 
                 onChange={e => setFilter({...filter, minPrice: e.target.value})} 
+                onBlur={clampField('minPrice', LISTING_CONSTRAINTS.PRICE_MIN, LISTING_CONSTRAINTS.PRICE_MAX)}
                 className={styles.input} 
                 placeholder="e.g. 300" 
               />
@@ -321,9 +403,11 @@ export default function ListingList() {
               </label>
               <input 
                 type="number" 
-                min="0"
+                min={LISTING_CONSTRAINTS.PRICE_MIN}
+                max={LISTING_CONSTRAINTS.PRICE_MAX}
                 value={filter.maxPrice} 
                 onChange={e => setFilter({...filter, maxPrice: e.target.value})} 
+                onBlur={clampField('maxPrice', LISTING_CONSTRAINTS.PRICE_MIN, LISTING_CONSTRAINTS.PRICE_MAX)}
                 className={styles.input} 
                 placeholder="e.g. 1500" 
               />
@@ -355,6 +439,7 @@ export default function ListingList() {
                     value={filter.municipality} 
                     onChange={e => setFilter({...filter, municipality: e.target.value})} 
                     className={styles.input} 
+                    maxLength={LISTING_CONSTRAINTS.ADDRESS_MAX}
                     placeholder="e.g. Αθηναίων, Καλλιθέας" 
                   />
                 </div>
@@ -368,6 +453,7 @@ export default function ListingList() {
                     value={filter.district} 
                     onChange={e => setFilter({...filter, district: e.target.value})} 
                     className={styles.input} 
+                    maxLength={LISTING_CONSTRAINTS.SUBTITLE_MAX}
                     placeholder="e.g. Κυψέλη, Παγκράτι" 
                   />
                 </div>
@@ -379,9 +465,11 @@ export default function ListingList() {
                   </label>
                   <input 
                     type="number" 
-                    min="0"
+                    min={LISTING_CONSTRAINTS.BEDROOMS_MIN}
+                    max={LISTING_CONSTRAINTS.BEDROOMS_MAX}
                     value={filter.minBedrooms} 
                     onChange={e => setFilter({...filter, minBedrooms: e.target.value})} 
+                    onBlur={clampField('minBedrooms', LISTING_CONSTRAINTS.BEDROOMS_MIN, LISTING_CONSTRAINTS.BEDROOMS_MAX)}
                     className={styles.input} 
                     placeholder="e.g. 1" 
                   />
@@ -393,9 +481,11 @@ export default function ListingList() {
                   </label>
                   <input 
                     type="number" 
-                    min="0"
+                    min={LISTING_CONSTRAINTS.BEDROOMS_MIN}
+                    max={LISTING_CONSTRAINTS.BEDROOMS_MAX}
                     value={filter.maxBedrooms} 
                     onChange={e => setFilter({...filter, maxBedrooms: e.target.value})} 
+                    onBlur={clampField('maxBedrooms', LISTING_CONSTRAINTS.BEDROOMS_MIN, LISTING_CONSTRAINTS.BEDROOMS_MAX)}
                     className={styles.input} 
                     placeholder="e.g. 4" 
                   />
@@ -407,9 +497,11 @@ export default function ListingList() {
                   </label>
                   <input 
                     type="number" 
-                    min="0"
+                    min={LISTING_CONSTRAINTS.BATHROOMS_MIN}
+                    max={LISTING_CONSTRAINTS.BATHROOMS_MAX}
                     value={filter.minBathrooms} 
                     onChange={e => setFilter({...filter, minBathrooms: e.target.value})} 
+                    onBlur={clampField('minBathrooms', LISTING_CONSTRAINTS.BATHROOMS_MIN, LISTING_CONSTRAINTS.BATHROOMS_MAX)}
                     className={styles.input} 
                     placeholder="e.g. 1" 
                   />
@@ -421,9 +513,11 @@ export default function ListingList() {
                   </label>
                   <input 
                     type="number" 
-                    min="0"
+                    min={LISTING_CONSTRAINTS.BATHROOMS_MIN}
+                    max={LISTING_CONSTRAINTS.BATHROOMS_MAX}
                     value={filter.maxBathrooms} 
                     onChange={e => setFilter({...filter, maxBathrooms: e.target.value})} 
+                    onBlur={clampField('maxBathrooms', LISTING_CONSTRAINTS.BATHROOMS_MIN, LISTING_CONSTRAINTS.BATHROOMS_MAX)}
                     className={styles.input} 
                     placeholder="e.g. 3" 
                   />
@@ -436,10 +530,11 @@ export default function ListingList() {
                   </label>
                   <input 
                     type="number" 
-                    min="1800"
-                    max="2035"
+                    min={LISTING_CONSTRAINTS.YEAR_BUILT_MIN}
+                    max={currentMaxYear}
                     value={filter.minYear} 
                     onChange={e => setFilter({...filter, minYear: e.target.value})} 
+                    onBlur={clampField('minYear', LISTING_CONSTRAINTS.YEAR_BUILT_MIN, currentMaxYear)}
                     className={styles.input} 
                     placeholder="e.g. 1990" 
                   />
@@ -451,10 +546,11 @@ export default function ListingList() {
                   </label>
                   <input 
                     type="number" 
-                    min="1800"
-                    max="2035"
+                    min={LISTING_CONSTRAINTS.YEAR_BUILT_MIN}
+                    max={currentMaxYear}
                     value={filter.maxYear} 
                     onChange={e => setFilter({...filter, maxYear: e.target.value})} 
+                    onBlur={clampField('maxYear', LISTING_CONSTRAINTS.YEAR_BUILT_MIN, currentMaxYear)}
                     className={styles.input} 
                     placeholder="e.g. 2024" 
                   />
@@ -467,9 +563,19 @@ export default function ListingList() {
                   </label>
                   <DatePicker
                     value={filter.updatedAfter}
-                    onChange={(val) => setFilter({ ...filter, updatedAfter: val })}
+                    onChange={(val) => {
+                      if (val && filter.updatedBefore && val >= filter.updatedBefore) {
+                        setFilter({ ...filter, updatedAfter: val, updatedBefore: '' });
+                      } else {
+                        setFilter({ ...filter, updatedAfter: val });
+                      }
+                    }}
                     placeholder="Select start date"
-                    max={filter.updatedBefore || undefined}
+                    max={
+                      filter.updatedBefore
+                        ? (offsetDateStr(filter.updatedBefore, -1) < todayStr ? offsetDateStr(filter.updatedBefore, -1) : todayStr)
+                        : todayStr
+                    }
                   />
                 </div>
 
@@ -479,9 +585,16 @@ export default function ListingList() {
                   </label>
                   <DatePicker
                     value={filter.updatedBefore}
-                    onChange={(val) => setFilter({ ...filter, updatedBefore: val })}
+                    onChange={(val) => {
+                      if (val && filter.updatedAfter && val <= filter.updatedAfter) {
+                        setFilter({ ...filter, updatedBefore: val, updatedAfter: '' });
+                      } else {
+                        setFilter({ ...filter, updatedBefore: val });
+                      }
+                    }}
                     placeholder="Select end date"
-                    min={filter.updatedAfter || undefined}
+                    min={filter.updatedAfter ? offsetDateStr(filter.updatedAfter, 1) : undefined}
+                    max={todayStr}
                     align="right"
                   />
                 </div>
