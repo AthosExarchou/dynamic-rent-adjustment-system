@@ -110,6 +110,21 @@
   flex-shrink: 0;
 }
 
+.statusBadgeRented {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  padding: 0.4rem 0.8rem;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
 .body {
   padding: 2rem;
   min-width: 0;
@@ -272,6 +287,18 @@
   box-shadow: 0 6px 12px rgba(13, 110, 253, 0.3);
 }
 
+.btnEdit {
+  background-color: #0284c7;
+  color: #fff;
+  box-shadow: 0 4px 6px rgba(2, 132, 199, 0.2);
+}
+
+.btnEdit:hover {
+  background-color: #0369a1;
+  color: #fff;
+  box-shadow: 0 6px 12px rgba(2, 132, 199, 0.3);
+}
+
 .appliedBadge {
   display: inline-flex;
   align-items: center;
@@ -283,4 +310,33 @@
   background-color: #d1fae5;
   color: #065f46;
   border: 1px solid #a7f3d0;
+}
+
+.rentedNoticeBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+  border-radius: var(--radius-md, 6px);
+  padding: 0.85rem 1.25rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .rentedNoticeBanner {
+  background-color: rgba(30, 64, 175, 0.2);
+  color: #93c5fd;
+  border-color: rgba(147, 197, 253, 0.3);
+}
+
+.rentedNoticeIcon {
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .rentedNoticeIcon {
+  color: #60a5fa;
 }

@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { createBrowserRouter, Navigate, useRouteError } from 'react-router-dom';
+import { createBrowserRouter, useRouteError } from 'react-router-dom';
 import ProtectedRoute from '../../shared/components/ProtectedRoute';
 import MainLayout from '../../shared/layouts/MainLayout';
 import styles from './Loading.module.css';
@@ -98,6 +98,7 @@ export const router = createBrowserRouter([
       { path: 'profile/delete', element: <ProtectedRoute>{withSuspense(DeleteAccountConfirm)}</ProtectedRoute> },
       { path: 'owner/new', element: <ProtectedRoute>{withSuspense(OwnerForm)}</ProtectedRoute> },
       { path: 'listings/new', element: <ProtectedRoute requiredRole="OWNER">{withSuspense(ListingForm)}</ProtectedRoute> },
+      { path: 'listings/edit/:listingId', element: <ProtectedRoute requiredRole={['OWNER', 'ADMIN']}>{withSuspense(ListingForm)}</ProtectedRoute> },
       { path: 'tenant/rent/:listingId', element: <ProtectedRoute>{withSuspense(TenantForm)}</ProtectedRoute> },
 
       // Owner Routes

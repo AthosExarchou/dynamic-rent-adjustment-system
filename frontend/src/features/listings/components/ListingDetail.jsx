@@ -13,8 +13,11 @@ import {
   CheckCircle2,
   Calendar,
   Euro,
+  Pencil,
   PenSquare,
-  PowerOff
+  PowerOff,
+  Lock,
+  AlertCircle
 } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { useAuth } from '../../auth';
@@ -26,7 +29,7 @@ export default function ListingDetail() {
   const location = useLocation();
   const backPath = location.state?.from || '/listings';
   const backLabel = location.state?.from === '/my-listings' ? 'Back to My Properties' : 'Back to Listings';
-  const { isAuthenticated, roles } = useAuth();
+  const { isAuthenticated, user, roles } = useAuth();
   const [listing, setListing] = useState(null);
   const [avgPricePerM2, setAvgPricePerM2] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -103,6 +106,7 @@ export default function ListingDetail() {
   );
 
   const isUserOnly = isAuthenticated && roles.includes('USER') && !roles.includes('OWNER') && !roles.includes('ADMIN');
+  const canEdit = (user && listing?.owner?.userId === user.id) || roles.includes('ADMIN');
 
   return (
     <div className={styles.container}>
@@ -120,16 +124,27 @@ export default function ListingDetail() {
               <Building2 className={styles.titleIcon} size={28} />
               Apartment Details
             </h3>
-            {listing.status === 'APPROVED' && (
+            {(listing.status === 'RENTED' || listing.rented) ? (
+              <span className={styles.statusBadgeRented}>
+                <Lock size={16} /> Rented
+              </span>
+            ) : listing.status === 'APPROVED' ? (
               <span className={styles.statusBadge}>
                 <CheckCircle2 size={16} /> Approved
               </span>
-            )}
-            {listing.status === 'DISABLED' && (
+            ) : listing.status === 'DISABLED' ? (
               <span className={styles.statusBadge} style={{ backgroundColor: '#f8d7da', color: '#842029', borderColor: '#f5c2c7' }}>
                 <PowerOff size={16} /> Disabled
               </span>
-            )}
+            ) : listing.status === 'PENDING' ? (
+              <span className={styles.statusBadge} style={{ backgroundColor: '#fff3cd', color: '#856404', borderColor: '#ffeeba' }}>
+                <Clock size={16} /> Pending Approval
+              </span>
+            ) : listing.status === 'REJECTED' ? (
+              <span className={styles.statusBadge} style={{ backgroundColor: '#f8d7da', color: '#842029', borderColor: '#f5c2c7' }}>
+                <AlertCircle size={16} /> Rejected
+              </span>
+            ) : null}
           </div>
         </div>
         
@@ -214,10 +229,39 @@ export default function ListingDetail() {
           </div>
 
           <div className={styles.actionsSection}>
+            {canEdit && !listing.rented && listing.status !== 'RENTED' && (
+              <Link 
+                to={`/listings/edit/${listing.id}`} 
+                state={{ from: `/listings/${listing.id}` }}
+                className={`${styles.btn} ${styles.btnEdit}`}
+              >
+                <Pencil size={18} /> Edit Property
+              </Link>
+            )}
+
+            {canEdit && (listing.rented || listing.status === 'RENTED') && (
+              <div className={styles.rentedNoticeBanner}>
+                <Lock size={18} className={styles.rentedNoticeIcon} />
+                <span>This property has an active rental agreement and cannot be edited until the rental concludes.</span>
+              </div>
+            )}
+
             {listing.status === 'DISABLED' ? (
               <div className={styles.appliedBadge} style={{ backgroundColor: '#f8d7da', borderColor: '#f5c2c7', color: '#842029' }}>
                 <PowerOff size={18} /> Listing Currently Disabled
               </div>
+            ) : (listing.status === 'RENTED' || listing.rented) ? (
+              isUserOnly && (
+                rentingListingId === Number(listing.id) ? (
+                  <div className={styles.appliedBadge} style={{ backgroundColor: '#198754', borderColor: '#198754' }}>
+                    <CheckCircle2 size={18} /> Currently Renting
+                  </div>
+                ) : (
+                  <div className={styles.appliedBadge} style={{ backgroundColor: '#cfe2ff', borderColor: '#b6d4fe', color: '#084298' }}>
+                    <Lock size={18} /> Currently Rented
+                  </div>
+                )
+              )
             ) : isUserOnly && (
               rentingListingId === Number(listing.id) ? (
                 <div className={styles.appliedBadge} style={{ backgroundColor: '#198754', borderColor: '#198754' }}>

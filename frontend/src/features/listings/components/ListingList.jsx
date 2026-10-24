@@ -315,7 +315,7 @@ export default function ListingList() {
   };
 
   const isUserOnly = isAuthenticated && roles.includes('USER') && !roles.includes('OWNER') && !roles.includes('ADMIN');
-  const isOwner = isAuthenticated && roles.includes('OWNER');
+  const isOwner = isAuthenticated && roles.includes('OWNER') && !roles.includes('ADMIN');
 
   return (
     <div className={styles.container}>

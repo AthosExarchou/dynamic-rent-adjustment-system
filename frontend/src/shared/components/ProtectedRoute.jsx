@@ -22,13 +22,16 @@ export default function ProtectedRoute({ children, requiredRole }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (requiredRole && !hasRole(requiredRole)) {
-    return (
-      <div style={{ padding: '4rem 2rem', textAlign: 'center', fontFamily: 'system-ui' }}>
-        <h2 style={{ color: '#dc3545' }}>Access Denied</h2>
-        <p style={{ color: '#666' }}>You do not have the required permissions to view this page.</p>
-      </div>
-    );
+  if (requiredRole) {
+    const requiredRoles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    if (!requiredRoles.some(r => hasRole(r))) {
+      return (
+        <div style={{ padding: '4rem 2rem', textAlign: 'center', fontFamily: 'system-ui' }}>
+          <h2 style={{ color: '#dc3545' }}>Access Denied</h2>
+          <p style={{ color: '#666' }}>You do not have the required permissions to view this page.</p>
+        </div>
+      );
+    }
   }
 
   return children;
