@@ -15,6 +15,8 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.Year;
+import gr.hua.dit.dras.model.enums.PropertyType;
 import java.util.List;
 import java.util.Optional;
 
@@ -239,6 +241,251 @@ public class ListingServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Invalid year built range");
         verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowWhenMinPriceNegative() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setMinPrice(-1);
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Minimum price must be between 0 and 20000.");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowWhenMinPriceExceeds20000() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setMinPrice(20001);
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Minimum price must be between 0 and 20000.");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowWhenMaxPriceNegative() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setMaxPrice(-1);
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Maximum price must be between 0 and 20000.");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowWhenMaxPriceExceeds20000() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setMaxPrice(20001);
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Maximum price must be between 0 and 20000.");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowWhenMinBedroomsNegative() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setMinBedrooms(-1);
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Bedrooms must be between 0 and 10.");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowWhenMinBedroomsExceeds10() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setMinBedrooms(11);
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Bedrooms must be between 0 and 10.");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowWhenMaxBedroomsNegative() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setMaxBedrooms(-1);
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Bedrooms must be between 0 and 10.");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowWhenMaxBedroomsExceeds10() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setMaxBedrooms(11);
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Bedrooms must be between 0 and 10.");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowWhenMinBathroomsNegative() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setMinBathrooms(-1);
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Bathrooms must be between 0 and 5.");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowWhenMinBathroomsExceeds5() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setMinBathrooms(6);
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Bathrooms must be between 0 and 5.");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowWhenMaxBathroomsNegative() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setMaxBathrooms(-1);
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Bathrooms must be between 0 and 5.");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowWhenMaxBathroomsExceeds5() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setMaxBathrooms(6);
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Bathrooms must be between 0 and 5.");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowWhenMinYearLessThan1800() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setMinYear(1799);
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Year built must be between 1800 and");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowWhenMinYearExceedsLimit() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        int futureYear = Year.now().getValue() + 6;
+        filter.setMinYear(futureYear);
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Year built must be between 1800 and");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowWhenMaxYearLessThan1800() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setMaxYear(1799);
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Year built must be between 1800 and");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowWhenMaxYearExceedsLimit() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        int futureYear = Year.now().getValue() + 6;
+        filter.setMaxYear(futureYear);
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Year built must be between 1800 and");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_shouldThrowWhenUpdatedBeforeIsInFuture() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setUpdatedBefore(LocalDate.now().plusDays(1));
+
+        assertThatThrownBy(() -> listingService.filterListings(filter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Updated Before date cannot be in the future.");
+        verify(listingRepository, never()).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_withAllFilterFieldsSet_shouldBuildSpecificationAndFindAll() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setSearch("Athens Luxury Penthouse");
+        filter.setMinPrice(500);
+        filter.setMaxPrice(2500);
+        filter.setType(PropertyType.APARTMENT);
+        filter.setMunicipality("Athens");
+        filter.setDistrict("Kolonaki");
+        filter.setMinBedrooms(2);
+        filter.setMaxBedrooms(4);
+        filter.setMinBathrooms(1);
+        filter.setMaxBathrooms(3);
+        filter.setMinYear(1990);
+        filter.setMaxYear(2022);
+        filter.setUpdatedAfter(LocalDate.now().minusDays(30));
+        filter.setUpdatedBefore(LocalDate.now().minusDays(1));
+        filter.setExternalOnly(true);
+
+        List<Listing> expected = List.of(new Listing());
+        when(listingRepository.findAll(anyListingSpecification())).thenReturn(expected);
+
+        List<Listing> result = listingService.filterListings(filter);
+
+        assertThat(result).isEqualTo(expected);
+        verify(listingRepository).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_withTitleFallback_shouldBuildSpecificationAndFindAll() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+        filter.setTitle("Cozy Studio Center");
+        filter.setExternalOnly(false);
+
+        List<Listing> expected = List.of(new Listing());
+        when(listingRepository.findAll(anyListingSpecification())).thenReturn(expected);
+
+        List<Listing> result = listingService.filterListings(filter);
+
+        assertThat(result).isEqualTo(expected);
+        verify(listingRepository).findAll(anyListingSpecification());
+    }
+
+    @Test
+    void filterListings_withEmptyFilter_shouldBuildSpecificationAndFindAll() {
+        ListingFilterDTO filter = new ListingFilterDTO();
+
+        List<Listing> expected = List.of(new Listing(), new Listing());
+        when(listingRepository.findAll(anyListingSpecification())).thenReturn(expected);
+
+        List<Listing> result = listingService.filterListings(filter);
+
+        assertThat(result).isEqualTo(expected);
+        verify(listingRepository).findAll(anyListingSpecification());
     }
 
     @Test
