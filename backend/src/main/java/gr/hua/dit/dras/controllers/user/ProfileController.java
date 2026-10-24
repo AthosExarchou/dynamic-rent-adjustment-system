@@ -26,7 +26,7 @@ public class ProfileController {
 
     /* Process password change */
     @PostMapping("/user/change-password/{id}")
-    @PreAuthorize("hasAuthority('USER')")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN')")
     public ResponseEntity<?> changePassword(
             @PathVariable Integer id,
             @RequestParam String oldPassword,

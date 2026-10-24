@@ -16,7 +16,7 @@ public interface TenantRepository extends JpaRepository<Tenant, Integer> {
     Optional<Tenant> findByUserId(Integer userId);
 
     @Transactional
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query(value = "DELETE FROM tenant_listing_applications WHERE listing_id = :listingId", nativeQuery = true)
     void deleteApplicationsByListingId(@Param("listingId") Integer listingId);
 

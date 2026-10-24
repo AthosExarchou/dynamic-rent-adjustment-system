@@ -115,7 +115,7 @@ public class UserController {
         return new UserDTO(user);
     }
 
-    @Secured("USER")
+    @PreAuthorize("hasAnyAuthority('USER', 'ADMIN')")
     @PostMapping("/user/{user_id}")
     @ResponseBody
     public ResponseEntity<?> editUser(

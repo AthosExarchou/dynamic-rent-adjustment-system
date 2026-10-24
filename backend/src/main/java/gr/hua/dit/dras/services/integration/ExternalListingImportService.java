@@ -109,9 +109,11 @@ public class ExternalListingImportService {
                 /* Replaces images if valid image URLs are provided */
                 if (dto.getImages() != null && !dto.getImages().isEmpty()) {
                     listing.setImages(
-                            dto.getImages().stream()
-                                    .filter(img -> img != null && !img.isBlank())
-                                    .toList()
+                            new ArrayList<>(
+                                    dto.getImages().stream()
+                                            .filter(img -> img != null && !img.isBlank())
+                                            .toList()
+                            )
                     );
                 }
 

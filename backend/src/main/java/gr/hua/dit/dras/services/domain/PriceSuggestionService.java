@@ -11,11 +11,9 @@ import gr.hua.dit.dras.repositories.ListingRepository;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.file.Path;
@@ -75,7 +73,7 @@ public class PriceSuggestionService {
 
     /**
      * Loads the ARIMA and scraped real estate prediction model.
-     * Looks first at the analytics/outputs directory on disk, then falls back to classpath.
+     * Looks at the analytics/outputs directory on disk; if not found, built-in analytical defaults are used.
      */
     public synchronized void loadModelData() {
         try {
@@ -93,18 +91,6 @@ public class PriceSuggestionService {
                     activeModelFile = file;
                     lastLoadedTimestamp = file.lastModified();
                     log.info("Loaded price prediction model from filesystem: {}", file.getAbsolutePath());
-                    return;
-                }
-            }
-
-            // Fallback to classpath resource
-            ClassPathResource resource = new ClassPathResource("data/price_predictions.json");
-            if (resource.exists()) {
-                try (InputStream is = resource.getInputStream()) {
-                    cachedModelNode = objectMapper.readTree(is);
-                    activeModelFile = null;
-                    lastLoadedTimestamp = System.currentTimeMillis();
-                    log.info("Loaded price prediction model from classpath: data/price_predictions.json");
                     return;
                 }
             }
