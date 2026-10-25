@@ -6,6 +6,7 @@
   --color-primary-100: #e0e7ff;
   --color-primary-500: #6366f1;
   --color-primary-600: #4f46e5;
+  --color-primary-700: #4338ca;
   --color-primary-900: #312e81;
 
   /* Secondary / Accent Colors */
@@ -53,6 +54,8 @@
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
   --border-color: #e2e8f0;
+  --card-bg: var(--background-paper);
+  --text-color: var(--text-primary);
 }
 
 [data-theme="dark"] {
@@ -64,6 +67,8 @@
   --border-color: #2d2d2d;
   --color-secondary: #38bdf8;
   --color-secondary-hover: #0284c7;
+  --card-bg: var(--background-paper);
+  --text-color: var(--text-primary);
 }
 
 * {

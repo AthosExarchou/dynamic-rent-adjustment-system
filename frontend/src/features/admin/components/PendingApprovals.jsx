@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { MapPin, ClipboardCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { MapPin, ClipboardCheck, Building2, Eye, Camera } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { LISTING_CONSTRAINTS } from '../../listings/models/listing';
 import styles from './AdminDashboard.module.css';
@@ -114,6 +115,35 @@ export default function PendingApprovals() {
       <div className={styles.grid}>
         {listings.map(l => (
           <div key={l.id} className={styles.card}>
+            <div className={styles.imageWrapper}>
+              <Link to={`/listings/${l.id}`} target="_blank" rel="noopener noreferrer" className={styles.imageLink} aria-label={`View details for ${l.title}`}>
+                {l.images && l.images.length > 0 ? (
+                  <img
+                    src={l.images[0]}
+                    alt={l.title}
+                    className={styles.image}
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      if (e.target.nextSibling) {
+                        e.target.nextSibling.style.display = 'flex';
+                      }
+                    }}
+                  />
+                ) : null}
+                <div
+                  className={styles.noImage}
+                  style={{ display: l.images && l.images.length > 0 ? 'none' : 'flex' }}
+                >
+                  <Building2 size={36} />
+                  <span>No image available</span>
+                </div>
+              </Link>
+              {l.images && l.images.length > 1 && (
+                <span className={styles.imageCountBadge} title={`${l.images.length} photos available`}>
+                  <Camera size={13} /> {l.images.length}
+                </span>
+              )}
+            </div>
             <div className={styles.cardContent}>
               <h3 className={styles.cardTitle}>{l.title}</h3>
               <p className={styles.address}><MapPin size={16} /> {l.address}</p>
@@ -142,6 +172,14 @@ export default function PendingApprovals() {
                 >
                   Reject Listing
                 </button>
+                <Link
+                  to={`/listings/${l.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.viewBtn}
+                >
+                  <Eye size={16} /> View Details
+                </Link>
               </div>
             </div>
           </div>

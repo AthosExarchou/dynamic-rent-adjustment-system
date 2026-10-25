@@ -198,7 +198,7 @@ export default function AboutPage() {
           </p>
           <div className={styles.ctaButtons}>
             <Link to="/listings" className={styles.ctaPrimaryBtn}>
-              <span>Browse Listings</span>
+              <span>Browse Apartments</span>
               <ArrowRight size={18} />
             </Link>
             <Link to="/contact" className={styles.ctaSecondaryBtn}>

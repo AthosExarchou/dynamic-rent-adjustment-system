@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Building2, Eye, Pencil, Trash2, Users, Power, PowerOff, AlertCircle, Lock } from 'lucide-react';
+import { MapPin, Building2, Eye, Pencil, Trash2, Users, Power, PowerOff, AlertCircle, Lock, Camera } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { useAuth } from '../../auth';
 import styles from './MyListings.module.css';
@@ -102,12 +102,41 @@ export default function MyListings() {
 
           return (
             <div key={l.id} className={`${styles.card} ${styles.cardHover}`}>
+              <div className={styles.imageWrapper}>
+                <Link to={`/listings/${l.id}`} state={{ from: '/my-listings' }} className={styles.imageLink} aria-label={`View ${l.title}`}>
+                  {l.images && l.images.length > 0 ? (
+                    <img
+                      src={l.images[0]}
+                      alt={l.title}
+                      className={styles.image}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        if (e.target.nextSibling) {
+                          e.target.nextSibling.style.display = 'flex';
+                        }
+                      }}
+                    />
+                  ) : null}
+                  <div
+                    className={styles.noImage}
+                    style={{ display: l.images && l.images.length > 0 ? 'none' : 'flex' }}
+                  >
+                    <Building2 size={36} />
+                    <span>No image available</span>
+                  </div>
+                </Link>
+                <span className={`${styles.imageStatusBadge} ${getStatusBadgeClass(l.status)}`}>
+                  {l.status}
+                </span>
+                {l.images && l.images.length > 1 && (
+                  <span className={styles.imageCountBadge} title={`${l.images.length} photos available`}>
+                    <Camera size={13} /> {l.images.length}
+                  </span>
+                )}
+              </div>
               <div className={styles.cardContent}>
                 <div className={styles.cardTop}>
                   <h3 className={styles.cardTitle}>{l.title}</h3>
-                  <span className={`${styles.badge} ${getStatusBadgeClass(l.status)}`}>
-                    {l.status}
-                  </span>
                 </div>
 
                 {l.subtitle && <p className={styles.subtitle}>{l.subtitle}</p>}
