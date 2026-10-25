@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { useAuth } from '../../auth';
+import { FavouriteButton } from '../../favourites';
 import styles from './ListingDetail.module.css';
 import PriceDropIndicator, { computeAvgPricePerM2 } from './PriceDropIndicator';
 
@@ -122,7 +123,7 @@ export default function ListingDetail() {
           <div className={styles.headerTitleRow}>
             <h3 className={styles.title}>
               <Building2 className={styles.titleIcon} size={28} />
-              Apartment Details
+              Property Details
             </h3>
             {(listing.status === 'RENTED' || listing.rented) ? (
               <span className={styles.statusBadgeRented}>
@@ -229,6 +230,8 @@ export default function ListingDetail() {
           </div>
 
           <div className={styles.actionsSection}>
+            <FavouriteButton listing={listing} variant="button" showText={true} />
+
             {canEdit && !listing.rented && listing.status !== 'RENTED' && (
               <Link 
                 to={`/listings/edit/${listing.id}`} 

@@ -148,6 +148,26 @@
   border-radius: 4px;
 }
 
+.badge {
+  margin-left: auto;
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border-radius: 9999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.pendingBadge {
+  margin-left: auto;
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border-radius: 9999px;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
 .divider {
   height: 1px;
   background: rgba(255, 255, 255, 0.1);

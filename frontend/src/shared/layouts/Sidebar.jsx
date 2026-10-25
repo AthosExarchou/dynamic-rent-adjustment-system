@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Home, Building2, Key, CheckSquare, Users, Info, MessageSquare, X, Search } from 'lucide-react';
+import { Home, Building2, Key, CheckSquare, Users, Info, MessageSquare, X, Search, Heart } from 'lucide-react';
 import { useAuth } from '../../features/auth';
+import { useFavourites } from '../../features/favourites';
 import styles from './Sidebar.module.css';
 
 export default function Sidebar({ isOpen, onClose }) {
   const { roles } = useAuth();
+  const { favouriteCount, guestFavouritesPending } = useFavourites();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileSearch, setMobileSearch] = useState('');
@@ -89,6 +91,16 @@ export default function Sidebar({ isOpen, onClose }) {
               isActive ? `${styles.sidebarLink} ${styles.active}` : styles.sidebarLink} onClick={onClose}>
             <Building2 size={20} />
             Apartments
+          </NavLink>
+
+          <NavLink to="/favourites" className={({ isActive }) =>
+              isActive ? `${styles.sidebarLink} ${styles.active}` : styles.sidebarLink} onClick={onClose}>
+            <Heart size={20} />
+            Favourites
+            {favouriteCount > 0 && <span className={styles.badge}>{favouriteCount}</span>}
+            {favouriteCount === 0 && guestFavouritesPending > 0 && (
+              <span className={styles.pendingBadge}>{guestFavouritesPending}</span>
+            )}
           </NavLink>
 
           {isOwner && (

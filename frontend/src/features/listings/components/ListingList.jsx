@@ -20,9 +20,11 @@ import {
   Calendar,
   Globe,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Camera
 } from 'lucide-react';
 import { useAuth } from '../../auth';
+import { FavouriteButton } from '../../favourites';
 import apiClient from '../../../shared/api/client';
 import styles from './ListingList.module.css';
 import PriceDropIndicator, { computeAvgPricePerM2 } from './PriceDropIndicator';
@@ -648,15 +650,36 @@ export default function ListingList() {
         <div className={styles.grid}>
           {listings.map(l => (
             <div key={l.id} className={styles.card}>
-              {l.images && l.images.length > 0 && (
-                <img 
-                  src={l.images[0]} 
-                  alt={l.title} 
-                  style={{ width: '100%', height: '180px', objectFit: 'cover',
-                    borderTopLeftRadius: '12px', borderTopRightRadius: '12px', display: 'block' }}
-                  onError={(e) => { e.target.style.display = 'none'; }}
-                />
-              )}
+              <div className={styles.imageWrapper}>
+                <FavouriteButton listing={l} variant="card" />
+                <Link to={`/listings/${l.id}`} className={styles.imageLink} aria-label={`View details for ${l.title}`}>
+                  {l.images && l.images.length > 0 ? (
+                    <img
+                      src={l.images[0]}
+                      alt={l.title}
+                      className={styles.image}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        if (e.target.nextSibling) {
+                          e.target.nextSibling.style.display = 'flex';
+                        }
+                      }}
+                    />
+                  ) : null}
+                  <div
+                    className={styles.noImage}
+                    style={{ display: l.images && l.images.length > 0 ? 'none' : 'flex' }}
+                  >
+                    <Building2 size={36} />
+                    <span>No image available</span>
+                  </div>
+                </Link>
+                {l.images && l.images.length > 1 && (
+                  <span className={styles.imageCountBadge} title={`${l.images.length} photos available`}>
+                    <Camera size={13} /> {l.images.length}
+                  </span>
+                )}
+              </div>
               <div className={styles.cardContent}>
                 <div className={styles.cardTop}>
                   <h5 className={styles.cardTitle}>

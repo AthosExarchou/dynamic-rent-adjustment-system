@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
+import { FavouriteButton } from '../../favourites';
 import {
   Building2, 
   ShieldCheck, 
   Headset, 
   ChevronDown, 
   ChevronUp, 
-  Factory, 
   Bed, 
   Bath, 
   Maximize, 
@@ -17,7 +17,8 @@ import {
   LogIn,
   UserCircle,
   TrendingUp,
-  FileText
+  FileText,
+  Camera
 } from 'lucide-react';
 import { useAuth } from '../../auth';
 import styles from './LandingPage.module.css';
@@ -197,7 +198,7 @@ export default function LandingPage() {
             Browse listings, connect with owners, and move into your new home with ease.
           </p>
           <Link to="/listings" className={styles.heroBtn}>
-            <Factory className={styles.btnIcon} size={20} /> Browse Apartments
+            <Building2 className={styles.btnIcon} size={20} /> Browse Apartments
           </Link>
         </div>
       </section>
@@ -247,6 +248,36 @@ export default function LandingPage() {
             <div className={styles.apartmentsGrid}>
               {featuredApartments.map(apt => (
                 <div key={apt.id} className={styles.apartmentCard}>
+                  <div className={styles.imageWrapper}>
+                    <FavouriteButton listing={apt} variant="card" />
+                    <Link to={`/listings/${apt.id}`} className={styles.imageLink} aria-label={`View details for ${apt.title}`}>
+                      {apt.images && apt.images.length > 0 ? (
+                        <img
+                          src={apt.images[0]}
+                          alt={apt.title}
+                          className={styles.image}
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            if (e.target.nextSibling) {
+                              e.target.nextSibling.style.display = 'flex';
+                            }
+                          }}
+                        />
+                      ) : null}
+                      <div
+                        className={styles.noImage}
+                        style={{ display: apt.images && apt.images.length > 0 ? 'none' : 'flex' }}
+                      >
+                        <Building2 size={36} />
+                        <span>No image available</span>
+                      </div>
+                    </Link>
+                    {apt.images && apt.images.length > 1 && (
+                      <span className={styles.imageCountBadge} title={`${apt.images.length} photos available`}>
+                        <Camera size={13} /> {apt.images.length}
+                      </span>
+                    )}
+                  </div>
                   <div className={styles.apartmentBody}>
                     <h5 className={styles.apartmentTitle} title={apt.title}>{apt.title}</h5>
                     {apt.subtitle && (
@@ -307,7 +338,7 @@ export default function LandingPage() {
               <p className={styles.ctaDesc}>Browse available apartments or manage your listings directly from your account.</p>
               <div className={styles.ctaButtons}>
                 <Link to="/listings" className={`${styles.btn} ${styles.btnPrimary} ${styles.btnPulse}`}>
-                  <Factory size={20} /> Browse Apartments
+                  <Building2 size={20} /> Browse Apartments
                 </Link>
                 <Link to="/profile" className={`${styles.btn} ${styles.btnOutlineInfo}`}>
                   <UserCircle size={20} /> My Profile

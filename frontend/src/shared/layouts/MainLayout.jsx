@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, useNavigate, Link, useLocation, ScrollRestoration } from 'react-router-dom';
-import { Sun, Moon, UserCircle, LogIn, UserPlus, LogOut, Building2, ChevronRight, Search, Bell, X } from 'lucide-react';
+import { Sun, Moon, UserCircle, LogIn, UserPlus, LogOut, Building2, ChevronRight, Search, Bell, X, Heart } from 'lucide-react';
 import { useAuth } from '../../features/auth';
+import { useFavourites } from '../../features/favourites';
 import apiClient from '../api/client';
 import { isNavigablePath } from '../utils/routeUtils';
 import Sidebar from './Sidebar';
@@ -9,6 +10,13 @@ import styles from './MainLayout.module.css';
 
 export default function MainLayout() {
   const { isAuthenticated, logout, roles, user } = useAuth();
+  const {
+    favouriteCount,
+    guestFavouritesPending,
+    importGuestFavourites,
+    discardGuestFavourites,
+    syncing
+  } = useFavourites();
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
   
@@ -233,6 +241,25 @@ export default function MainLayout() {
               </div>
 
               <div className={styles.navActions}>
+                {/* Favourites Shortcut */}
+                <Link
+                  to="/favourites"
+                  className={styles.iconBtn}
+                  aria-label="Favourites"
+                  title={
+                    guestFavouritesPending > 0
+                      ? `${guestFavouritesPending} guest ${guestFavouritesPending === 1 ? 'favourite' : 'favourites'} pending import`
+                      : favouriteCount > 0
+                      ? `${favouriteCount} saved favourites`
+                      : 'View favourites'
+                  }
+                >
+                  <Heart size={20} />
+                  {(favouriteCount > 0 || guestFavouritesPending > 0) && (
+                    <span className={styles.notificationDot}></span>
+                  )}
+                </Link>
+
                 {/* Notification Bell - only for authenticated users */}
                 {isAuthenticated && (
                   <div className={styles.dropdown} ref={notifRef}>
@@ -331,6 +358,43 @@ export default function MainLayout() {
           </div>
         </header>
 
+        {/* Pending Guest Favourites Notice Bar */}
+        {isAuthenticated && guestFavouritesPending > 0 && location.pathname !== '/favourites' && (
+          <div className={styles.guestSyncNotice} role="region" aria-label="Guest favourites prompt">
+            <div className={styles.container}>
+              <div className={styles.guestSyncNoticeInner}>
+                <div className={styles.guestSyncNoticeLeft}>
+                  <Heart size={16} className={styles.guestSyncNoticeIcon} fill="currentColor" />
+                  <span className={styles.guestSyncNoticeText}>
+                    You saved <strong>{guestFavouritesPending}</strong> {guestFavouritesPending === 1 ? 'property' : 'properties'} before signing in. Would you like to import {guestFavouritesPending === 1 ? 'it' : 'them'} to your account?
+                  </span>
+                </div>
+                <div className={styles.guestSyncNoticeActions}>
+                  <button
+                    type="button"
+                    onClick={importGuestFavourites}
+                    disabled={syncing}
+                    className={styles.guestSyncNoticeImportBtn}
+                  >
+                    {syncing ? 'Importing...' : 'Import to Account'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={discardGuestFavourites}
+                    disabled={syncing}
+                    className={styles.guestSyncNoticeDiscardBtn}
+                  >
+                    Discard
+                  </button>
+                  <Link to="/favourites" className={styles.guestSyncNoticeReviewLink}>
+                    Review
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
 
       {/* Main Content Area */}
       <main className={styles.mainContent}>
@@ -355,7 +419,7 @@ export default function MainLayout() {
               <h6 className={styles.footerTitle}>Explore</h6>
               <ul className={styles.footerList}>
                 <li><Link to="/" className={styles.footerLink}>Home</Link></li>
-                <li><Link to="/listings" className={styles.footerLink}>Browse</Link></li>
+                <li><Link to="/listings" className={styles.footerLink}>Browse Apartments</Link></li>
                 <li><Link to="/about" className={styles.footerLink}>About</Link></li>
                 <li><Link to="/contact" className={styles.footerLink}>Contact</Link></li>
               </ul>

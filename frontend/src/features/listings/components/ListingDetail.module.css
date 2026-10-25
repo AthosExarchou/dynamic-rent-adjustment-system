@@ -254,12 +254,16 @@
 .actionsSection {
   display: flex;
   justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
   margin-top: 3rem;
 }
 
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   padding: 0.75rem 2rem;
   font-size: 1.1rem;
@@ -269,6 +273,8 @@
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   border: 1px solid transparent;
+  line-height: 1.5;
+  box-sizing: border-box;
 }
 
 .btn:hover {

@@ -20,6 +20,7 @@ const ListingDetail = lazy(() => import('../../features/listings/components/List
 const ListingForm = lazy(() => import('../../features/listings/components/ListingForm'));
 const MyListings = lazy(() => import('../../features/listings/components/MyListings'));
 const ListingApplications = lazy(() => import('../../features/listings/components/ListingApplications'));
+const FavouritesPage = lazy(() => import('../../features/favourites/components/FavouritesPage'));
 
 const Profile = lazy(() => import('../../features/users/components/Profile'));
 const ProfileEditForm = lazy(() => import('../../features/users/components/ProfileEditForm'));
@@ -88,6 +89,7 @@ export const router = createBrowserRouter([
       { path: 'terms', element: withSuspense(TermsOfService) },
       { path: 'listings', element: withSuspense(ListingList) },
       { path: 'listings/:id', element: withSuspense(ListingDetail) },
+      { path: 'favourites', element: withSuspense(FavouritesPage) },
       { path: 'login', element: withSuspense(LoginForm) },
       { path: 'register', element: withSuspense(RegisterForm) },
 

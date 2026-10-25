@@ -78,8 +78,17 @@ export function AuthProvider({ children }) {
     } catch {
       /* Proceed with client-side cleanup regardless */
     }
+    try {
+      if (user?.id) {
+        localStorage.removeItem(`dras_user_favourites_${user.id}`);
+      }
+      localStorage.removeItem('dras_guest_favourites');
+      localStorage.removeItem('dras_favourites');
+    } catch {
+      /* Ignore localStorage errors */
+    }
     setUser(null);
-  }, []);
+  }, [user]);
 
   // Memoize `roles` so it has a stable reference between renders
   const roles = useMemo(

@@ -12,6 +12,7 @@ export const NAVIGABLE_ROUTES = [
   '/terms',
   '/listings',
   '/listings/:id',
+  '/favourites',
   '/listings/new',
   '/login',
   '/register',
