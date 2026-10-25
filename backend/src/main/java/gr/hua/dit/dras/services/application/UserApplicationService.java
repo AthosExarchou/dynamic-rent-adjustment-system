@@ -309,6 +309,10 @@ public class UserApplicationService {
             user.getNotifications().clear();
         }
 
+        if (user.getFavouriteListings() != null) {
+            user.getFavouriteListings().clear();
+        }
+
         if (user.getId() != null) {
             notificationService.deleteNotificationsForUser(user.getId());
         }

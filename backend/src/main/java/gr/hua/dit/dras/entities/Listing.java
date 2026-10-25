@@ -1,6 +1,7 @@
 package gr.hua.dit.dras.entities;
 
 /* imports */
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.model.enums.PropertyType;
 import gr.hua.dit.dras.model.enums.RentalDuration;
@@ -143,6 +144,11 @@ public class Listing {
             CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH
     })
     private Set<Tenant> applicants = new HashSet<>();
+
+    /* Users who added this listing to their favourites */
+    @JsonIgnore
+    @ManyToMany(mappedBy = "favouriteListings")
+    private Set<User> favouritedByUsers = new HashSet<>();
 
     public Listing(
             Integer id,
@@ -501,6 +507,26 @@ public class Listing {
         this.applicants.clear();
 
         return rejected;
+    }
+
+    public Set<User> getFavouritedByUsers() {
+        return favouritedByUsers;
+    }
+
+    public void setFavouritedByUsers(Set<User> favouritedByUsers) {
+        this.favouritedByUsers = favouritedByUsers;
+    }
+
+    @PreRemove
+    private void removeListingFromFavourites() {
+        if (favouritedByUsers != null) {
+            for (User user : new ArrayList<>(favouritedByUsers)) {
+                if (user.getFavouriteListings() != null) {
+                    user.getFavouriteListings().remove(this);
+                }
+            }
+            favouritedByUsers.clear();
+        }
     }
 
     @Override

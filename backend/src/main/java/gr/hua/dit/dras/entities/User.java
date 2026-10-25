@@ -80,6 +80,16 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Notification> notifications = new ArrayList<>();
 
+    /* User-Favourites relationship */
+    @JsonIgnore
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "user_favourites",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "listing_id")
+    )
+    private Set<Listing> favouriteListings = new HashSet<>();
+
     public User() {
     }
 
@@ -175,6 +185,24 @@ public class User {
 
     public void setNotifications(List<Notification> notifications) {
         this.notifications = notifications;
+    }
+
+    public Set<Listing> getFavouriteListings() {
+        return favouriteListings;
+    }
+
+    public void setFavouriteListings(Set<Listing> favouriteListings) {
+        this.favouriteListings = favouriteListings;
+    }
+
+    public void addFavouriteListing(Listing listing) {
+        this.favouriteListings.add(listing);
+        listing.getFavouritedByUsers().add(this);
+    }
+
+    public void removeFavouriteListing(Listing listing) {
+        this.favouriteListings.remove(listing);
+        listing.getFavouritedByUsers().remove(this);
     }
 
     @Override

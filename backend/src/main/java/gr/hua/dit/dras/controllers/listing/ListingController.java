@@ -47,7 +47,7 @@ public class ListingController {
         this.priceSuggestionService = priceSuggestionService;
     }
 
-    private Map<String, Object> mapListing(Listing l) {
+    public static Map<String, Object> mapListing(Listing l) {
         Map<String, Object> map = new java.util.HashMap<>();
         map.put("id", l.getId());
         map.put("title", l.getTitle());
@@ -81,13 +81,13 @@ public class ListingController {
     /* Public listings */
     @GetMapping({"", "/"})
     public ResponseEntity<?> showListings() {
-        List<Map<String, Object>> res = listingService.getListings().stream().map(this::mapListing).collect(Collectors.toList());
+        List<Map<String, Object>> res = listingService.getListings().stream().map(ListingController::mapListing).collect(Collectors.toList());
         return ResponseEntity.ok(res);
     }
 
     @GetMapping("/local")
     public ResponseEntity<?> showLocalListings() {
-        List<Map<String, Object>> res = listingService.getLocalListings().stream().map(this::mapListing).collect(Collectors.toList());
+        List<Map<String, Object>> res = listingService.getLocalListings().stream().map(ListingController::mapListing).collect(Collectors.toList());
         return ResponseEntity.ok(res);
     }
 
@@ -112,7 +112,7 @@ public class ListingController {
 
     @GetMapping("/filter")
     public ResponseEntity<?> filterListings(@Valid @ModelAttribute ListingFilterDTO filter) {
-        List<Map<String, Object>> res = listingService.filterListings(filter).stream().map(this::mapListing).collect(Collectors.toList());
+        List<Map<String, Object>> res = listingService.filterListings(filter).stream().map(ListingController::mapListing).collect(Collectors.toList());
         return ResponseEntity.ok(res);
     }
 
@@ -120,7 +120,7 @@ public class ListingController {
     @Secured("OWNER")
     @GetMapping("/mylisting")
     public ResponseEntity<?> myListings() {
-        List<Map<String, Object>> res = listingApplicationService.getOwnerListingsForCurrentUser().stream().map(this::mapListing).collect(Collectors.toList());
+        List<Map<String, Object>> res = listingApplicationService.getOwnerListingsForCurrentUser().stream().map(ListingController::mapListing).collect(Collectors.toList());
         return ResponseEntity.ok(res);
     }
 
@@ -219,7 +219,7 @@ public class ListingController {
     @Secured("ADMIN")
     @GetMapping("/forapproval")
     public ResponseEntity<?> listingsForApproval() {
-        List<Map<String, Object>> res = listingService.getPendingListings().stream().map(this::mapListing).collect(Collectors.toList());
+        List<Map<String, Object>> res = listingService.getPendingListings().stream().map(ListingController::mapListing).collect(Collectors.toList());
         return ResponseEntity.ok(res);
     }
 

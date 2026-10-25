@@ -108,6 +108,9 @@ public class ListingService {
             ownerService.unassignOwnerFromListing(listingId);
         }
 
+        /* Remove favourite associations */
+        listingRepository.deleteFavouritesByListingId(listingId);
+
         listingRepository.delete(listing);
     }
 

@@ -6,6 +6,9 @@ import gr.hua.dit.dras.entities.Owner;
 import gr.hua.dit.dras.model.enums.ListingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.time.Instant;
 import java.util.List;
@@ -20,5 +23,9 @@ public interface ListingRepository extends JpaRepository<Listing, Integer>, JpaS
     List<Listing> findByExternalTrue();
     List<Listing> findByStatus(ListingStatus status);
     void deleteByExternalTrueAndDateScrapedBefore(Instant cutoff);
+
+    @Modifying
+    @Query(value = "DELETE FROM user_favourites WHERE listing_id = :listingId", nativeQuery = true)
+    void deleteFavouritesByListingId(@Param("listingId") Integer listingId);
 
 }
