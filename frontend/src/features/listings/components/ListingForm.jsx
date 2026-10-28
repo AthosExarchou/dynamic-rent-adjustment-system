@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { AlertCircle, Lock } from 'lucide-react';
+import { AlertCircle, Lock, UploadCloud, X, Check } from 'lucide-react';
 import { useAuth } from '../../auth';
 import apiClient from '../../../shared/api/client';
 import { LISTING_CONSTRAINTS } from '../models/listing';
 import { OWNER_CONSTRAINTS } from '../../owners/models/owner';
 import PriceSuggestionWidget from './PriceSuggestionWidget';
+import { getImageUrl } from '../../../shared/utils/imageUtils';
 import styles from './ListingForm.module.css';
 
 export default function ListingForm() {
@@ -13,13 +14,15 @@ export default function ListingForm() {
   const isEditMode = Boolean(listingId);
   const { user, roles, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     title: '', subtitle: '', description: '', price: '', address: '',
     sizeM2: '', propertyType: 'APARTMENT', rentalDuration: 'LONG_TERM',
     floor: '', yearBuilt: '', bedrooms: '', bathrooms: '',
     firstName: '', lastName: '', phoneNumber: ''
   });
-  const [images, setImages] = useState(['']);
+  const [images, setImages] = useState([]);
+  const [isDragging, setIsDragging] = useState(false);
   const maxImages = 10;
   const [error, setError] = useState('');
   const [errorDetails, setErrorDetails] = useState([]);
@@ -80,7 +83,12 @@ export default function ListingForm() {
             phoneNumber: ''
           });
           if (Array.isArray(data.images) && data.images.length > 0) {
-            setImages(data.images);
+            setImages(data.images.map((path, idx) => ({
+              id: `existing-${idx}-${path}`,
+              type: 'existing',
+              path: path,
+              preview: getImageUrl(path)
+            })));
           }
         }
       })
@@ -103,46 +111,94 @@ export default function ListingForm() {
     if (clamped !== formData[field]) setFormData(prev => ({ ...prev, [field]: clamped }));
   };
 
+  const handleAddFiles = (newFiles) => {
+    if (!newFiles || !newFiles.length) return;
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
+
+    const filesArray = Array.from(newFiles);
+    const oversized = filesArray.filter(f => f.size > MAX_FILE_SIZE);
+    if (oversized.length > 0) {
+      setError(`Some files exceed the 20MB limit: ${oversized.map(f => f.name).join(', ')}`);
+      return;
+    }
+
+    const incoming = filesArray.filter(f => validTypes.includes(f.type));
+    if (!incoming.length) {
+      setError('Please select valid image files (JPG, PNG, WebP, or GIF).');
+      return;
+    }
+
+    setImages(prev => {
+      const remaining = maxImages - prev.length;
+      if (remaining <= 0) return prev;
+      const toAdd = incoming.slice(0, remaining).map(file => ({
+        id: `file-${Date.now()}-${Math.random()}`,
+        type: 'file',
+        file,
+        preview: URL.createObjectURL(file),
+        name: file.name
+      }));
+      return [...prev, ...toAdd];
+    });
+  };
+
+  const handleRemoveImage = (indexToRemove) => {
+    setImages(prev => {
+      const item = prev[indexToRemove];
+      if (item && item.type === 'file' && item.preview) {
+        URL.revokeObjectURL(item.preview);
+      }
+      return prev.filter((_, idx) => idx !== indexToRemove);
+    });
+  };
+
+  // Revoke object URLs on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      images.forEach(img => {
+        if (img.type === 'file' && img.preview) {
+          URL.revokeObjectURL(img.preview);
+        }
+      });
+    };
+  }, [images]);
+
   const executeSubmit = async () => {
     setLoading(true);
     setError('');
     setErrorDetails([]);
 
-    const validUrlRegex = /^(https?:\/\/)/;
-    const invalidImage = images.find(url => url.trim() && !validUrlRegex.test(url.trim()));
-    if (invalidImage) {
-      setError('One or more image URLs are invalid. They must start with http:// or https://');
-      setLoading(false);
-      return;
-    }
-
-    // Prepare parameters for API matching MultiPart / URLParams in MVC controller
-    const params = new URLSearchParams({
-      title: formData.title,
-      subtitle: formData.subtitle,
-      description: formData.description,
-      price: formData.price,
-      pricePerM2: Math.round(Number(formData.sizeM2) > 0 ? Number(formData.price) / Number(formData.sizeM2) : 0),
-      address: formData.address,
-      sizeM2: formData.sizeM2,
-      propertyType: formData.propertyType,
-      rentalDuration: formData.rentalDuration,
-      floor: formData.floor,
-      yearBuilt: formData.yearBuilt,
-      bedrooms: formData.bedrooms,
-      bathrooms: formData.bathrooms
-    });
+    const formDataPayload = new FormData();
+    formDataPayload.append('title', formData.title);
+    formDataPayload.append('subtitle', formData.subtitle || '');
+    formDataPayload.append('description', formData.description || '');
+    formDataPayload.append('price', formData.price);
+    formDataPayload.append(
+      'pricePerM2',
+      String(Math.round(Number(formData.sizeM2) > 0 ? Number(formData.price) / Number(formData.sizeM2) : 0))
+    );
+    formDataPayload.append('address', formData.address);
+    formDataPayload.append('sizeM2', formData.sizeM2);
+    formDataPayload.append('propertyType', formData.propertyType);
+    formDataPayload.append('rentalDuration', formData.rentalDuration);
+    formDataPayload.append('floor', formData.floor != null ? formData.floor : '');
+    formDataPayload.append('yearBuilt', formData.yearBuilt != null ? formData.yearBuilt : '');
+    formDataPayload.append('bedrooms', formData.bedrooms != null ? formData.bedrooms : '');
+    formDataPayload.append('bathrooms', formData.bathrooms != null ? formData.bathrooms : '');
 
     if (!isOwner && !isEditMode) {
-      params.append('firstName', formData.firstName);
-      params.append('lastName', formData.lastName);
-      params.append('phoneNumber', formData.phoneNumber);
+      formDataPayload.append('firstName', formData.firstName || '');
+      formDataPayload.append('lastName', formData.lastName || '');
+      formDataPayload.append('phoneNumber', formData.phoneNumber || '');
     }
 
-    images.forEach(url => {
-      const trimmed = url.trim();
-      if (trimmed) {
-        params.append('images', trimmed);
+    // Append retained existing images and new files
+    images.forEach(img => {
+      if (img.type === 'existing' && img.path) {
+        formDataPayload.append('images', img.path);
+      } else if (img.type === 'file' && img.file) {
+        formDataPayload.append('imageFiles', img.file);
       }
     });
 
@@ -151,8 +207,7 @@ export default function ListingForm() {
     try {
       await apiClient(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString()
+        body: formDataPayload
       });
       if (refreshUser && !isEditMode) {
         await refreshUser();
@@ -176,13 +231,6 @@ export default function ListingForm() {
     e.preventDefault();
     setError('');
     setErrorDetails([]);
-
-    const validUrlRegex = /^(https?:\/\/)/;
-    const invalidImage = images.find(url => url.trim() && !validUrlRegex.test(url.trim()));
-    if (invalidImage) {
-      setError('One or more image URLs are invalid. They must start with http:// or https://');
-      return;
-    }
 
     if (willResetToPending) {
       setShowConfirmModal(true);
@@ -433,42 +481,86 @@ export default function ListingForm() {
           )}
 
           <div className={styles.formGroup}>
-            <label className={styles.label}>Property Images (URLs)</label>
-            {images.map((url, index) => (
-              <div key={index} className={styles.imageInputRow}
-                   style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                <input
-                  type="url"
-                  placeholder="https://example.com/image.jpg"
-                  value={url}
-                  onChange={(e) => {
-                    const newImages = [...images];
-                    newImages[index] = e.target.value;
-                    setImages(newImages);
-                  }}
-                  className={styles.input}
-                  style={{ flex: 1 }}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    const newImages = images.filter((_, i) => i !== index);
-                    setImages(newImages.length ? newImages : ['']);
-                  }}
-                  className={styles.removeBtn}
-                >
-                  X
-                </button>
-              </div>
-            ))}
+            <label className={styles.label}>
+              Property Images ({images.length}/{maxImages})
+            </label>
+
+            {/* Drag & Drop File Upload Area */}
             {images.length < maxImages && (
-              <button
-                type="button"
-                onClick={() => setImages([...images, ''])}
-                className={styles.addBtn}
+              <div
+                className={`${styles.dropzone} ${isDragging ? styles.dropzoneActive : ''}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                  if (e.dataTransfer.files) {
+                    handleAddFiles(e.dataTransfer.files);
+                  }
+                }}
+                onClick={() => fileInputRef.current?.click()}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    fileInputRef.current?.click();
+                  }
+                }}
               >
-                + Add Another Image
-              </button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      handleAddFiles(e.target.files);
+                    }
+                    e.target.value = '';
+                  }}
+                  multiple
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  style={{ display: 'none' }}
+                />
+                <UploadCloud size={36} className={styles.dropzoneIcon} />
+                <p className={styles.dropzoneTitle}>
+                  Drag & drop property photos here, or <span className={styles.browseLink}>browse</span>
+                </p>
+                <p className={styles.dropzoneSubtitle}>
+                  Supports JPG, PNG, WebP or GIF (maximum {maxImages} photos)
+                </p>
+              </div>
+            )}
+
+            {/* Instant Thumbnail Previews Grid */}
+            {images.length > 0 && (
+              <div className={styles.previewGrid}>
+                {images.map((item, index) => (
+                  <div key={item.id || index} className={styles.previewCard}>
+                    <img
+                      src={item.preview}
+                      alt={`Upload preview ${index + 1}`}
+                      className={styles.previewImage}
+                    />
+                    {index === 0 && (
+                      <span className={styles.coverBadge}>
+                        <Check size={11} /> Cover
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(index)}
+                      className={styles.removeImageBtn}
+                      title="Remove this photo"
+                      aria-label={`Remove photo ${index + 1}`}
+                    >
+                      <X size={14} />
+                    </button>
+                    <span className={styles.imageIndexBadge}>#{index + 1}</span>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 
