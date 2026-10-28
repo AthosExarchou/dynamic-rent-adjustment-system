@@ -36,6 +36,8 @@ class ListingControllerTest {
     private ListingApplicationService listingApplicationService;
     @Mock
     private PriceSuggestionService priceSuggestionService;
+    @Mock
+    private ImageStorageService imageStorageService;
 
     @Mock
     private BindingResult bindingResult;

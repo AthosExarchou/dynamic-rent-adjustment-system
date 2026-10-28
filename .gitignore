@@ -63,6 +63,8 @@ out/
 analytics/data/
 analytics/outputs/
 analytics/failed_payloads/
+uploads/
+backend/uploads/
 
 # Scraper logs
 analytics/*.log

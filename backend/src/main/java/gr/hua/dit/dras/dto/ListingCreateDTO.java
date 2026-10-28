@@ -1,8 +1,10 @@
 package gr.hua.dit.dras.dto;
 
+/* imports */
 import gr.hua.dit.dras.model.enums.PropertyType;
 import gr.hua.dit.dras.model.enums.RentalDuration;
 import jakarta.validation.constraints.*;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public class ListingCreateDTO {
@@ -60,6 +62,8 @@ public class ListingCreateDTO {
 
     @Size(max = 10, message = "You can upload a maximum of 10 images")
     private List<String> images;
+
+    private List<MultipartFile> imageFiles;
 
     public String getTitle() {
         return title;
@@ -136,6 +140,13 @@ public class ListingCreateDTO {
     }
     public void setImages(List<String> images) {
         this.images = images;
+    }
+
+    public List<MultipartFile> getImageFiles() {
+        return imageFiles;
+    }
+    public void setImageFiles(List<MultipartFile> imageFiles) {
+        this.imageFiles = imageFiles;
     }
 
     public Integer getFloor() {

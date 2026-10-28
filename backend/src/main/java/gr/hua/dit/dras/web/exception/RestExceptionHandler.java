@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.Ordered;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice(annotations = RestController.class)
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -89,6 +90,19 @@ public class RestExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.FORBIDDEN)
                 .body(Map.of("error", ex.getMessage() != null ? ex.getMessage() : "Access denied"));
+    }
+
+    /**
+     * Handles file uploads that exceed maximum permitted file or request size.
+     */
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, String>> handleMaxUploadSizeExceeded(
+            MaxUploadSizeExceededException ex
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(Map.of("error",
+                        "Uploaded images exceed the maximum allowed size (maximum 20MB per photo, 100MB per listing)."));
     }
 
     /**

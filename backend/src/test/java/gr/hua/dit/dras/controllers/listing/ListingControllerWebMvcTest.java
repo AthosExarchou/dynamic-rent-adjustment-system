@@ -9,6 +9,7 @@ import gr.hua.dit.dras.entities.Listing;
 import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.model.enums.PropertyType;
 import gr.hua.dit.dras.services.application.ListingApplicationService;
+import gr.hua.dit.dras.services.domain.ImageStorageService;
 import gr.hua.dit.dras.services.domain.ListingService;
 import gr.hua.dit.dras.services.domain.OwnerService;
 import gr.hua.dit.dras.services.domain.PriceSuggestionService;
@@ -66,6 +67,9 @@ class ListingControllerWebMvcTest {
 
     @MockitoBean
     private PriceSuggestionService priceSuggestionService;
+
+    @MockitoBean
+    private ImageStorageService imageStorageService;
 
     @MockitoBean
     private LoginSuccessHandler loginSuccessHandler;

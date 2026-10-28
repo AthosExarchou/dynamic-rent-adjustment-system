@@ -30,6 +30,7 @@ public class ListingController {
     private final OwnerService ownerService;
     private final ListingApplicationService listingApplicationService;
     private final PriceSuggestionService priceSuggestionService;
+    private final ImageStorageService imageStorageService;
 
     public ListingController(
             UserService userService,
@@ -37,7 +38,8 @@ public class ListingController {
             OwnerService ownerService,
             TenantService tenantService,
             ListingApplicationService listingApplicationService,
-            PriceSuggestionService priceSuggestionService
+            PriceSuggestionService priceSuggestionService,
+            ImageStorageService imageStorageService
     ) {
         this.userService = userService;
         this.listingService = listingService;
@@ -45,6 +47,7 @@ public class ListingController {
         this.tenantService = tenantService;
         this.listingApplicationService = listingApplicationService;
         this.priceSuggestionService = priceSuggestionService;
+        this.imageStorageService = imageStorageService;
     }
 
     public static Map<String, Object> mapListing(Listing l) {
@@ -156,9 +159,19 @@ public class ListingController {
         listing.setFloor(listingDTO.getFloor());
         listing.setBedrooms(listingDTO.getBedrooms());
         listing.setBathrooms(listingDTO.getBathrooms());
+
+        List<String> combinedImages = new java.util.ArrayList<>();
         if (listingDTO.getImages() != null) {
-            listing.setImages(listingDTO.getImages());
+            combinedImages.addAll(listingDTO.getImages().stream().filter(s -> s != null && !s.isBlank()).toList());
         }
+        if (listingDTO.getImageFiles() != null && !listingDTO.getImageFiles().isEmpty()) {
+            combinedImages.addAll(imageStorageService.storeImages(listingDTO.getImageFiles()));
+        }
+        if (combinedImages.size() > 10) {
+            combinedImages = combinedImages.subList(0, 10);
+        }
+        listing.setImages(combinedImages);
+        listingDTO.setImages(combinedImages);
 
         listingApplicationService.createListing(
                 listing, ownerId, firstName, lastName, phoneNumber, session
@@ -180,6 +193,18 @@ public class ListingController {
                     "details", bindingResult.getAllErrors().stream().map(e -> e.getDefaultMessage()).toList()
             ));
         }
+
+        List<String> combinedImages = new java.util.ArrayList<>();
+        if (listingDTO.getImages() != null) {
+            combinedImages.addAll(listingDTO.getImages().stream().filter(s -> s != null && !s.isBlank()).toList());
+        }
+        if (listingDTO.getImageFiles() != null && !listingDTO.getImageFiles().isEmpty()) {
+            combinedImages.addAll(imageStorageService.storeImages(listingDTO.getImageFiles()));
+        }
+        if (combinedImages.size() > 10) {
+            combinedImages = combinedImages.subList(0, 10);
+        }
+        listingDTO.setImages(combinedImages);
 
         Listing updated = listingApplicationService.editListing(id, listingDTO);
         return ResponseEntity.ok(mapListing(updated));
