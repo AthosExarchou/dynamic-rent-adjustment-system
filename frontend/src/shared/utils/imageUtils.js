@@ -54,3 +54,71 @@ export function getImageUrl(path) {
   // Default: prepend '/api/images/'
   return `/api/images/${clean}`;
 }
+
+/**
+ * Validates a web image URL with syntax/hostname checks and a pre-flight image load.
+ * Returns a Promise that resolves with image metadata if valid, or rejects with a descriptive error.
+ *
+ * @param {string} url - Web image URL to validate
+ * @param {number} timeoutMs - Timeout in milliseconds (defaults to 6000)
+ * @returns {Promise<{ url: string, width: number, height: number }>}
+ */
+export function validateImageUrl(url, timeoutMs = 6000) {
+  return new Promise((resolve, reject) => {
+    const trimmed = (url || '').trim();
+    if (!trimmed) {
+      return reject(new Error('Please enter an image URL.'));
+    }
+
+    // Syntax & Domain check
+    let parsed;
+    try {
+      parsed = new URL(trimmed);
+    } catch {
+      return reject(new Error('Invalid URL format. Please include http:// or https://'));
+    }
+
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return reject(new Error('URL must start with http:// or https://'));
+    }
+
+    if (!parsed.hostname.includes('.') && parsed.hostname !== 'localhost') {
+      return reject(new Error('Please enter a valid web domain with a valid extension (e.g. https://example.com/photo.jpg).'));
+    }
+
+    // Pre-flight image load check using in-memory Image
+    if (typeof window === 'undefined' || typeof window.Image === 'undefined') {
+      return resolve({ url: trimmed, width: 0, height: 0 });
+    }
+
+    const img = new window.Image();
+    let settled = false;
+
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      img.src = '';
+      reject(new Error('Image request timed out. The server took too long to respond.'));
+    }, timeoutMs);
+
+    img.onload = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve({
+        url: trimmed,
+        width: img.naturalWidth,
+        height: img.naturalHeight
+      });
+    };
+
+    img.onerror = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      reject(new Error('Unable to load image from this URL. Please verify the link points to a direct, publicly accessible photo (JPG, PNG, WebP).'));
+    };
+
+    img.src = trimmed;
+  });
+}

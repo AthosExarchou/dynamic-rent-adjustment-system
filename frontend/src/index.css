@@ -50,6 +50,7 @@
   /* Centralized Theme variables (Light Theme Default) */
   --background-default: var(--color-neutral-50);
   --background-paper: #ffffff;
+  --background-muted: var(--color-neutral-100);
   --text-primary: var(--color-neutral-900);
   --text-secondary: #64748b;
   --text-muted: #94a3b8;
@@ -61,6 +62,7 @@
 [data-theme="dark"] {
   --background-default: #121212;
   --background-paper: #1e1e1e;
+  --background-muted: #262626;
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;

@@ -162,7 +162,10 @@ public class ListingController {
 
         List<String> combinedImages = new java.util.ArrayList<>();
         if (listingDTO.getImages() != null) {
-            combinedImages.addAll(listingDTO.getImages().stream().filter(s -> s != null && !s.isBlank()).toList());
+            combinedImages.addAll(listingDTO.getImages().stream()
+                    .filter(s -> s != null && !s.isBlank())
+                    .map(String::trim)
+                    .toList());
         }
         if (listingDTO.getImageFiles() != null && !listingDTO.getImageFiles().isEmpty()) {
             combinedImages.addAll(imageStorageService.storeImages(listingDTO.getImageFiles()));
@@ -196,7 +199,10 @@ public class ListingController {
 
         List<String> combinedImages = new java.util.ArrayList<>();
         if (listingDTO.getImages() != null) {
-            combinedImages.addAll(listingDTO.getImages().stream().filter(s -> s != null && !s.isBlank()).toList());
+            combinedImages.addAll(listingDTO.getImages().stream()
+                    .filter(s -> s != null && !s.isBlank())
+                    .map(String::trim)
+                    .toList());
         }
         if (listingDTO.getImageFiles() != null && !listingDTO.getImageFiles().isEmpty()) {
             combinedImages.addAll(imageStorageService.storeImages(listingDTO.getImageFiles()));
