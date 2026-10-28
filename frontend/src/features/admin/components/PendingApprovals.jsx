@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, ClipboardCheck, Building2, Eye, Camera } from 'lucide-react';
+import { MapPin, ClipboardCheck, Eye, Camera } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { LISTING_CONSTRAINTS } from '../../listings/models/listing';
+import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
 import styles from './AdminDashboard.module.css';
 import modalStyles from './AdminModals.module.css';
 
@@ -113,38 +114,41 @@ export default function PendingApprovals() {
       <hr className={styles.divider} />
 
       <div className={styles.grid}>
-        {listings.map(l => (
-          <div key={l.id} className={styles.card}>
-            <div className={styles.imageWrapper}>
-              <Link to={`/listings/${l.id}`} target="_blank" rel="noopener noreferrer" className={styles.imageLink} aria-label={`View details for ${l.title}`}>
-                {l.images && l.images.length > 0 ? (
+        {listings.map(l => {
+          const hasImages = l.images && l.images.length > 0;
+          const cardImageUrl = hasImages ? (getImageUrl(l.images[0]) || DEFAULT_LISTING_IMAGE) : DEFAULT_LISTING_IMAGE;
+          return (
+            <div key={l.id} className={styles.card}>
+              <div className={styles.imageWrapper}>
+                <Link to={`/listings/${l.id}`} target="_blank" rel="noopener noreferrer" className={styles.imageLink} aria-label={`View details for ${l.title}`}>
                   <img
-                    src={l.images[0]}
-                    alt={l.title}
+                    src={cardImageUrl}
+                    alt={hasImages ? l.title : 'Generic demo preview'}
                     className={styles.image}
+                    loading="lazy"
+                    decoding="async"
                     onError={(e) => {
-                      e.target.style.display = 'none';
-                      if (e.target.nextSibling) {
-                        e.target.nextSibling.style.display = 'flex';
+                      if (e.target.src.includes('demo/image1.jpg')) {
+                        e.target.src = REMOTE_FALLBACK_IMAGE;
+                      } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
+                        e.target.src = DEFAULT_LISTING_IMAGE;
                       }
                     }}
                   />
-                ) : null}
-                <div
-                  className={styles.noImage}
-                  style={{ display: l.images && l.images.length > 0 ? 'none' : 'flex' }}
-                >
-                  <Building2 size={36} />
-                  <span>No image available</span>
-                </div>
-              </Link>
-              {l.images && l.images.length > 1 && (
-                <span className={styles.imageCountBadge} title={`${l.images.length} photos available`}>
-                  <Camera size={13} /> {l.images.length}
-                </span>
-              )}
-            </div>
-            <div className={styles.cardContent}>
+                </Link>
+                {hasImages ? (
+                  l.images.length > 1 && (
+                    <span className={styles.imageCountBadge} title={`${l.images.length} photos available`}>
+                      <Camera size={13} /> {l.images.length}
+                    </span>
+                  )
+                ) : (
+                  <span className={styles.demoBadge} title="Demo image - no photos uploaded">
+                    <Camera size={12} /> Demo Preview
+                  </span>
+                )}
+              </div>
+              <div className={styles.cardContent}>
               <h3 className={styles.cardTitle}>{l.title}</h3>
               <p className={styles.address}><MapPin size={16} /> {l.address}</p>
               
@@ -183,7 +187,8 @@ export default function PendingApprovals() {
               </div>
             </div>
           </div>
-        ))}
+        );
+      })}
         {loading ? (
           <p className={styles.emptyState}>Loading pending approvals...</p>
         ) : error ? (

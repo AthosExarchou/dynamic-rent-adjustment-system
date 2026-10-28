@@ -30,6 +30,7 @@ import styles from './ListingList.module.css';
 import PriceDropIndicator, { computeAvgPricePerM2 } from './PriceDropIndicator';
 import DatePicker from '../../../shared/components/DatePicker';
 import { LISTING_CONSTRAINTS } from '../models/listing';
+import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
 
 const getTodayStr = () => {
   const now = new Date();
@@ -648,39 +649,42 @@ export default function ListingList() {
         </div>
       ) : listings.length > 0 ? (
         <div className={styles.grid}>
-          {listings.map(l => (
-            <div key={l.id} className={styles.card}>
-              <div className={styles.imageWrapper}>
-                <FavouriteButton listing={l} variant="card" />
-                <Link to={`/listings/${l.id}`} className={styles.imageLink} aria-label={`View details for ${l.title}`}>
-                  {l.images && l.images.length > 0 ? (
+          {listings.map(l => {
+            const hasImages = l.images && l.images.length > 0;
+            const cardImageUrl = hasImages ? (getImageUrl(l.images[0]) || DEFAULT_LISTING_IMAGE) : DEFAULT_LISTING_IMAGE;
+            return (
+              <div key={l.id} className={styles.card}>
+                <div className={styles.imageWrapper}>
+                  <FavouriteButton listing={l} variant="card" />
+                  <Link to={`/listings/${l.id}`} className={styles.imageLink} aria-label={`View details for ${l.title}`}>
                     <img
-                      src={l.images[0]}
-                      alt={l.title}
+                      src={cardImageUrl}
+                      alt={hasImages ? l.title : 'Generic demo preview'}
                       className={styles.image}
+                      loading="lazy"
+                      decoding="async"
                       onError={(e) => {
-                        e.target.style.display = 'none';
-                        if (e.target.nextSibling) {
-                          e.target.nextSibling.style.display = 'flex';
+                        if (e.target.src.includes('demo/image1.jpg')) {
+                          e.target.src = REMOTE_FALLBACK_IMAGE;
+                        } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
+                          e.target.src = DEFAULT_LISTING_IMAGE;
                         }
                       }}
                     />
-                  ) : null}
-                  <div
-                    className={styles.noImage}
-                    style={{ display: l.images && l.images.length > 0 ? 'none' : 'flex' }}
-                  >
-                    <Building2 size={36} />
-                    <span>No image available</span>
-                  </div>
-                </Link>
-                {l.images && l.images.length > 1 && (
-                  <span className={styles.imageCountBadge} title={`${l.images.length} photos available`}>
-                    <Camera size={13} /> {l.images.length}
-                  </span>
-                )}
-              </div>
-              <div className={styles.cardContent}>
+                  </Link>
+                  {hasImages ? (
+                    l.images.length > 1 && (
+                      <span className={styles.imageCountBadge} title={`${l.images.length} photos available`}>
+                        <Camera size={13} /> {l.images.length}
+                      </span>
+                    )
+                  ) : (
+                    <span className={styles.demoBadge} title="Demo image - no photos uploaded">
+                      <Camera size={12} /> Demo Preview
+                    </span>
+                  )}
+                </div>
+                <div className={styles.cardContent}>
                 <div className={styles.cardTop}>
                   <h5 className={styles.cardTitle}>
                     <Building2 size={20} className={styles.cardIcon} />
@@ -724,7 +728,8 @@ export default function ListingList() {
                 </div>
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
       ) : (
         <div className={styles.emptyState}>

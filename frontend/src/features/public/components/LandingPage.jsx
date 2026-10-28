@@ -21,6 +21,7 @@ import {
   Camera
 } from 'lucide-react';
 import { useAuth } from '../../auth';
+import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
 import styles from './LandingPage.module.css';
 
 const FAQ_ITEMS = [
@@ -246,39 +247,42 @@ export default function LandingPage() {
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Featured Apartments</h2>
             <div className={styles.apartmentsGrid}>
-              {featuredApartments.map(apt => (
-                <div key={apt.id} className={styles.apartmentCard}>
-                  <div className={styles.imageWrapper}>
-                    <FavouriteButton listing={apt} variant="card" />
-                    <Link to={`/listings/${apt.id}`} className={styles.imageLink} aria-label={`View details for ${apt.title}`}>
-                      {apt.images && apt.images.length > 0 ? (
+              {featuredApartments.map(apt => {
+                const hasImages = apt.images && apt.images.length > 0;
+                const cardImageUrl = hasImages ? (getImageUrl(apt.images[0]) || DEFAULT_LISTING_IMAGE) : DEFAULT_LISTING_IMAGE;
+                return (
+                  <div key={apt.id} className={styles.apartmentCard}>
+                    <div className={styles.imageWrapper}>
+                      <FavouriteButton listing={apt} variant="card" />
+                      <Link to={`/listings/${apt.id}`} className={styles.imageLink} aria-label={`View details for ${apt.title}`}>
                         <img
-                          src={apt.images[0]}
-                          alt={apt.title}
+                          src={cardImageUrl}
+                          alt={hasImages ? apt.title : 'Generic demo preview'}
                           className={styles.image}
+                          loading="lazy"
+                          decoding="async"
                           onError={(e) => {
-                            e.target.style.display = 'none';
-                            if (e.target.nextSibling) {
-                              e.target.nextSibling.style.display = 'flex';
+                            if (e.target.src.includes('demo/image1.jpg')) {
+                              e.target.src = REMOTE_FALLBACK_IMAGE;
+                            } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
+                              e.target.src = DEFAULT_LISTING_IMAGE;
                             }
                           }}
                         />
-                      ) : null}
-                      <div
-                        className={styles.noImage}
-                        style={{ display: apt.images && apt.images.length > 0 ? 'none' : 'flex' }}
-                      >
-                        <Building2 size={36} />
-                        <span>No image available</span>
-                      </div>
-                    </Link>
-                    {apt.images && apt.images.length > 1 && (
-                      <span className={styles.imageCountBadge} title={`${apt.images.length} photos available`}>
-                        <Camera size={13} /> {apt.images.length}
-                      </span>
-                    )}
-                  </div>
-                  <div className={styles.apartmentBody}>
+                      </Link>
+                      {hasImages ? (
+                        apt.images.length > 1 && (
+                          <span className={styles.imageCountBadge} title={`${apt.images.length} photos available`}>
+                            <Camera size={13} /> {apt.images.length}
+                          </span>
+                        )
+                      ) : (
+                        <span className={styles.demoBadge} title="Demo image - no photos uploaded">
+                          <Camera size={12} /> Demo Preview
+                        </span>
+                      )}
+                    </div>
+                    <div className={styles.apartmentBody}>
                     <h5 className={styles.apartmentTitle} title={apt.title}>{apt.title}</h5>
                     {apt.subtitle && (
                       <p className={styles.apartmentSubtitle} title={apt.subtitle}>{apt.subtitle}</p>
@@ -312,7 +316,8 @@ export default function LandingPage() {
                     </div>
                   </div>
                 </div>
-              ))}
+              );
+            })}
             </div>
           </section>
         )}

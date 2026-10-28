@@ -19,6 +19,7 @@ import { useFavourites } from '../context/FavouritesContext';
 import { useAuth } from '../../auth';
 import FavouriteButton from './FavouriteButton';
 import PriceDropIndicator, { computeAvgPricePerM2 } from '../../listings/components/PriceDropIndicator';
+import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
 import styles from './FavouritesPage.module.css';
 
 export default function FavouritesPage() {
@@ -238,40 +239,43 @@ export default function FavouritesPage() {
         </div>
       ) : (
         <div className={styles.grid}>
-          {displayedListings.map(listing => (
-            <div key={listing.id} className={styles.card}>
-              <div className={styles.imageWrapper}>
-                <FavouriteButton listing={listing} variant="card" />
-                <Link to={`/listings/${listing.id}`} className={styles.imageLink} aria-label={`View details for ${listing.title}`}>
-                  {listing.images && listing.images.length > 0 ? (
+          {displayedListings.map(listing => {
+            const hasImages = listing.images && listing.images.length > 0;
+            const cardImageUrl = hasImages ? (getImageUrl(listing.images[0]) || DEFAULT_LISTING_IMAGE) : DEFAULT_LISTING_IMAGE;
+            return (
+              <div key={listing.id} className={styles.card}>
+                <div className={styles.imageWrapper}>
+                  <FavouriteButton listing={listing} variant="card" />
+                  <Link to={`/listings/${listing.id}`} className={styles.imageLink} aria-label={`View details for ${listing.title}`}>
                     <img
-                      src={listing.images[0]}
-                      alt={listing.title}
+                      src={cardImageUrl}
+                      alt={hasImages ? listing.title : 'Generic demo preview'}
                       className={styles.image}
+                      loading="lazy"
+                      decoding="async"
                       onError={(e) => {
-                        e.target.style.display = 'none';
-                        if (e.target.nextSibling) {
-                          e.target.nextSibling.style.display = 'flex';
+                        if (e.target.src.includes('demo/image1.jpg')) {
+                          e.target.src = REMOTE_FALLBACK_IMAGE;
+                        } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
+                          e.target.src = DEFAULT_LISTING_IMAGE;
                         }
                       }}
                     />
-                  ) : null}
-                  <div
-                    className={styles.noImage}
-                    style={{ display: listing.images && listing.images.length > 0 ? 'none' : 'flex' }}
-                  >
-                    <Building2 size={36} />
-                    <span>No image available</span>
-                  </div>
-                </Link>
-                {listing.images && listing.images.length > 1 && (
-                  <span className={styles.imageCountBadge} title={`${listing.images.length} photos available`}>
-                    <Camera size={13} /> {listing.images.length}
-                  </span>
-                )}
-              </div>
+                  </Link>
+                  {hasImages ? (
+                    listing.images.length > 1 && (
+                      <span className={styles.imageCountBadge} title={`${listing.images.length} photos available`}>
+                        <Camera size={13} /> {listing.images.length}
+                      </span>
+                    )
+                  ) : (
+                    <span className={styles.demoBadge} title="Demo image - no photos uploaded">
+                      <Camera size={12} /> Demo Preview
+                    </span>
+                  )}
+                </div>
 
-              <div className={styles.cardBody}>
+                <div className={styles.cardBody}>
                 <div className={styles.cardHeader}>
                   <h3 className={styles.cardTitle} title={listing.title}>
                     {listing.title}
@@ -349,7 +353,8 @@ export default function FavouritesPage() {
                 </div>
               </div>
             </div>
-          ))}
+          );
+        })}
         </div>
       )}
     </div>

@@ -17,11 +17,17 @@ import {
   PenSquare,
   PowerOff,
   Lock,
-  AlertCircle
+  AlertCircle,
+  Camera,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  X
 } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { useAuth } from '../../auth';
 import { FavouriteButton } from '../../favourites';
+import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
 import styles from './ListingDetail.module.css';
 import PriceDropIndicator, { computeAvgPricePerM2 } from './PriceDropIndicator';
 
@@ -34,6 +40,8 @@ export default function ListingDetail() {
   const [listing, setListing] = useState(null);
   const [avgPricePerM2, setAvgPricePerM2] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   const [error, setError] = useState(null);
   const [appliedListingIds, setAppliedListingIds] = useState([]);
@@ -90,7 +98,30 @@ export default function ListingDetail() {
     return () => controller.abort();
   }, [id]);
 
+  useEffect(() => {
+    setActiveImageIndex(0);
+    setIsLightboxOpen(false);
+  }, [id]);
 
+  const rawImages = Array.isArray(listing?.images)
+    ? listing.images.filter(img => typeof img === 'string' && img.trim().length > 0)
+    : [];
+  const hasImages = rawImages.length > 0;
+
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsLightboxOpen(false);
+      } else if (e.key === 'ArrowLeft' && rawImages.length > 1) {
+        setActiveImageIndex(prev => (prev - 1 + rawImages.length) % rawImages.length);
+      } else if (e.key === 'ArrowRight' && rawImages.length > 1) {
+        setActiveImageIndex(prev => (prev + 1) % rawImages.length);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLightboxOpen, rawImages.length]);
 
   if (loading) return (
     <div className={styles.loadingContainer}>
@@ -108,6 +139,9 @@ export default function ListingDetail() {
 
   const isUserOnly = isAuthenticated && roles.includes('USER') && !roles.includes('OWNER') && !roles.includes('ADMIN');
   const canEdit = (user && listing?.owner?.userId === user.id) || roles.includes('ADMIN');
+  const currentImageSrc = hasImages
+    ? (getImageUrl(rawImages[activeImageIndex]) || DEFAULT_LISTING_IMAGE)
+    : DEFAULT_LISTING_IMAGE;
 
   return (
     <div className={styles.container}>
@@ -159,24 +193,102 @@ export default function ListingDetail() {
             </div>
           </div>
 
-          <hr className={styles.divider} />
+          {/* Property Image Gallery Showcase */}
+          <div className={styles.galleryContainer}>
+            <div className={styles.heroWrapper}>
+              <img
+                src={currentImageSrc}
+                alt={hasImages ? (listing.title ? `${listing.title} view ${activeImageIndex + 1}` : 'Property view') : 'Generic demonstration image (No photos uploaded)'}
+                className={styles.heroImage}
+                decoding="async"
+                onClick={() => setIsLightboxOpen(true)}
+                onError={(e) => {
+                  if (e.target.src.includes('demo/image1.jpg')) {
+                    e.target.src = REMOTE_FALLBACK_IMAGE;
+                  } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
+                    e.target.src = DEFAULT_LISTING_IMAGE;
+                  }
+                }}
+              />
 
-          {listing.images && listing.images.length > 0 && (
-            <div className={styles.imageGallery}
-                 style={{display: 'flex', gap: '10px', overflowX: 'auto',
-                   marginBottom: '1.5rem', padding: '10px 0', scrollbarWidth: 'thin' }}>
-              {listing.images.map((imgUrl, idx) => (
-                <img 
-                  key={idx} 
-                  src={imgUrl} 
-                  alt={`Listing view ${idx + 1}`} 
-                  style={{ height: '300px', objectFit: 'cover',
-                    borderRadius: '8px', flexShrink: 0, border: '1px solid #eaeaea' }}
-                  onError={(e) => { e.target.style.display = 'none'; }}
-                />
-              ))}
+              <div className={styles.photoCountBadge}>
+                <Camera size={14} />
+                <span>
+                  {hasImages ? `${activeImageIndex + 1} / ${rawImages.length}` : 'Demo Preview (No photos uploaded)'}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                className={styles.expandButton}
+                onClick={() => setIsLightboxOpen(true)}
+                aria-label="View full size image"
+                title="View full size"
+              >
+                <Maximize2 size={16} />
+              </button>
+
+              {hasImages && rawImages.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    className={`${styles.navButton} ${styles.navPrev}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveImageIndex(prev => (prev - 1 + rawImages.length) % rawImages.length);
+                    }}
+                    aria-label="Previous image"
+                  >
+                    <ChevronLeft size={22} />
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.navButton} ${styles.navNext}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveImageIndex(prev => (prev + 1) % rawImages.length);
+                    }}
+                    aria-label="Next image"
+                  >
+                    <ChevronRight size={22} />
+                  </button>
+                </>
+              )}
             </div>
-          )}
+
+            {hasImages && rawImages.length > 1 && (
+              <div className={styles.thumbnailsTrack}>
+                {rawImages.map((imgUrl, idx) => {
+                  const resolvedUrl = getImageUrl(imgUrl) || DEFAULT_LISTING_IMAGE;
+                  const isActive = idx === activeImageIndex;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      className={`${styles.thumbnailButton} ${isActive ? styles.activeThumbnail : ''}`}
+                      onClick={() => setActiveImageIndex(idx)}
+                      aria-label={`Select photo ${idx + 1}`}
+                    >
+                      <img
+                        src={resolvedUrl}
+                        alt={`Thumbnail ${idx + 1}`}
+                        className={styles.thumbnailImg}
+                        loading="lazy"
+                        decoding="async"
+                        onError={(e) => {
+                          if (e.target.src !== DEFAULT_LISTING_IMAGE) {
+                            e.target.src = DEFAULT_LISTING_IMAGE;
+                          }
+                        }}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <hr className={styles.divider} />
 
           <div className={styles.descriptionSection}>
             <h5 className={styles.sectionHeading}>Description</h5>
@@ -287,6 +399,74 @@ export default function ListingDetail() {
           </div>
         </div>
       </div>
+
+      {/* Lightbox / Fullscreen Modal */}
+      {isLightboxOpen && (
+        <div
+          className={styles.lightboxBackdrop}
+          onClick={() => setIsLightboxOpen(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className={styles.lightboxContainer} onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className={styles.lightboxCloseBtn}
+              onClick={() => setIsLightboxOpen(false)}
+              aria-label="Close fullscreen modal"
+            >
+              <X size={26} />
+            </button>
+
+            <div className={styles.lightboxMedia}>
+              <img
+                src={currentImageSrc}
+                alt={listing.title ? `${listing.title} full view` : 'Property view'}
+                className={styles.lightboxImage}
+                decoding="async"
+                onError={(e) => {
+                  if (e.target.src.includes('demo/image1.jpg')) {
+                    e.target.src = REMOTE_FALLBACK_IMAGE;
+                  } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
+                    e.target.src = DEFAULT_LISTING_IMAGE;
+                  }
+                }}
+              />
+            </div>
+
+            {hasImages && rawImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  className={`${styles.lightboxNav} ${styles.lightboxNavPrev}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveImageIndex(prev => (prev - 1 + rawImages.length) % rawImages.length);
+                  }}
+                  aria-label="Previous photo"
+                >
+                  <ChevronLeft size={30} />
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.lightboxNav} ${styles.lightboxNavNext}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveImageIndex(prev => (prev + 1) % rawImages.length);
+                  }}
+                  aria-label="Next photo"
+                >
+                  <ChevronRight size={30} />
+                </button>
+              </>
+            )}
+
+            <div className={styles.lightboxFooter}>
+              <span>{hasImages ? `Photo ${activeImageIndex + 1} of ${rawImages.length}` : 'Generic demonstration preview (No photos uploaded)'}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
