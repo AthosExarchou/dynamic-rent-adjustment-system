@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Outlet, useNavigate, Link, useLocation, ScrollRestoration } from 'react-router-dom';
-import { Sun, Moon, UserCircle, LogIn, UserPlus, LogOut, Building2, ChevronRight, Search, Bell, X, Heart } from 'lucide-react';
+import { Sun, Moon, UserCircle, LogIn, UserPlus, LogOut, Building2, ChevronRight, Search, Bell, X, Heart, Trash2 } from 'lucide-react';
 import { useAuth } from '../../features/auth';
 import { useFavourites } from '../../features/favourites';
 import apiClient from '../api/client';
@@ -133,6 +133,32 @@ export default function MainLayout() {
       setUnreadCount(0);
     } catch (error) {
       console.error("Failed to mark all as read", error);
+    }
+  };
+
+  const handleDeleteNotification = async (e, id) => {
+    e.stopPropagation();
+    const target = notifications.find(n => n.id === id);
+    setNotifications(prev => prev.filter(n => n.id !== id));
+    if (target && !target.read) {
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    }
+    try {
+      await apiClient(`/notifications/${id}`, { method: 'DELETE' });
+    } catch (error) {
+      console.error("Failed to delete notification", error);
+      fetchNotifications();
+    }
+  };
+
+  const handleClearAllNotifications = async () => {
+    setNotifications([]);
+    setUnreadCount(0);
+    try {
+      await apiClient('/notifications', { method: 'DELETE' });
+    } catch (error) {
+      console.error("Failed to clear notifications", error);
+      fetchNotifications();
     }
   };
 
@@ -276,15 +302,30 @@ export default function MainLayout() {
                       <div className={styles.notifDropdownMenu}>
                         <div className={styles.notifHeader}>
                           <h6 className={styles.notifTitle}>Notifications</h6>
-                          {unreadCount > 0 && (
-                            <button className={styles.notifClearBtn} onClick={handleMarkAllAsRead}>
-                              Mark all as read
-                            </button>
-                          )}
+                          <div className={styles.notifHeaderActions}>
+                            {unreadCount > 0 && (
+                              <button
+                                className={styles.notifActionBtn}
+                                onClick={handleMarkAllAsRead}
+                                title="Mark all notifications as read"
+                              >
+                                Mark all read
+                              </button>
+                            )}
+                            {notifications.length > 0 && (
+                              <button
+                                className={`${styles.notifActionBtn} ${styles.notifClearAllBtn}`}
+                                onClick={handleClearAllNotifications}
+                                title="Delete all notifications"
+                              >
+                                Clear all
+                              </button>
+                            )}
+                          </div>
                         </div>
                         <div className={styles.notifBody}>
                           {notifications.length === 0 ? (
-                            <div className={styles.notifEmpty}>No new notifications</div>
+                            <div className={styles.notifEmpty}>No notifications</div>
                           ) : (
                             notifications.map(notif => (
                               <div 
@@ -292,7 +333,18 @@ export default function MainLayout() {
                                 className={`${styles.notifItem} ${!notif.read ? styles.unread : ''}`}
                                 onClick={() => handleMarkAsRead(notif.id, notif.read)}
                               >
-                                <div className={styles.notifItemTitle}>{notif.title}</div>
+                                <div className={styles.notifItemHeader}>
+                                  <div className={styles.notifItemTitle}>{notif.title}</div>
+                                  <button
+                                    type="button"
+                                    className={styles.notifDeleteBtn}
+                                    onClick={(e) => handleDeleteNotification(e, notif.id)}
+                                    title="Delete notification"
+                                    aria-label="Delete notification"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
                                 <div className={styles.notifItemMsg}>{notif.message}</div>
                                 <div className={styles.notifItemTime}>{formatTimeAgo(notif.createdAt)}</div>
                               </div>

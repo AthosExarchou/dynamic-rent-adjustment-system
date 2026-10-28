@@ -349,16 +349,35 @@
   color: var(--text-primary);
 }
 
-.notifClearBtn {
-  background: transparent;
-  border: none;
-  color: #3b82f6;
-  font-size: 0.8rem;
-  cursor: pointer;
+.notifHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.notifClearBtn:hover {
-  text-decoration: underline;
+.notifActionBtn {
+  background: transparent;
+  border: none;
+  color: var(--color-primary-600, #3b82f6);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.notifActionBtn:hover {
+  background-color: rgba(37, 99, 235, 0.08);
+}
+
+.notifClearAllBtn {
+  color: var(--text-secondary);
+}
+
+.notifClearAllBtn:hover {
+  color: var(--color-danger, #ef4444);
+  background-color: rgba(239, 68, 68, 0.08);
 }
 
 .notifBody {
@@ -392,11 +411,43 @@
   background-color: rgba(59, 130, 246, 0.05);
 }
 
+.notifItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
 .notifItemTitle {
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 0.25rem;
+  line-height: 1.3;
+}
+
+.notifDeleteBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.notifItem:hover .notifDeleteBtn {
+  opacity: 1;
+}
+
+.notifDeleteBtn:hover {
+  color: var(--color-danger, #ef4444);
+  background-color: rgba(239, 68, 68, 0.1);
 }
 
 .notifItemMsg {
