@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { AlertCircle, Lock, UploadCloud, X, Check } from 'lucide-react';
+import { AlertCircle, Lock, UploadCloud, X, Check, Globe, Upload, Plus, Loader2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../auth';
 import apiClient from '../../../shared/api/client';
 import { LISTING_CONSTRAINTS } from '../models/listing';
 import { OWNER_CONSTRAINTS } from '../../owners/models/owner';
 import PriceSuggestionWidget from './PriceSuggestionWidget';
-import { getImageUrl } from '../../../shared/utils/imageUtils';
+import { getImageUrl, DEFAULT_LISTING_IMAGE, validateImageUrl } from '../../../shared/utils/imageUtils';
 import styles from './ListingForm.module.css';
 
 export default function ListingForm() {
@@ -22,6 +22,10 @@ export default function ListingForm() {
     firstName: '', lastName: '', phoneNumber: ''
   });
   const [images, setImages] = useState([]);
+  const [imageMode, setImageMode] = useState('upload'); // 'upload' | 'url'
+  const [imageUrlInput, setImageUrlInput] = useState('');
+  const [urlError, setUrlError] = useState('');
+  const [validatingUrl, setValidatingUrl] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const maxImages = 10;
   const [error, setError] = useState('');
@@ -143,6 +147,58 @@ export default function ListingForm() {
     });
   };
 
+  const handleAddUrl = async () => {
+    if (images.length >= maxImages) {
+      setUrlError(`You can add up to ${maxImages} images maximum.`);
+      return;
+    }
+
+    const trimmed = imageUrlInput.trim();
+    if (!trimmed) {
+      setUrlError('Please enter an image URL.');
+      return;
+    }
+
+    if (images.some(img => img.path === trimmed || img.preview === trimmed)) {
+      setUrlError('This image URL has already been added.');
+      return;
+    }
+
+    setValidatingUrl(true);
+    setUrlError('');
+
+    try {
+      await validateImageUrl(trimmed);
+
+      setImages(prev => [
+        ...prev,
+        {
+          id: `url-${Date.now()}-${Math.random()}`,
+          type: 'url',
+          path: trimmed,
+          preview: trimmed,
+          hasError: false
+        }
+      ]);
+
+      setImageUrlInput('');
+      setUrlError('');
+    } catch (err) {
+      setUrlError(err.message || 'Unable to load image from this URL.');
+    } finally {
+      setValidatingUrl(false);
+    }
+  };
+
+  const handleImageLoadError = (index) => {
+    setImages(prev => prev.map((item, idx) => {
+      if (idx === index) {
+        return { ...item, hasError: true };
+      }
+      return item;
+    }));
+  };
+
   const handleRemoveImage = (indexToRemove) => {
     setImages(prev => {
       const item = prev[indexToRemove];
@@ -193,9 +249,9 @@ export default function ListingForm() {
       formDataPayload.append('phoneNumber', formData.phoneNumber || '');
     }
 
-    // Append retained existing images and new files
+    // Append retained existing images, URLs, and new files
     images.forEach(img => {
-      if (img.type === 'existing' && img.path) {
+      if ((img.type === 'existing' || img.type === 'url') && img.path) {
         formDataPayload.append('images', img.path);
       } else if (img.type === 'file' && img.file) {
         formDataPayload.append('imageFiles', img.file);
@@ -481,12 +537,43 @@ export default function ListingForm() {
           )}
 
           <div className={styles.formGroup}>
-            <label className={styles.label}>
-              Property Images ({images.length}/{maxImages})
-            </label>
+            <div className={styles.imagesHeader}>
+              <label className={styles.label} style={{ marginBottom: 0 }}>
+                Property Images ({images.length}/{maxImages})
+              </label>
 
-            {/* Drag & Drop File Upload Area */}
-            {images.length < maxImages && (
+              {images.length < maxImages && (
+                <div className={styles.imageModeTabs}>
+                  <button
+                    type="button"
+                    className={`${styles.imageTabBtn} ${imageMode === 'upload' ? styles.imageTabBtnActive : ''}`}
+                    onClick={() => {
+                      setImageMode('upload');
+                      setUrlError('');
+                    }}
+                  >
+                    <Upload size={14} /> Upload Files
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.imageTabBtn} ${imageMode === 'url' ? styles.imageTabBtnActive : ''}`}
+                    onClick={() => {
+                      setImageMode('url');
+                      setUrlError('');
+                    }}
+                  >
+                    <Globe size={14} /> Add from URL
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {images.length >= maxImages ? (
+              <div className={styles.maxImagesNotice}>
+                <Check size={16} /> Maximum of {maxImages} property images added. Remove any photo below to add different ones.
+              </div>
+            ) : imageMode === 'upload' ? (
+              /* Drag & Drop File Upload Area */
               <div
                 className={`${styles.dropzone} ${isDragging ? styles.dropzoneActive : ''}`}
                 onDragOver={(e) => {
@@ -530,36 +617,120 @@ export default function ListingForm() {
                 <p className={styles.dropzoneSubtitle}>
                   Supports JPG, PNG, WebP or GIF (maximum {maxImages} photos)
                 </p>
+                <button
+                  type="button"
+                  className={styles.switchModeLink}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setImageMode('url');
+                    setUrlError('');
+                  }}
+                >
+                  <Globe size={13} /> Or add image by web URL
+                </button>
+              </div>
+            ) : (
+              /* Image URL Input Area */
+              <div className={styles.urlInputContainer}>
+                <div className={styles.urlInputRow}>
+                  <div className={styles.urlInputWrapper}>
+                    <Globe size={17} className={styles.urlIcon} />
+                    <input
+                      type="url"
+                      value={imageUrlInput}
+                      onChange={(e) => {
+                        setImageUrlInput(e.target.value);
+                        setUrlError('');
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddUrl();
+                        }
+                      }}
+                      placeholder="https://example.com/property-photo.jpg"
+                      className={styles.urlInputField}
+                      disabled={images.length >= maxImages}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddUrl}
+                    className={styles.addUrlBtn}
+                    disabled={!imageUrlInput.trim() || validatingUrl || images.length >= maxImages}
+                  >
+                    {validatingUrl ? (
+                      <>
+                        <Loader2 size={16} className={styles.spinIcon} /> Verifying...
+                      </>
+                    ) : (
+                      <>
+                        <Plus size={16} /> Add URL
+                      </>
+                    )}
+                  </button>
+                </div>
+                {urlError && <p className={styles.urlErrorMessage}>{urlError}</p>}
+                <p className={styles.urlHelpText}>
+                  Enter a direct web link (starting with http:// or https://). Press Enter or click &quot;Add URL&quot;.
+                </p>
+                <button
+                  type="button"
+                  className={styles.switchModeLink}
+                  onClick={() => {
+                    setImageMode('upload');
+                    setUrlError('');
+                  }}
+                >
+                  <Upload size={13} /> Or upload local image files
+                </button>
               </div>
             )}
 
             {/* Instant Thumbnail Previews Grid */}
             {images.length > 0 && (
               <div className={styles.previewGrid}>
-                {images.map((item, index) => (
-                  <div key={item.id || index} className={styles.previewCard}>
-                    <img
-                      src={item.preview}
-                      alt={`Upload preview ${index + 1}`}
-                      className={styles.previewImage}
-                    />
-                    {index === 0 && (
-                      <span className={styles.coverBadge}>
-                        <Check size={11} /> Cover
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveImage(index)}
-                      className={styles.removeImageBtn}
-                      title="Remove this photo"
-                      aria-label={`Remove photo ${index + 1}`}
+                {images.map((item, index) => {
+                  const isBroken = Boolean(item.hasError);
+                  return (
+                    <div
+                      key={item.id || index}
+                      className={`${styles.previewCard} ${isBroken ? styles.previewCardError : ''}`}
                     >
-                      <X size={14} />
-                    </button>
-                    <span className={styles.imageIndexBadge}>#{index + 1}</span>
-                  </div>
-                ))}
+                      <img
+                        src={isBroken ? DEFAULT_LISTING_IMAGE : item.preview}
+                        alt={`Property preview ${index + 1}`}
+                        className={`${styles.previewImage} ${isBroken ? styles.previewImageError : ''}`}
+                        decoding="async"
+                        onError={() => handleImageLoadError(index)}
+                      />
+                      {index === 0 && !isBroken && (
+                        <span className={styles.coverBadge}>
+                          <Check size={11} /> Cover
+                        </span>
+                      )}
+                      {isBroken ? (
+                        <span className={styles.brokenBadge} title="Image link is broken or unreachable">
+                          <AlertTriangle size={11} /> Broken Link
+                        </span>
+                      ) : item.type === 'url' ? (
+                        <span className={styles.urlBadge} title="Added via URL">
+                          <Globe size={10} /> Link
+                        </span>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(index)}
+                        className={styles.removeImageBtn}
+                        title="Remove this photo"
+                        aria-label={`Remove photo ${index + 1}`}
+                      >
+                        <X size={14} />
+                      </button>
+                      <span className={styles.imageIndexBadge}>#{index + 1}</span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
