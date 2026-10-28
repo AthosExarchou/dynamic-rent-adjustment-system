@@ -27,7 +27,7 @@ export default function AboutPage() {
           <span>About the Platform</span>
         </div>
         <h1 className={styles.heroTitle}>
-          Dynamic Rent <span className={styles.gradientText}>Adjustment System</span>
+          <span className={styles.gradientText}>Dynamic Rent Adjustment System</span>
         </h1>
         <p className={styles.heroLead}>
           DRAS is an apartment rental and price suggestion platform designed to assist property owners and tenants
