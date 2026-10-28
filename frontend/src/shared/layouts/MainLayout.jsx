@@ -504,10 +504,10 @@ export default function MainLayout() {
           <div className={styles.footerBottom}>
             <p className={styles.copyright}>&copy; {new Date().getFullYear()} Dynamic Rent Adjustment System. All rights reserved.</p>
             <div className={styles.socials}>
-              <a href="https://facebook.com" target="_blank" rel="noreferrer" className={styles.socialLink}><i className="fab fa-facebook-f fa-lg"></i></a>
-              <a href="https://twitter.com" target="_blank" rel="noreferrer" className={styles.socialLink}><i className="fab fa-twitter fa-lg"></i></a>
-              <a href="https://linkedin.com/in/athos-exarchou" target="_blank" rel="noreferrer" className={styles.socialLink}><i className="fab fa-linkedin-in fa-lg"></i></a>
-              <a href="https://github.com/AthosExarchou" target="_blank" rel="noreferrer" className={styles.socialLink}><i className="fab fa-github fa-lg"></i></a>
+              <a href="https://facebook.com" target="_blank" rel="noreferrer" className={styles.socialLink} aria-label="Facebook"><i className="fab fa-facebook-f fa-lg"></i></a>
+              <a href="https://x.com" target="_blank" rel="noreferrer" className={styles.socialLink} aria-label="X"><i className="fab fa-x-twitter fa-lg"></i></a>
+              <a href="https://linkedin.com/in/athos-exarchou" target="_blank" rel="noreferrer" className={styles.socialLink} aria-label="LinkedIn"><i className="fab fa-linkedin-in fa-lg"></i></a>
+              <a href="https://github.com/AthosExarchou" target="_blank" rel="noreferrer" className={styles.socialLink} aria-label="GitHub"><i className="fab fa-github fa-lg"></i></a>
             </div>
           </div>
         </div>
