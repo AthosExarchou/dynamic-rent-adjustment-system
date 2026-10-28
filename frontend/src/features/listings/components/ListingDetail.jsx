@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
 import { 
   Building2, 
@@ -122,6 +122,45 @@ export default function ListingDetail() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isLightboxOpen, rawImages.length]);
+
+  const trackElRef = useRef(null);
+  const thumbnailItemRefs = useRef([]);
+
+  const handleWheel = useCallback((e) => {
+    const el = trackElRef.current;
+    if (!el) return;
+    if (el.scrollWidth > el.clientWidth && Math.abs(e.deltaY) > 0) {
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    }
+  }, []);
+
+  const setTrackRef = useCallback((node) => {
+    if (trackElRef.current) {
+      trackElRef.current.removeEventListener('wheel', handleWheel);
+    }
+    trackElRef.current = node;
+    if (node) {
+      node.addEventListener('wheel', handleWheel, { passive: false });
+    }
+  }, [handleWheel]);
+
+  useEffect(() => {
+    const el = trackElRef.current;
+    const activeThumb = thumbnailItemRefs.current[activeImageIndex];
+    if (!el || !activeThumb) return;
+
+    const elRect = el.getBoundingClientRect();
+    const thumbRect = activeThumb.getBoundingClientRect();
+
+    if (thumbRect.left < elRect.left || thumbRect.right > elRect.right) {
+      activeThumb.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center'
+      });
+    }
+  }, [activeImageIndex]);
 
   if (loading) return (
     <div className={styles.loadingContainer}>
@@ -257,13 +296,17 @@ export default function ListingDetail() {
             </div>
 
             {hasImages && rawImages.length > 1 && (
-              <div className={styles.thumbnailsTrack}>
+              <div
+                ref={setTrackRef}
+                className={styles.thumbnailsTrack}
+              >
                 {rawImages.map((imgUrl, idx) => {
                   const resolvedUrl = getImageUrl(imgUrl) || DEFAULT_LISTING_IMAGE;
                   const isActive = idx === activeImageIndex;
                   return (
                     <button
                       key={idx}
+                      ref={(node) => { thumbnailItemRefs.current[idx] = node; }}
                       type="button"
                       className={`${styles.thumbnailButton} ${isActive ? styles.activeThumbnail : ''}`}
                       onClick={() => setActiveImageIndex(idx)}
