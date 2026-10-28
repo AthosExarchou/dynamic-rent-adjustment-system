@@ -30,7 +30,7 @@ export default function AboutPage() {
           <span className={styles.gradientText}>Dynamic Rent Adjustment System</span>
         </h1>
         <p className={styles.heroLead}>
-          DRAS is an apartment rental and price suggestion platform designed to assist property owners and tenants
+          DRAS is a rental property and price suggestion platform designed to assist property owners and tenants
           with transparent rental pricing, admin-reviewed listings, and direct rental applications.
         </p>
 
@@ -63,7 +63,7 @@ export default function AboutPage() {
           </div>
           <h2 className={styles.cardTitle}>Our Purpose</h2>
           <p className={styles.cardText}>
-            To provide a transparent, accessible platform where property owners can list apartments and prospective
+            To provide a transparent, accessible platform where property owners can list rental properties and prospective
             tenants can browse listings and apply with confidence, supported by clear property details.
           </p>
         </div>
@@ -97,7 +97,7 @@ export default function AboutPage() {
             </div>
             <h3 className={styles.featureTitle}>Reviewed Listings</h3>
             <p className={styles.featureText}>
-              Every submitted apartment is reviewed by platform administrators before appearing in public searches to help maintain accurate descriptions.
+              Every submitted property listing is reviewed by platform administrators before appearing in public searches to help maintain accurate descriptions.
             </p>
             <ul className={styles.featureList}>
               <li><CheckCircle2 size={16} className={styles.bulletIcon} /> Admin review and approval workflow</li>
@@ -111,7 +111,7 @@ export default function AboutPage() {
             </div>
             <h3 className={styles.featureTitle}>Price Suggestions</h3>
             <p className={styles.featureText}>
-              Calculates market price suggestions for apartment listings using scraped regional market benchmarks and statistical forecasting.
+              Calculates market price suggestions for property listings using scraped regional market benchmarks and statistical forecasting.
             </p>
             <ul className={styles.featureList}>
               <li><CheckCircle2 size={16} className={styles.bulletIcon} /> Market benchmark price indicators</li>
@@ -125,7 +125,7 @@ export default function AboutPage() {
             </div>
             <h3 className={styles.featureTitle}>Rental Applications</h3>
             <p className={styles.featureText}>
-              Registered tenants can submit applications directly from apartment pages, providing owners with clear applicant profiles and contact information.
+              Registered tenants can submit applications directly from property listing pages, providing owners with clear applicant profiles and contact information.
             </p>
             <ul className={styles.featureList}>
               <li><CheckCircle2 size={16} className={styles.bulletIcon} /> Tenant and Owner profile roles</li>
@@ -192,13 +192,13 @@ export default function AboutPage() {
       {/* Call to Action */}
       <section className={styles.ctaBanner}>
         <div className={styles.ctaContent}>
-          <h2 className={styles.ctaTitle}>Explore Available Apartments</h2>
+          <h2 className={styles.ctaTitle}>Explore Available Listings</h2>
           <p className={styles.ctaText}>
             Browse our listings catalog or register an account to submit your own properties or rental applications.
           </p>
           <div className={styles.ctaButtons}>
             <Link to="/listings" className={styles.ctaPrimaryBtn}>
-              <span>Browse Apartments</span>
+              <span>Browse Listings</span>
               <ArrowRight size={18} />
             </Link>
             <Link to="/contact" className={styles.ctaSecondaryBtn}>

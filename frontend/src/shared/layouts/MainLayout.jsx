@@ -462,7 +462,7 @@ export default function MainLayout() {
             <div className={styles.footerCol}>
               <h5 className={styles.footerBrand}>Dynamic Rent Adjustment System</h5>
               <p className={styles.footerText}>
-                Helping you find the perfect place to live, with a wide selection of apartments for rent.
+                Helping you find the perfect place to live, with a wide selection of rental properties.
                 Trusted, secure, and easy to use.
               </p>
             </div>
@@ -471,7 +471,7 @@ export default function MainLayout() {
               <h6 className={styles.footerTitle}>Explore</h6>
               <ul className={styles.footerList}>
                 <li><Link to="/" className={styles.footerLink}>Home</Link></li>
-                <li><Link to="/listings" className={styles.footerLink}>Browse Apartments</Link></li>
+                <li><Link to="/listings" className={styles.footerLink}>Browse Listings</Link></li>
                 <li><Link to="/about" className={styles.footerLink}>About</Link></li>
                 <li><Link to="/contact" className={styles.footerLink}>Contact</Link></li>
               </ul>

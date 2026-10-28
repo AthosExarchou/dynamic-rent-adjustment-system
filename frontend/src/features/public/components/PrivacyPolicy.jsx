@@ -142,7 +142,7 @@ export default function PrivacyPolicy() {
               handles and protects user information when you use our website and application services.
             </p>
             <p>
-              By accessing DRAS, registering an account, submitting an apartment listing, or submitting a rental application,
+              By accessing DRAS, registering an account, submitting a property listing, or submitting a rental application,
               you acknowledge the data practices described in this document.
             </p>
             <div className={styles.calloutBox}>
@@ -181,7 +181,7 @@ export default function PrivacyPolicy() {
             </div>
 
             <div className={styles.subCard}>
-              <h3 className={styles.subCardTitle}>C. Apartment Listings Data</h3>
+              <h3 className={styles.subCardTitle}>C. Property Listings Data</h3>
               <p>Property characteristics (square meters, bedrooms, floor, energy class, heating type, construction year, rental price, address) and uploaded photos.</p>
             </div>
 

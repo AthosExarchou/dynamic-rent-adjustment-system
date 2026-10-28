@@ -245,7 +245,7 @@ export default function MyListings() {
         <div className={styles.emptyState}>
           <p>You have not listed any properties yet.</p>
           {!roles.includes('ADMIN') && (
-            <Link to="/listings/new" className={`${styles.btn} ${styles.btnSuccess}`}>Create New Apartment</Link>
+            <Link to="/listings/new" className={`${styles.btn} ${styles.btnSuccess}`}>Create Listing</Link>
           )}
         </div>
       )}

@@ -165,7 +165,7 @@ export default function ListingDetail() {
   if (loading) return (
     <div className={styles.loadingContainer}>
       <div className={styles.spinner}></div>
-      <p>Loading apartment details...</p>
+      <p>Loading property details...</p>
     </div>
   );
   

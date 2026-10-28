@@ -214,10 +214,10 @@ export default function FavouritesPage() {
           </div>
           <h2 className={styles.emptyTitle}>No favourite listings yet</h2>
           <p className={styles.emptyDesc}>
-            You haven't saved any apartments to your favourites list yet. Browse our verified listings and click the heart icon on any property to save it here.
+            You haven't saved any listings to your favourites list yet. Browse our verified listings and click the heart icon on any property to save it here.
           </p>
           <Link to="/listings" className={styles.browseBtn}>
-            <Building2 size={18} /> Browse Apartments <ArrowRight size={16} />
+            <Building2 size={18} /> Browse Listings <ArrowRight size={16} />
           </Link>
         </div>
       ) : displayedListings.length === 0 ? (

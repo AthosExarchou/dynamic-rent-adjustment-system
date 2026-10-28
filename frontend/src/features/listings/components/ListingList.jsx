@@ -324,7 +324,7 @@ export default function ListingList() {
     <div className={styles.container}>
       <div className={styles.header}>
         <h2 className={styles.pageTitle}>
-          <Building2 className={styles.pageIcon} size={28} /> Apartments
+          <Building2 className={styles.pageIcon} size={28} /> Browse Listings
         </h2>
         {isUserOnly && (
           <Link to="/owner/new" className={`${styles.btn} ${styles.btnSuccess} ${styles.pulseBtn}`}>
@@ -333,7 +333,7 @@ export default function ListingList() {
         )}
         {isOwner && (
           <Link to="/listings/new" className={`${styles.btn} ${styles.btnSuccess} ${styles.pulseBtn}`}>
-            <Plus size={18} /> Create New Apartment
+            <Plus size={18} /> Create Listing
           </Link>
         )}
       </div>
@@ -344,7 +344,7 @@ export default function ListingList() {
       <div className={styles.filterCard}>
         <div className={styles.filterHeader}>
           <h5 className={styles.filterTitle}>
-            <Filter size={20} /> Filter Apartments {activeFiltersCount > 0 && <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>({activeFiltersCount} active)</span>}
+            <Filter size={20} /> Filter Listings {activeFiltersCount > 0 && <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>({activeFiltersCount} active)</span>}
           </h5>
         </div>
         <div className={styles.filterBody}>
@@ -418,8 +418,8 @@ export default function ListingList() {
 
             {/* Advanced Filters Toggle */}
             <div className={styles.advancedToggleWrapper}>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
                 className={styles.advancedToggleBtn}
               >
@@ -625,8 +625,8 @@ export default function ListingList() {
                 <Check size={18} /> Apply Filters {activeFiltersCount > 0 && `(${activeFiltersCount})`}
               </button>
               {hasActiveFilters && (
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={handleFilterReset}
                   className={`${styles.btn} ${styles.btnOutlineSecondary}`}
                 >
@@ -641,7 +641,7 @@ export default function ListingList() {
       {/* Listing Grid */}
       {loading ? (
         <div className={styles.emptyState}>
-          <p>Loading apartments...</p>
+          <p>Loading listings...</p>
         </div>
       ) : error ? (
         <div className={styles.emptyState}>
@@ -734,14 +734,14 @@ export default function ListingList() {
       ) : (
         <div className={styles.emptyState}>
           <p>
-            {searchTerm 
-              ? `No apartments found matching "${searchTerm}".` 
-              : 'No apartments currently available.'}
+            {searchTerm
+              ? `No listings found matching "${searchTerm}".`
+              : 'No listings currently available.'}
           </p>
           {hasActiveFilters && (
-            <button 
-              type="button" 
-              onClick={handleFilterReset} 
+            <button
+              type="button"
+              onClick={handleFilterReset}
               className={`${styles.btn} ${styles.btnOutlineSecondary}`}
               style={{ marginTop: '1rem' }}
             >
@@ -760,7 +760,7 @@ export default function ListingList() {
         )}
         {isOwner && (
           <Link to="/listings/new" className={`${styles.btn} ${styles.btnOutlineSuccess} ${styles.pulseBtn}`}>
-            <Plus size={18} /> Create New Apartment
+            <Plus size={18} /> Create Listing
           </Link>
         )}
       </div>

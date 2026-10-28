@@ -64,7 +64,7 @@ export default function OwnerForm() {
           )}
           
           <div className={styles.sectionNotice}>
-            <p>Register as a property owner on DRAS to create and manage apartment listings.</p>
+            <p>Register as a property owner on DRAS to create and manage property listings.</p>
           </div>
           
           <form onSubmit={handleSubmit} className={styles.form}>

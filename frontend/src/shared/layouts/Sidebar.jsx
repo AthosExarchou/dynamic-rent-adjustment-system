@@ -90,7 +90,7 @@ export default function Sidebar({ isOpen, onClose }) {
           <NavLink to="/listings" className={({ isActive }) =>
               isActive ? `${styles.sidebarLink} ${styles.active}` : styles.sidebarLink} onClick={onClose}>
             <Building2 size={20} />
-            Apartments
+            Listings
           </NavLink>
 
           <NavLink to="/favourites" className={({ isActive }) =>
@@ -107,7 +107,7 @@ export default function Sidebar({ isOpen, onClose }) {
             <NavLink to="/my-listings" className={({ isActive }) =>
                 isActive ? `${styles.sidebarLink} ${styles.active}` : styles.sidebarLink} onClick={onClose}>
               <Key size={20} />
-              My Apartments
+              My Properties
             </NavLink>
           )}
 

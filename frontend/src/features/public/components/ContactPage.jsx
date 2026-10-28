@@ -273,7 +273,7 @@ export default function ContactPage() {
         <div className={styles.faqContent}>
           <h3 className={styles.faqTitle}>Frequently Asked Questions</h3>
           <p className={styles.faqText}>
-            Find answers to common questions about creating an owner profile, listing an apartment, or submitting tenant applications on our homepage.
+            Find answers to common questions about creating an owner profile, listing a property, or submitting tenant applications on our homepage.
           </p>
         </div>
         <Link to="/" className={styles.faqBtn}>
