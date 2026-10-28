@@ -87,6 +87,33 @@ class NotificationRepositoryTest {
     }
 
     @Test
+    @DisplayName("deleteByIdAndUserId deletes only target notification of target user")
+    void deleteByIdAndUserId_DeletesOnlyTargetNotification() {
+        User userA = createUser("userDelA", "userDelA@test.com");
+        User userB = createUser("userDelB", "userDelB@test.com");
+
+        Notification n1 = createNotification(userA, "N1", false, LocalDateTime.now());
+        Notification n2 = createNotification(userA, "N2", false, LocalDateTime.now());
+        Notification nOther = createNotification(userB, "N3", false, LocalDateTime.now());
+
+        entityManager.clear();
+
+        // Attempt to delete with wrong user id returns 0
+        int wrongUserResult = notificationRepository.deleteByIdAndUserId(n1.getId(), userB.getId());
+        assertThat(wrongUserResult).isEqualTo(0);
+
+        // Delete with correct user id returns 1
+        int correctResult = notificationRepository.deleteByIdAndUserId(n1.getId(), userA.getId());
+        assertThat(correctResult).isEqualTo(1);
+
+        entityManager.clear();
+
+        assertThat(entityManager.find(Notification.class, n1.getId())).isNull();
+        assertThat(entityManager.find(Notification.class, n2.getId())).isNotNull();
+        assertThat(entityManager.find(Notification.class, nOther.getId())).isNotNull();
+    }
+
+    @Test
     @DisplayName("findByUser_IdOrderByCreatedAtDesc returns notifications ordered newest first")
     void findByUser_IdOrderByCreatedAtDesc_ReturnsOrdered() {
         User user = createUser("userSort", "userSort@test.com");

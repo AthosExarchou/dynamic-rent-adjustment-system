@@ -72,4 +72,15 @@ public class NotificationService {
             notificationRepository.deleteAllByUserId(userId);
         }
     }
+
+    @Transactional
+    public boolean deleteNotification(Integer notificationId, Integer userId) {
+        if (notificationId == null || userId == null) return false;
+        return notificationRepository.deleteByIdAndUserId(notificationId, userId) > 0;
+    }
+
+    @Transactional
+    public void deleteAllNotifications(Integer userId) {
+        deleteNotificationsForUser(userId);
+    }
 }

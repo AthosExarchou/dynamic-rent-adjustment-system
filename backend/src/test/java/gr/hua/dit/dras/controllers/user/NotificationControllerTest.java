@@ -22,6 +22,7 @@ import java.util.Optional;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -129,5 +130,59 @@ class NotificationControllerTest {
                 .andExpect(status().isOk());
 
         verify(notificationService).markAllAsRead(42);
+    }
+
+    @Test
+    @DisplayName("Authenticated user deletes single notification successfully")
+    @WithMockUser(username = "user@test.com")
+    void deleteNotification_Authenticated_Success_ReturnsNoContent() throws Exception {
+        User user = new User();
+        ReflectionTestUtils.setField(user, "id", 42);
+        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
+        when(notificationService.deleteNotification(5, 42)).thenReturn(true);
+
+        mockMvc.perform(delete("/notifications/5"))
+                .andExpect(status().isNoContent());
+
+        verify(notificationService).deleteNotification(5, 42);
+    }
+
+    @Test
+    @DisplayName("Authenticated user deletes notification that does not exist returns 404")
+    @WithMockUser(username = "user@test.com")
+    void deleteNotification_Authenticated_NotFound_ReturnsNotFound() throws Exception {
+        User user = new User();
+        ReflectionTestUtils.setField(user, "id", 42);
+        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
+        when(notificationService.deleteNotification(999, 42)).thenReturn(false);
+
+        mockMvc.perform(delete("/notifications/999"))
+                .andExpect(status().isNotFound());
+
+        verify(notificationService).deleteNotification(999, 42);
+    }
+
+    @Test
+    @DisplayName("Authenticated user deletes all notifications returns 204")
+    @WithMockUser(username = "user@test.com")
+    void deleteAllNotifications_Authenticated_ReturnsNoContent() throws Exception {
+        User user = new User();
+        ReflectionTestUtils.setField(user, "id", 42);
+        when(userRepository.findByEmail("user@test.com")).thenReturn(Optional.of(user));
+
+        mockMvc.perform(delete("/notifications"))
+                .andExpect(status().isNoContent());
+
+        verify(notificationService).deleteAllNotifications(42);
+    }
+
+    @Test
+    @DisplayName("Unauthenticated request to delete notification redirects to login")
+    void deleteNotification_Unauthenticated_RedirectsToLogin() throws Exception {
+        mockMvc.perform(delete("/notifications/5"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("http://localhost/login"));
+
+        verifyNoInteractions(notificationService);
     }
 }

@@ -1,5 +1,6 @@
 package gr.hua.dit.dras.controllers.user;
 
+/* imports */
 import gr.hua.dit.dras.dto.NotificationDTO;
 import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.repositories.UserRepository;
@@ -58,5 +59,22 @@ public class NotificationController {
         if (user == null) return ResponseEntity.status(401).build();
         notificationService.markAllAsRead(user.getId());
         return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteNotification(@PathVariable Integer id, Authentication authentication) {
+        User user = getAuthenticatedUser(authentication);
+        if (user == null) return ResponseEntity.status(401).build();
+        boolean deleted = notificationService.deleteNotification(id, user.getId());
+        if (!deleted) return ResponseEntity.notFound().build();
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deleteAllNotifications(Authentication authentication) {
+        User user = getAuthenticatedUser(authentication);
+        if (user == null) return ResponseEntity.status(401).build();
+        notificationService.deleteAllNotifications(user.getId());
+        return ResponseEntity.noContent().build();
     }
 }
