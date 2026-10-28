@@ -28,7 +28,7 @@ services:
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
       - MAIL_USERNAME=${MAIL_USERNAME}
       - MAIL_PASSWORD=${MAIL_PASSWORD}
-      - APP_PUBLIC_URL=http://89.168.95.36
+      - APP_PUBLIC_URL=${APP_PUBLIC_URL:-http://dras.abrdns.com}
     volumes:
       - ./analytics/outputs:/app/analytics/outputs:ro
       - ./analytics/data/images:/app/analytics/data/images:ro
