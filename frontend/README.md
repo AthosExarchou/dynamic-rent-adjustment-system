@@ -38,6 +38,7 @@ The frontend follows a feature-based architecture, where source code is organize
 - **Admin**: System-wide administrative workflows (approvals, users, external imports).
 - **Auth**: Authentication context, session management, and login/registration workflows.
 - **Listings**: Property listings, filtering, and application logic.
+- **Favourites**: Saved listings and bookmark management.
 - **Owners**: Owner registration and property management dashboards.
 - **Tenants**: Renter profiles and application tracking.
 - **Users**: Standard user profiles and account management.
@@ -50,6 +51,7 @@ All cross-cutting concerns (API clients, generic UI components, custom hooks, gl
 - React-based Single Page Application (SPA)
 - Responsive layouts
 - Client-side routing
+- In-app notifications
 - Modular component architecture
 - Domain-driven project organization
 
@@ -130,7 +132,7 @@ src/
 
 - **Name**: Exarchou Athos
 - **Student ID**: it2022134
-- **Email**: athosexarhou@gmail.com
+- **Email**: athosexarhou@gmail.com | it2022134@hua.gr
 
 ## License
 This project is licensed under the **MIT License**.

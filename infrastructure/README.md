@@ -115,12 +115,18 @@ Nginx acts as a reverse proxy, routing traffic to the frontend and backend conta
   ```
   *(Alternatively, to keep `db` and `backend` running: `docker compose rm -f -s nginx frontend && docker volume rm dynamic-rent-adjustment-system_frontend_dist && docker compose up -d --build frontend nginx`)*
   > **Note:** This only applies to the local Docker environment. When running via **Vagrant** or a VM, frontend rebuilds and volume clearing are handled automatically by the Jenkins pipeline's Deploy stage. Simply click **Build Now** in Jenkins.
-- **Reset database (wipe all data):** `docker compose down -v` removes all named volumes - this means both the database **and** the frontend build are deleted. The subsequent `docker compose up -d` will take longer as both must be re-created from scratch. To wipe only the database and preserve the frontend volume, run:
-  ```bash
-  docker compose down
-  docker volume rm dynamic-rent-adjustment-system_db_data
-  docker compose up -d
-  ```
+- **Reset database (wipe all data):**
+  > [!CAUTION]
+  > The following actions permanently delete all database data:
+  >
+  > - `docker compose down -v` removes all named volumes (both the database and frontend build, so the next `docker compose up -d` will take longer).
+  > - To wipe only the database and preserve the frontend volume:
+  >   ```bash
+  >   docker compose down
+  >   docker volume rm dynamic-rent-adjustment-system_db_data
+  >   docker compose up -d
+  >   ```
+
   > **Note:** For **Vagrant**, the database volume is `dras_db_data` (Jenkins sets `COMPOSE_PROJECT_NAME=dras`). For a VM, the production volume is `dras_db_data_prod` (defined in `docker-compose.prod.yml`). In both cases, stop the relevant containers first via `vagrant ssh` or SSH into your server before removing the volume, then trigger a Jenkins build to redeploy.
 - **Stop everything:** Run `docker compose down`.
 - **Watch logs:** Run `docker compose logs -f` to see everything, or `docker compose logs -f backend` for just the backend.
@@ -128,7 +134,7 @@ Nginx acts as a reverse proxy, routing traffic to the frontend and backend conta
 
 ## 4. Infrastructure Provisioning (Vagrant)
 
-A complete, reproducible infrastructure is provided via Vagrant. The `Vagrantfile` and `bootstrap.sh` automate the setup of an Ubuntu VM containing Java 21, Node.js 20, Docker, Docker Compose, and Jenkins.
+A complete, reproducible infrastructure is provided via Vagrant. The `Vagrantfile` and `bootstrap.sh` automate the setup of an Ubuntu VM containing Docker, Docker Compose, and Jenkins (build dependencies like Java 21 and Node.js 20 are handled inside containerized pipeline stages).
 - To start the VM and trigger provisioning, run `cd infrastructure/vagrant` followed by `vagrant up`.
 - The application will be accessible at `http://localhost:8080` (this is forwarded to the VM's internal Nginx proxy on port 80).
 - Jenkins will be accessible at `http://localhost:8888` on your host machine.
@@ -140,7 +146,7 @@ If you want to monitor the containers running inside the Vagrant VM from your ho
 
 ## 5. CI/CD Pipeline (Jenkins Setup)
 
-Jenkins automatically handles deployments when you push to GitHub. The project includes a `Jenkinsfile` for CI/CD, containing stages for Backend Build, Backend Tests, Frontend Install, Frontend Build, Docker Image Build, Docker Compose Deployment, Health Check, and Archive Logs.
+Jenkins automatically handles deployments when you push to GitHub. The project includes a `Jenkinsfile` for CI/CD, containing stages for Backend Tests, Frontend Lint, Docker Image Build, Deploy, Smoke Test, and Archive Logs.
 
 ### Initial Setup (Local Vagrant Environment)
 If you are testing the pipeline locally using Vagrant, set up Jenkins as follows:
@@ -199,5 +205,5 @@ If it is not enrolled:
 To connect a local database client to the different environments, use the following configurations:
 
 - **Local Docker Environment:** Connect to `localhost` on port `5433` (already mapped in `docker-compose.yml`).
-- **Local Vagrant Environment:** You must first manually add `config.vm.network "forwarded_port", guest: 5433, host: 5434, id: "postgres"` to your `Vagrantfile` and run `vagrant reload`. Then, connect to `localhost` on port `5434`.
+- **Local Vagrant Environment:** Connect to `localhost` on port `5434` (forwarded from guest port `5433` in `Vagrantfile`).
 - **Production Environment (Remote VM):** First, add `ports: ["127.0.0.1:5432:5432"]` to the `db` service in `docker-compose.prod.yml` to securely bind it to the server's loopback interface. Then, configure your client to connect to `localhost:5432` using an **SSH Tunnel** through your production server.

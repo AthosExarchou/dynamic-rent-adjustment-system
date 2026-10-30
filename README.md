@@ -88,6 +88,7 @@ The project consists of three distinct components communicating over HTTP via a 
 │
 └── analytics/                # Python Data Analytics & Scraper
     ├── analysis/             # Market data analysis scripts
+    ├── models/               # Time series forecasting and price suggestion models
     └── scrapers/             # Web scrapers for external listings
 ```
 
@@ -101,24 +102,27 @@ To run this application, ensure you have the following installed:
 - **Docker**: Optional, for containerized local development
 
 ## Installation
-1. Clone the repository:
+1. Clone the repository and configure `.env`:
    ```bash
    git clone https://github.com/AthosExarchou/dynamic-rent-adjustment-system.git
+   cd dynamic-rent-adjustment-system
+   cp .env.example .env
    ```
-2. For the **Backend**:
+2. Start PostgreSQL (e.g. `docker compose up -d db`).
+3. For the **Backend**:
    ```bash
    cd backend
    mvn clean install
    mvn spring-boot:run
    ```
-3. For the **Frontend**:
+4. For the **Frontend**:
    ```bash
    cd frontend
    npm install
    npm run dev
    ```
-4. Access the web application in your browser at `http://localhost:5173` (development) or `http://localhost` (production).
-5. For the **Analytics** module, see the `analytics` folder for Python environment setup instructions.
+5. Access the application in your browser at `http://localhost:5173`.
+6. For the **Analytics** module, see the `analytics` folder for Python environment setup instructions.
 
 ## Configuration
 
@@ -127,7 +131,7 @@ The project utilizes `.env` files for configuration. Copy the example file in th
 ```bash
 cp .env.example .env
 ```
-Fill in the `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, and `MAIL_*` credentials.
+Fill in `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `APP_PUBLIC_URL`, and `MAIL_*` credentials. Set `APP_PUBLIC_URL` according to your deployment target.
 
 ### Backend (`backend/src/main/resources/application.yml`)
 The backend is configured to use environment variables by default. You can adjust application profiles (`dev`, `prod`) here.
@@ -163,7 +167,7 @@ It uses Nginx to serve the React frontend and proxy requests to the Spring Boot 
 The PostgreSQL database is hidden from the public internet for security.
 
 I set up a fully automated deployment pipeline:
-- **GitHub Actions**: Runs unit tests and ESLint every time code is pushed.
+- **GitHub Actions**: Runs backend unit tests and frontend oxlint and build checks every time code is pushed.
 - **Jenkins**: Runs directly on the Oracle server. Whenever the `main` branch is updated,
   Jenkins automatically builds new Docker images and restarts the app without downtime.
   It also runs a quick smoke test to make sure the app actually boots before calling the deployment successful.

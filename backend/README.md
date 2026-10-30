@@ -42,7 +42,7 @@ The backend follows a layered architecture that separates presentation, business
 ## Security, Authentication & API Documentation
 
 - **Role-Based Access Control (RBAC)**: Method-level security (`@Secured`, `@PreAuthorize`) controls access to endpoints based on role requirements (`USER`, `OWNER`, `TENANT`, `ADMIN`).
-- **API Security**: Endpoints under `/api/**` bypass CSRF for stateless frontend integration.
+- **CSRF Protection**: Cookie-based CSRF protection using `CookieCsrfTokenRepository` (`XSRF-TOKEN-DRAS`). Mutating requests (`POST`, `PUT`, `DELETE`) require the matching `X-XSRF-TOKEN` header.
 - **CORS Configuration**: Configured to accept requests from the frontend client (default `http://localhost:5173`).
 - **OpenAPI & Swagger UI**: Integrated OpenAPI configuration for interactive API documentation, accessible at `/api/swagger-ui/index.html`.
 - **Error Handling**: Exception interception mapping errors to JSON HTTP responses (e.g., 400, 401, 403, 404, 500).
@@ -73,12 +73,18 @@ Ensure you have the following installed to build and run the backend:
 
 Configuration is managed via `src/main/resources/application.yml` and environment variables.
 
-It is recommended to copy the `.env.example` in the root directory to `.env` and set your variables:
+It is recommended to copy `.env.example` in the root directory to `.env` and set your variables:
 
 ```properties
 DATABASE_URL=jdbc:postgresql://localhost:5432/dras_db
 DATABASE_USERNAME=postgres
 DATABASE_PASSWORD=your_password
+
+# Public URL of the frontend (used for outgoing email links and CORS)
+# - Local dev without Docker (npm run dev): http://localhost:5173
+# - Local Docker Compose (served via Nginx): http://localhost
+# - Production VM: http://dras.abrdns.com
+APP_PUBLIC_URL=http://localhost:5173
 
 MAIL_USERNAME=your_email@gmail.com
 MAIL_PASSWORD=your_app_password
@@ -109,6 +115,7 @@ src/main/java/gr/hua/dit/dras/
 │   ├── domain/               # Core business logic
 │   ├── infrastructure/       # Infrastructure-related implementations
 │   └── integration/          # External service integrations
+├── web/                      # Web exception handlers
 └── DrasApplication.java      # Main Spring Boot Entry Point
 ```
 
@@ -123,6 +130,8 @@ src/main/java/gr/hua/dit/dras/
 - Maven
 - JUnit 5
 - Mockito
+- Springdoc OpenAPI (Swagger)
+- Thymeleaf
 
 ## Responsibilities
 
@@ -141,7 +150,7 @@ The backend is responsible for:
 
 - **Name**: Exarchou Athos
 - **Student ID**: it2022134
-- **Email**: athosexarhou@gmail.com
+- **Email**: athosexarhou@gmail.com | it2022134@hua.gr
 
 ## License
 This project is licensed under the **MIT License**.

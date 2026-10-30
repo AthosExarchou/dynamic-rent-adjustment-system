@@ -11,7 +11,7 @@ This document serves as a comprehensive reference for the endpoint mappings and 
 | /saveUser | POST | `permitAll` (SecurityConfig) |
 | /users | GET | `@Secured("ADMIN")` |
 | /user/{user_id} | GET | `@PreAuthorize("hasAuthority('ADMIN') or @userService.getCurrentUserId() == #user_id")` |
-| /user/{user_id} | POST | `@Secured("USER")` + internal access checks |
+| /user/{user_id} | POST | `@PreAuthorize("hasAnyAuthority('USER', 'ADMIN')")` + internal access checks |
 | /user/role/delete/{user_id}/{role_id} | POST | `@Secured("ADMIN")` + assertNotAdmin |
 | /user/role/add/{user_id}/{role_id} | POST | `@Secured("ADMIN")` + assertNotAdmin |
 | /user/delete/{user_id} | POST | `@Secured("ADMIN")` |
@@ -21,7 +21,7 @@ This document serves as a comprehensive reference for the endpoint mappings and 
 
 | Endpoint | Method | Security |
 |----------|--------|----------|
-| /user/change-password/{id} | POST | `@Secured("USER")` + validateProfileOwnership(id) |
+| /user/change-password/{id} | POST | `@PreAuthorize("hasAnyAuthority('USER', 'ADMIN')")` + validateProfileOwnership(id) |
 
 ### ListingController.java
 
@@ -33,8 +33,12 @@ This document serves as a comprehensive reference for the endpoint mappings and 
 | /listings/{id} | GET | `permitAll` (SecurityConfig) |
 | /listings/filter | GET | `permitAll` (SecurityConfig) |
 | /listings/mylisting | GET | `@Secured("OWNER")` |
-| /listings/new | POST | `@PreAuthorize("hasAuthority('USER')")` |
+| /listings/new | POST | `@PreAuthorize("hasAuthority('USER') and !hasAuthority('ADMIN')")` |
+| /listings/edit/{id} | POST | `@PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")` |
 | /listings/delete/{id} | POST | `@Secured("OWNER")` |
+| /listings/disable/{id} | POST | `@PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")` |
+| /listings/enable/{id} | POST | `@PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")` |
+| /listings/toggle-status/{id} | POST | `@PreAuthorize("hasAnyAuthority('OWNER', 'ADMIN')")` |
 | /listings/forapproval | GET | `@Secured("ADMIN")` |
 | /listings/approve/{id} | POST | `@Secured("ADMIN")` |
 | /listings/reject/{id} | POST | `@Secured("ADMIN")` |
@@ -47,8 +51,8 @@ This document serves as a comprehensive reference for the endpoint mappings and 
 
 | Endpoint | Method | Security |
 |----------|--------|----------|
-| /owner/new | POST | `@PreAuthorize("hasRole('ADMIN') or hasRole('USER')")` |
-| /owner/{id}/listings | GET | `@PreAuthorize("hasRole('OWNER') or hasRole('ADMIN')")` + system-owner guard |
+| /owner/new | POST | `@PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")` |
+| /owner/{id}/listings | GET | `@PreAuthorize("hasAuthority('OWNER') or hasAuthority('ADMIN')")` + system-owner guard |
 | /owner/listings/{listingId}/approveApplicant/{tenantId} | POST | `@Secured("OWNER")` |
 | /owner/listings/{listingId}/rejectApplicant/{tenantId} | POST | `@Secured("OWNER")` |
 
@@ -57,7 +61,7 @@ This document serves as a comprehensive reference for the endpoint mappings and 
 | Endpoint | Method | Security |
 |----------|--------|----------|
 | /tenant/rent/{listingId} | POST | `@Secured("USER")` + validateRentalApplicationRights |
-| /tenant/new | POST | `@PreAuthorize("hasRole('ADMIN')")` |
+| /tenant/new | POST | `@PreAuthorize("hasAuthority('ADMIN')")` |
 
 ### ExternalImportController.java
 
@@ -73,6 +77,18 @@ This document serves as a comprehensive reference for the endpoint mappings and 
 | /notifications/unread-count | GET | manual auth check |
 | /notifications/{id}/read | PUT | manual auth check |
 | /notifications/read-all | PUT | manual auth check |
+| /notifications/{id} | DELETE | manual auth check |
+| /notifications | DELETE | manual auth check |
+
+### FavouriteController.java
+
+| Endpoint | Method | Security |
+|----------|--------|----------|
+| /favourites | GET | manual auth check |
+| /favourites/ids | GET | manual auth check |
+| /favourites/{listingId} | POST | manual auth check |
+| /favourites/{listingId} | DELETE | manual auth check |
+| /favourites/sync | POST | manual auth check |
 
 ### RestAuthController.java
 

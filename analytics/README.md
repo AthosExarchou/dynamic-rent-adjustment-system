@@ -44,9 +44,10 @@ To run this module, ensure you have the following installed:
      venv\Scripts\activate
      ```
 
-4. Install the required dependencies:
+4. Install the required dependencies and Playwright browser:
    ```bash
    pip install -r requirements.txt
+   playwright install chromium
    ```
 
 ## Usage Guide
@@ -79,6 +80,11 @@ python3 analytics/models/arima_micro.py
 **Get an instant price suggestion for a property via CLI (from project root):**
 ```bash
 python3 analytics/models/arima_micro.py --suggest --size 75 --type APARTMENT --address "Kypseli, Athens" --floor 3 --year 2010
+```
+
+**Run rolling-origin out-of-sample ARIMA backtesting (from project root):**
+```bash
+python3 analytics/models/arima_micro.py --backtest
 ```
 
 *(Or from inside `analytics/`: `python models/arima_micro.py`)*
