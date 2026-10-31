@@ -52,7 +52,7 @@ To run this module, ensure you have the following installed:
 
 ## Usage Guide
 
-> **Note for IDE Users:** If your editor terminal opens at the project root (`dynamic-rent-adjustment-system`), use the root-relative commands below so that IDE automatic run buttons ("Run in Terminal") work out of the box. Ensure the virtual environment is activated (`source analytics/venv/bin/activate` or `source venv/bin/activate`).
+> **Note for IDE Users:** If your editor terminal opens at the project root (`dynamic-rent-adjustment-system`), use the root-relative commands below so that editor run actions execute correctly. Ensure the virtual environment is activated (`source analytics/venv/bin/activate` or `source venv/bin/activate`).
 
 ### 1. Web Scrapers
 The scrapers are located in `analytics/scrapers/`. Run the Spitogatos scraping pipeline:
@@ -77,7 +77,7 @@ The forecasting engine (`analytics/models/arima_micro.py`) performs Auto-ARIMA t
 python3 analytics/models/arima_micro.py
 ```
 
-**Get an instant price suggestion for a property via CLI (from project root):**
+**Generate a price suggestion for a property via CLI (from project root):**
 ```bash
 python3 analytics/models/arima_micro.py --suggest --size 75 --type APARTMENT --address "Kypseli, Athens" --floor 3 --year 2010
 ```
@@ -90,8 +90,8 @@ python3 analytics/models/arima_micro.py --backtest
 *(Or from inside `analytics/`: `python models/arima_micro.py`)*
 
 The script outputs:
-- `outputs/price_predictions.json`: Comprehensive model metrics consumed by the Spring Boot backend (`/api/listings/price-suggestion`)
-- `outputs/micro_forecast_athens.png`: Visualized forecast plot with 95% confidence intervals
+- `outputs/price_predictions.json`: Model metrics consumed by the Spring Boot backend (`/api/listings/price-suggestion`)
+- `outputs/micro_forecast_athens.png`: Forecast plot with 95% confidence intervals
 
 ## Project Structure
 

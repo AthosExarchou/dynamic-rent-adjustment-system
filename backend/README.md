@@ -106,9 +106,9 @@ src/main/java/gr/hua/dit/dras/
 │
 ├── config/                   # Global configuration classes (Security, OpenAPI, CORS)
 ├── controllers/              # REST controllers exposing API endpoints
-├── dto/                      # Data Transfer Objects for secure request/response bodies
+├── dto/                      # Data Transfer Objects for request and response payloads
 ├── entities/                 # Database schema models (JPA Entities)
-├── model/                    # Application Enums and simple POJOs
+├── model/                    # Application Enums and domain POJOs
 ├── repositories/             # Spring Data JPA repository interfaces
 ├── services/                 # Domain logic and transactional workflows
 │   ├── application/          # Application-specific orchestrations

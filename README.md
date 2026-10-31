@@ -6,7 +6,7 @@
 [![](https://img.shields.io/badge/status-active-brightgreen?style=for-the-badge)]()
 [![](https://img.shields.io/github/license/AthosExarchou/dynamic-rent-adjustment-system.svg?style=for-the-badge)](https://github.com/AthosExarchou/dynamic-rent-adjustment-system/blob/master/LICENSE)
 
-Welcome to the **Dynamic Rent Adjustment System (DRAS)**, a web application for real estate property management, connecting owners with tenants, and processing rental applications.
+The **Dynamic Rent Adjustment System (DRAS)** is a web application for real estate property management, connecting owners with tenants, and processing rental applications.
 
 > **Academic Project:** This project is being developed as an undergraduate thesis in the
 [Department of Informatics and Telecommunications at Harokopio University of Athens](https://dit.hua.gr).
@@ -35,8 +35,8 @@ It manages rental properties, tenant applications, and administrative workflows.
 
 The Dynamic Rent Adjustment System (DRAS) is the implementation component of an undergraduate diploma thesis.
 
-The objective of the project is to design and develop a modern rental management platform that
-demonstrates the application of contemporary software engineering principles, including:
+The objective of the project is to design and develop a rental management platform that
+demonstrates the application of software engineering principles, including:
 
 - Layered backend architecture
 - RESTful API design
@@ -162,15 +162,15 @@ VITE_API_BASE_URL=http://localhost:8080/api
 
 ## Production & CI/CD
 
-The app is hosted on an **Oracle Cloud ARM64 VM** (their Always Free tier) using Docker Compose.
+The application is hosted on an **Oracle Cloud ARM64 VM** using Docker Compose.
 It uses Nginx to serve the React frontend and proxy requests to the Spring Boot backend.
-The PostgreSQL database is hidden from the public internet for security.
+The PostgreSQL database is not exposed to the public internet.
 
-I set up a fully automated deployment pipeline:
-- **GitHub Actions**: Runs backend unit tests and frontend oxlint and build checks every time code is pushed.
-- **Jenkins**: Runs directly on the Oracle server. Whenever the `main` branch is updated,
-  Jenkins automatically builds new Docker images and restarts the app without downtime.
-  It also runs a quick smoke test to make sure the app actually boots before calling the deployment successful.
+The deployment pipeline consists of:
+- **GitHub Actions**: Runs backend unit tests, frontend oxlint checks, and build verification on push.
+- **Jenkins**: Runs on the Oracle server. When the `main` branch is updated,
+  Jenkins builds new Docker images, restarts the application containers,
+  and executes a smoke test to verify application availability before marking deployment complete.
 
 ## Author
 

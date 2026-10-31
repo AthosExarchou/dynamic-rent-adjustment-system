@@ -61,7 +61,7 @@ All cross-cutting concerns (API clients, generic UI components, custom hooks, gl
 - **Vite**: Vite provides the development server and production build tooling.
 - **React Router**: For declarative client-side routing.
 - **Context API**: Handles global state (e.g., authentication).
-- **Fetch API**: Powers the centralized HTTP client.
+- **Fetch API**: Used for the centralized HTTP client.
 - **CSS Modules**: Scopes CSS locally to prevent style collisions.
 
 ## Requirements

@@ -114,7 +114,7 @@ Nginx acts as a reverse proxy, routing traffic to the frontend and backend conta
   docker compose up -d --build
   ```
   *(Alternatively, to keep `db` and `backend` running: `docker compose rm -f -s nginx frontend && docker volume rm dynamic-rent-adjustment-system_frontend_dist && docker compose up -d --build frontend nginx`)*
-  > **Note:** This only applies to the local Docker environment. When running via **Vagrant** or a VM, frontend rebuilds and volume clearing are handled automatically by the Jenkins pipeline's Deploy stage. Simply click **Build Now** in Jenkins.
+  > **Note:** This only applies to the local Docker environment. When running via **Vagrant** or a VM, frontend rebuilds and volume clearing are handled automatically by the Jenkins pipeline's Deploy stage. Trigger a build by clicking **Build Now** in Jenkins.
 - **Reset database (wipe all data):**
   > [!CAUTION]
   > The following actions permanently delete all database data:
@@ -134,7 +134,7 @@ Nginx acts as a reverse proxy, routing traffic to the frontend and backend conta
 
 ## 4. Infrastructure Provisioning (Vagrant)
 
-A complete, reproducible infrastructure is provided via Vagrant. The `Vagrantfile` and `bootstrap.sh` automate the setup of an Ubuntu VM containing Docker, Docker Compose, and Jenkins (build dependencies like Java 21 and Node.js 20 are handled inside containerized pipeline stages).
+Local virtual machine infrastructure is provisioned using Vagrant. The `Vagrantfile` and `bootstrap.sh` automate the setup of an Ubuntu VM containing Docker, Docker Compose, and Jenkins (build dependencies such as Java 21 and Node.js 20 are handled inside containerized pipeline stages).
 - To start the VM and trigger provisioning, run `cd infrastructure/vagrant` followed by `vagrant up`.
 - The application will be accessible at `http://localhost:8080` (this is forwarded to the VM's internal Nginx proxy on port 80).
 - Jenkins will be accessible at `http://localhost:8888` on your host machine.
@@ -163,10 +163,10 @@ In production (Oracle Cloud), Jenkins runs as a native system service on the Ubu
 
 The production configuration (`docker-compose.prod.yml`) includes restart policies, health checks, named volumes, and log rotation, with Nginx being the only publicly exposed service. Before deploying, you must copy `.env.example` to `.env` and edit it with your credentials.
 
-If you ever need to manually fix things on the production server, SSH in and go to `/opt/dras/repository`.
+For maintenance operations on the production server, connect via SSH and navigate to `/opt/dras/repository`.
 - **See what's running:** Run `docker compose -f docker-compose.prod.yml ps`.
 - **Watch live production logs:** Run `docker compose -f docker-compose.prod.yml logs --tail=100 -f`.
-- **Force a manual redeploy from scratch:** If the frontend isn't updating properly, run `docker compose -f docker-compose.prod.yml build`, followed by `docker compose -f docker-compose.prod.yml down --remove-orphans`, optionally `docker volume rm dras_frontend_dist || true`, and finally `docker compose -f docker-compose.prod.yml up -d`.
+- **Manual container redeployment:** To rebuild and restart containers, run `docker compose -f docker-compose.prod.yml build`, followed by `docker compose -f docker-compose.prod.yml down --remove-orphans`, optionally `docker volume rm dras_frontend_dist || true`, and finally `docker compose -f docker-compose.prod.yml up -d`.
 
 ## 7. Scheduled Host Maintenance & Cron Jobs (OCI VM)
 
@@ -183,7 +183,7 @@ The Oracle Cloud VM host runs the following automated scheduled tasks (`crontab 
 0 22 * * 0 cd /var/lib/jenkins/workspace/dras-prod/analytics && ./venv/bin/python models/arima_micro.py >> /var/log/dras_arima.log 2>&1
 ```
 
-- **Manual Backups:** To take an immediate database snapshot before major changes, execute `/opt/dras/repository/infrastructure/scripts/backup-db.sh`. Backups are saved to `/opt/dras/backups/`.
+- **Manual Backups:** To execute an immediate database backup, run `/opt/dras/repository/infrastructure/scripts/backup-db.sh`. Backups are saved to `/opt/dras/backups/`.
 
 ## 8. Troubleshooting
 
@@ -206,4 +206,4 @@ To connect a local database client to the different environments, use the follow
 
 - **Local Docker Environment:** Connect to `localhost` on port `5433` (already mapped in `docker-compose.yml`).
 - **Local Vagrant Environment:** Connect to `localhost` on port `5434` (forwarded from guest port `5433` in `Vagrantfile`).
-- **Production Environment (Remote VM):** First, add `ports: ["127.0.0.1:5432:5432"]` to the `db` service in `docker-compose.prod.yml` to securely bind it to the server's loopback interface. Then, configure your client to connect to `localhost:5432` using an **SSH Tunnel** through your production server.
+- **Production Environment (Remote VM):** First, add `ports: ["127.0.0.1:5432:5432"]` to the `db` service in `docker-compose.prod.yml` to bind it to the server's loopback interface. Then, configure your client to connect to `localhost:5432` using an **SSH Tunnel** through your production server.
