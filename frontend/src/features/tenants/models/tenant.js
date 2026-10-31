@@ -1,23 +1,8 @@
 /**
- * Tenant domain model.
+ * Tenant domain model and DTO shapes.
  *
- * Mirrors: gr.hua.dit.dras.entities.Tenant
- *
- * Shape:
- *   id              - Integer
- *   firstName       - String (max 20)
- *   lastName        - String (max 20)
- *   phoneNumber     - String (unique, regex: ^\\+?[0-9. ()-]{7,25}$)
- *   rentalStatus    - RentalStatus enum (APPLIED | RENTING | CANCELED)
- *   listing         - ListingSummary | null (current rental)
- *   appliedListings - ListingSummary[] (pending applications)
- *   user            - UserSummary
- *
- * TenantCreateRequest shape (admin creates tenant for a user):
- *   userId       - Integer (@NotNull)
- *   firstName    - String (@NotBlank)
- *   lastName     - String (@NotBlank)
- *   phoneNumber  - String (@NotBlank)
+ * @see {@code backend/src/main/java/gr/hua/dit/dras/entities/Tenant.java}
+ * @see {@code backend/src/main/java/gr/hua/dit/dras/dto/TenantCreateRequest.java}
  */
 
 export const TENANT_CONSTRAINTS = Object.freeze({

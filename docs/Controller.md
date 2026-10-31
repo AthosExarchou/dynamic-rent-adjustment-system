@@ -1,6 +1,7 @@
 # Controller Security Audit
 
-This document serves as a comprehensive reference for the endpoint mappings and their associated security constraints across the application. It outlines the access control rules enforced at the controller layer via Spring Security (`SecurityConfig` and method-level annotations).
+This document references endpoint mappings and their associated security constraints across the application.
+It outlines the access control rules enforced at the controller layer via Spring Security (`SecurityConfig` and method-level annotations).
 
 ## Controller Audit
 

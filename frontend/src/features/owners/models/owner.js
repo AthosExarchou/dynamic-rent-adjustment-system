@@ -1,22 +1,8 @@
 /**
- * Owner domain model.
+ * Owner domain model and DTO shapes.
  *
- * Mirrors: gr.hua.dit.dras.entities.Owner
- *
- * Shape:
- *   id           - Integer
- *   firstName    - String (max 20)
- *   lastName     - String (max 20)
- *   phoneNumber  - String (unique, regex: ^\\+?[0-9. ()-]{7,25}$)
- *   systemOwner  - boolean
- *   listings     - ListingSummary[]
- *   user         - UserSummary
- *
- * OwnerCreateRequest shape (admin creates owner for a user):
- *   userId       - Integer (@NotNull)
- *   firstName    - String (@NotBlank)
- *   lastName     - String (@NotBlank)
- *   phoneNumber  - String (@NotBlank)
+ * @see {@code backend/src/main/java/gr/hua/dit/dras/entities/Owner.java}
+ * @see {@code backend/src/main/java/gr/hua/dit/dras/dto/OwnerCreateRequest.java}
  */
 
 export const OWNER_CONSTRAINTS = Object.freeze({

@@ -1,49 +1,9 @@
 /**
- * Listing domain model.
+ * Listing domain model and DTO shapes.
  *
- * Mirrors: gr.hua.dit.dras.entities.Listing
- *
- * Shape:
- *   id              - Integer
- *   title           - String (max 150)
- *   subtitle        - String | null (max 250)
- *   description     - String (max 5000)
- *   price           - Integer (0-20000)
- *   pricePerM2      - Integer (0-200)
- *   address         - String (max 255)
- *   sizeM2          - Integer (5-1000)
- *   propertyType    - PropertyType enum
- *   rentalDuration  - RentalDuration enum
- *   floor           - Integer | null (-3-100)
- *   yearBuilt       - Integer | null
- *   bedrooms        - Integer | null (0-10)
- *   bathrooms       - Integer | null (0-5)
- *   sourceUrl       - String | null (max 500)
- *   status          - ListingStatus enum
- *   images          - String[]
- *   external        - boolean
- *   createdAt       - ISO date string
- *   updatedAt       - ISO date string
- *   owner           - OwnerSummary | null
- *   tenant          - TenantSummary | null
- *   applicants      - TenantSummary[]
- *
- * ListingFilterDTO shape:
- *   title           - String | null
- *   minPrice        - Integer | null
- *   maxPrice        - Integer | null
- *   type            - PropertyType | null
- *   municipality    - String | null
- *   district        - String | null
- *   minBedrooms     - Integer | null
- *   maxBedrooms     - Integer | null
- *   minBathrooms    - Integer | null
- *   maxBathrooms    - Integer | null
- *   minYear         - Integer | null
- *   maxYear         - Integer | null
- *   updatedAfter    - date string | null
- *   updatedBefore   - date string | null
- *   externalOnly    - boolean | null
+ * @see {@code backend/src/main/java/gr/hua/dit/dras/entities/Listing.java}
+ * @see {@code backend/src/main/java/gr/hua/dit/dras/dto/ListingFilterDTO.java}
+ * @see {@code backend/src/main/java/gr/hua/dit/dras/dto/ListingCreateDTO.java}
  */
 
 /**
@@ -53,6 +13,7 @@
 export function createEmptyListingFilter() {
   return {
     title: null,
+    search: null,
     minPrice: null,
     maxPrice: null,
     type: null,
@@ -94,4 +55,8 @@ export const LISTING_CONSTRAINTS = Object.freeze({
   YEAR_BUILT_MAX_OFFSET: 5,
   SOURCE_URL_MAX: 500,
   REJECTION_REASON_MAX: 500,
+  SEARCH_MAX: 150,
+  MUNICIPALITY_MAX: 255,
+  DISTRICT_MAX: 250,
+  IMAGES_MAX: 10,
 });
