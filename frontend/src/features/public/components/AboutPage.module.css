@@ -122,6 +122,10 @@
   box-shadow: var(--shadow-md);
 }
 
+.card:hover .iconWrapper {
+  transform: scale(1.08);
+}
+
 .iconWrapper {
   display: inline-flex;
   align-items: center;
@@ -130,6 +134,7 @@
   height: 56px;
   border-radius: var(--radius-lg);
   margin-bottom: 1.5rem;
+  transition: transform 0.25s ease;
 }
 
 .iconPrimary {
@@ -226,6 +231,10 @@
   box-shadow: var(--shadow-md);
 }
 
+.featureCard:hover .featureIconBox {
+  transform: scale(1.08);
+}
+
 .featureIconBox {
   display: inline-flex;
   align-items: center;
@@ -234,6 +243,7 @@
   height: 48px;
   border-radius: var(--radius-md);
   margin-bottom: 1.25rem;
+  transition: transform 0.25s ease;
 }
 
 .iconSuccess {
@@ -319,6 +329,10 @@
   transform: translateY(-3px);
 }
 
+.valueCard:hover .valueIcon {
+  transform: scale(1.1);
+}
+
 .valueHeader {
   display: flex;
   align-items: center;
@@ -328,6 +342,7 @@
 
 .valueIcon {
   color: var(--color-primary-600);
+  transition: transform 0.25s ease;
 }
 
 .valueTitle {

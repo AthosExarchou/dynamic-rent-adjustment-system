@@ -137,9 +137,14 @@
   filter: brightness(1.03);
 }
 
+.featureCard:hover .featureIcon {
+  transform: scale(1.08);
+}
+
 .featureIcon {
   color: #0062ff;
   margin-bottom: 1.5rem;
+  transition: transform 0.25s ease;
 }
 
 .featureTitle {
