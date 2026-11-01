@@ -123,6 +123,12 @@ To run this application, ensure you have the following installed:
    ```
 5. Access the application in your browser at `http://localhost:5173`.
 6. For the **Analytics** module, see the `analytics` folder for Python environment setup instructions.
+7. *(Optional)* Seed demo data and test accounts:
+   ```bash
+   node scripts/seed-db.js
+   # or from frontend: npm run seed
+   ```
+   *Accounts created:* `admin@gmail.com`, `owner@gmail.com`, `tenant@gmail.com`, `user@gmail.com` (password: `<username>Password1!`).
 
 ## Configuration
 
