@@ -70,15 +70,15 @@ const FAQ_ITEMS = [
     )
   },
   {
-    question: 'What do the "Price recently lowered" and "Below market average" badges mean?',
+    question: 'What does the "Below market average" badge mean?',
     answer: (
       <>
         <p>DRAS automatically analyzes rental prices across all active listings to help tenants discover great opportunities:</p>
-        <ul>
-          <li><strong>Price recently lowered:</strong> Highlighted when a property owner has reduced the monthly rent within the past 30 days.</li>
-          <li><strong>Below market average:</strong> Indicated when a listing&#39;s rent per square meter (€/m²) is lower than the prevailing citywide benchmark for comparable properties.</li>
-        </ul>
-        <p>These badges allow tenants to quickly spot high-value deals and promote transparent, market-aligned pricing.</p>
+        <p>
+          The <strong>Below market average</strong> badge is displayed when a listing&#39;s rent per square meter (€/m²)
+          is lower than the prevailing average benchmark for comparable properties on the platform.
+        </p>
+        <p>This badge allows tenants to quickly spot high-value deals and promotes transparent, market-aligned pricing.</p>
       </>
     )
   },
