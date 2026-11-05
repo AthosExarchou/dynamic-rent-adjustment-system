@@ -191,7 +191,7 @@ export default function ListingList() {
       const data = await apiClient(`/listings/filter?${params.toString()}`, signal ? { signal } : {});
       const approved = data.filter(l => l.status === 'APPROVED' || l.approved);
       setListings(approved);
-      setAvgPricePerM2(computeAvgPricePerM2(approved));
+      setAvgPricePerM2(prev => prev ?? computeAvgPricePerM2(approved));
       setError(null);
     } catch (err) {
       if (err.name === 'AbortError') return;

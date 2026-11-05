@@ -22,6 +22,7 @@ import PriceDropIndicator, { computeAvgPricePerM2 } from '../../listings/compone
 import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
 import { useToast } from '../../../shared/components/Toast';
+import apiClient from '../../../shared/api/client';
 import styles from './FavouritesPage.module.css';
 
 export default function FavouritesPage() {
@@ -40,18 +41,27 @@ export default function FavouritesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
+  const [platformAvgPricePerM2, setPlatformAvgPricePerM2] = useState(null);
 
   const isUserOnly = isAuthenticated && roles.includes('USER') && !roles.includes('OWNER') && !roles.includes('ADMIN');
 
   useEffect(() => {
     const controller = new AbortController();
     fetchFavourites(controller.signal);
+    apiClient('/listings', { signal: controller.signal })
+      .then((all) => {
+        if (Array.isArray(all)) {
+          const approved = all.filter(l => l.status === 'APPROVED' || l.approved);
+          setPlatformAvgPricePerM2(computeAvgPricePerM2(approved));
+        }
+      })
+      .catch(() => {});
     return () => controller.abort();
   }, [fetchFavourites]);
 
   const avgPricePerM2 = useMemo(() => {
-    return computeAvgPricePerM2(favourites);
-  }, [favourites]);
+    return platformAvgPricePerM2 || computeAvgPricePerM2(favourites);
+  }, [platformAvgPricePerM2, favourites]);
 
   // Filtered and sorted listings
   const displayedListings = useMemo(() => {
