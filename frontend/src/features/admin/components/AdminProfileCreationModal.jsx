@@ -80,7 +80,7 @@ export default function AdminProfileCreationModal({ userId, roleType, onClose, o
               <input id="modalPhone" type="tel" required
                      minLength={7}
                      maxLength={25}
-                     pattern="^\+?[0-9. ()-]{7,25}$"
+                     pattern={"^\\+?[0-9. \\(\\)\\-]{7,25}$"}
                      title="Enter a valid phone number with 7-25 digits."
                      value={formData.phoneNumber}
                      onChange={e => setFormData(

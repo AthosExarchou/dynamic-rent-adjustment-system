@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Users } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
+import { useToast } from '../../../shared/components/Toast';
+import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
 import styles from './AdminDashboard.module.css';
 import EditUserModal from './EditUserModal';
 import AdminProfileCreationModal from './AdminProfileCreationModal';
@@ -18,6 +20,7 @@ export default function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userToDelete, setUserToDelete] = useState(null);
+  const toast = useToast();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -55,13 +58,14 @@ export default function UserManagement() {
     const role = roles.find(r => r.id === roleId);
     try {
       await apiClient(`/user/role/add/${userId}/${roleId}`, { method: 'POST' });
+      toast.success(`Role ${role?.name || ''} added successfully.`);
       fetchUsersAndRoles();
     } catch (err) {
       // If backend says profile required, open profile creation modal
       if (err.message && err.message.includes('PROFILE_REQUIRED')) {
          setCreatingProfileFor({ userId, roleType: role.name });
       } else {
-         alert('Failed to add role. Please try again.');
+         toast.error(err.message || 'Failed to add role. Please try again.');
          fetchUsersAndRoles();
       }
     }
@@ -70,9 +74,10 @@ export default function UserManagement() {
   const handleRemoveRole = async (userId, roleId) => {
     try {
       await apiClient(`/user/role/delete/${userId}/${roleId}`, { method: 'POST' });
+      toast.success('Role removed successfully.');
       fetchUsersAndRoles();
     } catch (err) {
-      alert(err.message || 'Failed to remove role.');
+      toast.error(err.message || 'Failed to remove role.');
       fetchUsersAndRoles();
     }
   };
@@ -81,13 +86,14 @@ export default function UserManagement() {
 
   const handleDeleteUser = async () => {
     if (!userToDelete) return;
+    const targetUserId = userToDelete;
+    setUserToDelete(null);
     try {
-      await apiClient(`/user/delete/${userToDelete}`, { method: 'POST' });
+      await apiClient(`/user/delete/${targetUserId}`, { method: 'POST' });
+      toast.success('User deleted successfully.');
       fetchUsersAndRoles();
-      setUserToDelete(null);
     } catch (err) {
-      alert(err.message || 'Failed to delete user.');
-      setUserToDelete(null);
+      toast.error(err.message || 'Failed to delete user.');
     }
   };
 
@@ -176,17 +182,14 @@ export default function UserManagement() {
       )}
 
       {userToDelete && (
-        <div style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)',
-          display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000}}>
-          <div style={{backgroundColor: 'var(--background-paper)', padding: '2rem', borderRadius: '8px', maxWidth: '400px', color: 'var(--text-primary)', border: '1px solid var(--border-color)', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'}}>
-            <h3 style={{marginTop: 0, color: 'var(--text-primary)'}}>Confirm Deletion</h3>
-            <p style={{color: 'var(--text-secondary)'}}>Are you sure you want to delete this user? This action cannot be undone.</p>
-            <div style={{display: 'flex', gap: '1rem', marginTop: '1.5rem', justifyContent: 'flex-end'}}>
-              <button onClick={() => setUserToDelete(null)} className={styles.addBtn} style={{background: 'var(--background-default)', color: 'var(--text-primary)', border: '1px solid var(--border-color)'}}>Cancel</button>
-              <button onClick={handleDeleteUser} className={styles.delBtn}>Confirm Delete</button>
-            </div>
-          </div>
-        </div>
+        <ConfirmDialog
+          title="Confirm Deletion"
+          message="Are you sure you want to delete this user? This action cannot be undone."
+          confirmLabel="Confirm Delete"
+          variant="danger"
+          onConfirm={handleDeleteUser}
+          onCancel={() => setUserToDelete(null)}
+        />
       )}
     </div>
   );

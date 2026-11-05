@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, ClipboardCheck, Eye, Camera } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
+import { useToast } from '../../../shared/components/Toast';
 import { LISTING_CONSTRAINTS } from '../../listings/models/listing';
 import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
 import styles from './AdminDashboard.module.css';
@@ -15,6 +16,7 @@ export default function PendingApprovals() {
   const [rejectTarget, setRejectTarget] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [rejectionError, setRejectionError] = useState('');
+  const toast = useToast();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -42,10 +44,10 @@ export default function PendingApprovals() {
     setActionLoading({ id, type: 'approve' });
     try {
       await apiClient(`/listings/approve/${id}`, { method: 'POST' });
-      alert('Listing approved successfully.');
+      toast.success('Listing approved successfully.');
       await fetchPendingListings();
     } catch (err) {
-      alert(err.message || 'Failed to approve listing.');
+      toast.error(err.message || 'Failed to approve listing.');
     } finally {
       setActionLoading(null);
     }
@@ -92,7 +94,7 @@ export default function PendingApprovals() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason: trimmed })
       });
-      alert('Listing rejected.');
+      toast.success('Listing rejected.');
       closeRejectModal();
       await fetchPendingListings();
     } catch (err) {
