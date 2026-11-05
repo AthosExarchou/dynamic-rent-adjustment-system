@@ -32,7 +32,9 @@ export default function OwnerForm() {
       toast.success('Owner profile created successfully!');
       navigate('/profile'); 
     } catch (err) {
-      setError(err.message || 'Failed to create owner profile. Please check your details or you might already have one.');
+      const errorMsg = err.message || 'Failed to create owner profile. Please check your details or you might already have one.';
+      setError(errorMsg);
+      toast.error(errorMsg);
       if (Array.isArray(err.details) && err.details.length > 0) {
         setErrorDetails(err.details);
       }

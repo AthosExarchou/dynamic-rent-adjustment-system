@@ -13,9 +13,11 @@ import {
   Building
 } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
+import { useToast } from '../../../shared/components/Toast';
 import styles from './ContactPage.module.css';
 
 export default function ContactPage() {
+  const toast = useToast();
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -31,9 +33,12 @@ export default function ContactPage() {
       });
       setSuccess(true);
       setError('');
+      toast.success('Message sent successfully! We will get back to you soon.');
       setFormData({ name: '', email: '', subject: '', message: '' });
     } catch (err) {
-      setError(err.message || 'Failed to send message. Please try again.');
+      const errorMsg = err.message || 'Failed to send message. Please try again.';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
     }

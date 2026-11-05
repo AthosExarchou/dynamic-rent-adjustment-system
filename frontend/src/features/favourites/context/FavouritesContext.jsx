@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import apiClient from '../../../shared/api/client';
 import { useAuth } from '../../auth';
+import { useToast } from '../../../shared/components/Toast';
 
 const FavouritesContext = createContext(null);
 
@@ -76,6 +77,7 @@ export const clearUserFavourites = (userId) => {
 
 export function FavouritesProvider({ children }) {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const toast = useToast();
 
   const prevAuthRef = useRef(isAuthenticated);
   const prevUserIdRef = useRef(user?.id);
@@ -239,9 +241,10 @@ export function FavouritesProvider({ children }) {
         if (user?.id) {
           setUserFavouriteIds(user.id, favouriteIds);
         }
+        toast.error(err.message || 'Failed to update favourite.');
       }
     }
-  }, [favouriteIds, isFavourite, isAuthenticated, user?.id]);
+  }, [favouriteIds, isFavourite, isAuthenticated, user?.id, toast]);
 
   // Remove favourite explicitly
   const removeFavourite = useCallback(async (listingId) => {
@@ -264,9 +267,10 @@ export function FavouritesProvider({ children }) {
         await apiClient(`/favourites/${numId}`, { method: 'DELETE' });
       } catch (err) {
         console.error('Failed to remove favourite on server', err);
+        toast.error(err.message || 'Failed to remove favourite.');
       }
     }
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated, user?.id, toast]);
 
   // Clear all favourites across state, storage, and server
   const clearAllFavourites = useCallback(async () => {
