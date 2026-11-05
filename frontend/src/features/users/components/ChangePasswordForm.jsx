@@ -108,7 +108,7 @@ export default function ChangePasswordForm() {
             <hr className={styles.divider} />
             
             <div className={styles.formActions}>
-              <button type="submit" disabled={loading || success} className={`${styles.btn} ${styles.btnPrimary}`}>
+              <button type="submit" disabled={loading} className={`${styles.btn} ${styles.btnPrimary}`}>
                 {loading ? 'Updating Password...' : 'Update Password'}
               </button>
             </div>

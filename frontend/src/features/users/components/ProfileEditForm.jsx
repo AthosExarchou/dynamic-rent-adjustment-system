@@ -138,7 +138,7 @@ export default function ProfileEditForm() {
             <hr className={styles.divider} />
             
             <div className={styles.formActions}>
-              <button type="submit" disabled={loading || success} className={`${styles.btn} ${styles.btnPrimary}`}>
+              <button type="submit" disabled={loading} className={`${styles.btn} ${styles.btnPrimary}`}>
                 {loading ? 'Saving Changes...' : 'Save Changes'}
               </button>
             </div>
