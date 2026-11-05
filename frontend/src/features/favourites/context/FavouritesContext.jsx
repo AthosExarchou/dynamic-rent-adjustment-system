@@ -247,14 +247,15 @@ export function FavouritesProvider({ children }) {
   const removeFavourite = useCallback(async (listingId) => {
     if (!listingId) return;
     const numId = Number(listingId);
-    const nextIds = favouriteIds.filter(id => Number(id) !== numId);
-    setFavouriteIds(nextIds);
-
-    if (isAuthenticated && user?.id) {
-      setUserFavouriteIds(user.id, nextIds);
-    } else {
-      setGuestFavouriteIds(nextIds);
-    }
+    setFavouriteIds(prev => {
+      const nextIds = prev.filter(id => Number(id) !== numId);
+      if (isAuthenticated && user?.id) {
+        setUserFavouriteIds(user.id, nextIds);
+      } else {
+        setGuestFavouriteIds(nextIds);
+      }
+      return nextIds;
+    });
 
     setFavourites(prev => prev.filter(item => Number(item.id) !== numId));
 
@@ -264,6 +265,31 @@ export function FavouritesProvider({ children }) {
       } catch (err) {
         console.error('Failed to remove favourite on server', err);
       }
+    }
+  }, [isAuthenticated, user?.id]);
+
+  // Clear all favourites across state, storage, and server
+  const clearAllFavourites = useCallback(async () => {
+    const idsToDelete = [...favouriteIds];
+    setFavouriteIds([]);
+    setFavourites([]);
+
+    if (isAuthenticated && user?.id) {
+      clearUserFavourites(user.id);
+      if (idsToDelete.length > 0) {
+        const results = await Promise.allSettled(
+          idsToDelete.map(id => apiClient(`/favourites/${id}`, { method: 'DELETE' }))
+        );
+        const failures = results.filter(r => r.status === 'rejected');
+        if (failures.length > 0) {
+          console.error('Failed to clear some favourites on server', failures);
+          if (failures.length === idsToDelete.length) {
+            throw new Error('Failed to remove favourites from server.');
+          }
+        }
+      }
+    } else {
+      clearGuestFavourites();
     }
   }, [favouriteIds, isAuthenticated, user?.id]);
 
@@ -309,6 +335,7 @@ export function FavouritesProvider({ children }) {
     isFavourite,
     toggleFavourite,
     removeFavourite,
+    clearAllFavourites,
     fetchFavourites,
     favouriteCount: favouriteIds.length,
     loading,
@@ -323,6 +350,7 @@ export function FavouritesProvider({ children }) {
     isFavourite,
     toggleFavourite,
     removeFavourite,
+    clearAllFavourites,
     fetchFavourites,
     loading,
     syncing,

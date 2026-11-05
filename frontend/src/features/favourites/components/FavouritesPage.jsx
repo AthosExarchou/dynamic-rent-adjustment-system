@@ -20,14 +20,15 @@ import { useAuth } from '../../auth';
 import FavouriteButton from './FavouriteButton';
 import PriceDropIndicator, { computeAvgPricePerM2 } from '../../listings/components/PriceDropIndicator';
 import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
+import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
+import { useToast } from '../../../shared/components/Toast';
 import styles from './FavouritesPage.module.css';
 
 export default function FavouritesPage() {
   const {
     favourites,
-    favouriteIds,
     fetchFavourites,
-    removeFavourite,
+    clearAllFavourites,
     loading,
     guestFavouritesPending,
     importGuestFavourites,
@@ -35,8 +36,10 @@ export default function FavouritesPage() {
     syncing
   } = useFavourites();
   const { isAuthenticated, user, roles } = useAuth();
+  const toast = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+  const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
 
   const isUserOnly = isAuthenticated && roles.includes('USER') && !roles.includes('OWNER') && !roles.includes('ADMIN');
 
@@ -83,8 +86,16 @@ export default function FavouritesPage() {
   }, [favourites, searchTerm, sortBy]);
 
   const handleClearAll = () => {
-    if (window.confirm('Are you sure you want to remove all properties from your favourites?')) {
-      favouriteIds.forEach(id => removeFavourite(id));
+    setShowClearAllConfirm(true);
+  };
+
+  const confirmClearAll = async () => {
+    setShowClearAllConfirm(false);
+    try {
+      await clearAllFavourites();
+      toast.success('All properties removed from favourites.');
+    } catch (err) {
+      toast.error(err.message || 'Failed to remove all favourites.');
     }
   };
 
@@ -356,6 +367,17 @@ export default function FavouritesPage() {
           );
         })}
         </div>
+      )}
+
+      {showClearAllConfirm && (
+        <ConfirmDialog
+          title="Clear All Favourites"
+          message="Are you sure you want to remove all properties from your favourites? This action cannot be undone."
+          confirmLabel="Clear All"
+          variant="danger"
+          onConfirm={confirmClearAll}
+          onCancel={() => setShowClearAllConfirm(false)}
+        />
       )}
     </div>
   );
