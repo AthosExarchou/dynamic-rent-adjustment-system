@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Phone, CheckCircle, ChevronRight, Briefcase } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { useAuth } from '../../auth';
+import { useToast } from '../../../shared/components/Toast';
 import { OWNER_CONSTRAINTS } from '../models/owner';
 import styles from './OwnerForm.module.css';
 
 export default function OwnerForm() {
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const [formData, setFormData] = useState({ firstName: '', lastName: '', phoneNumber: '' });
   const [error, setError] = useState('');
   const [errorDetails, setErrorDetails] = useState([]);
@@ -27,7 +29,7 @@ export default function OwnerForm() {
         body: { ...formData, userId: user?.id }
       });
       await refreshUser();
-      alert('Owner profile created successfully!');
+      toast.success('Owner profile created successfully!');
       navigate('/profile'); 
     } catch (err) {
       setError(err.message || 'Failed to create owner profile. Please check your details or you might already have one.');
@@ -111,7 +113,7 @@ export default function OwnerForm() {
                   onChange={e => setFormData({...formData, phoneNumber: e.target.value})} 
                   className={styles.input} 
                   placeholder="+30 210 1234567" 
-                  pattern="^\+?[0-9. ()-]{7,25}$"
+                  pattern={"^\\+?[0-9. \\(\\)\\-]{7,25}$"}
                   title="Enter a valid phone number with 7-25 digits."
                 />
               </div>

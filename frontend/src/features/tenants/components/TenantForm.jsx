@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../auth';
 import { UserPlus, UserCheck, Phone, CheckCircle, ChevronRight, ArrowLeft, Info } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
+import { useToast } from '../../../shared/components/Toast';
 import { TENANT_CONSTRAINTS } from '../models/tenant';
 import styles from './TenantForm.module.css';
 
@@ -11,6 +12,7 @@ export default function TenantForm() {
   const { roles, refreshUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const toast = useToast();
   const fromListingDetail = location.state?.fromListingDetail;
   const [formData, setFormData] = useState({ firstName: '', lastName: '', phoneNumber: '' });
   const [error, setError] = useState('');
@@ -74,7 +76,7 @@ export default function TenantForm() {
     try {
       await apiClient(`/tenant/rent/${listingId}`, requestOptions);
       if (!isTenant) await refreshUser();
-      alert('Application submitted successfully!');
+      toast.success('Application submitted successfully!');
       navigate('/listings');
     } catch (err) {
       const msg = err.message || 'Failed to submit application. Profile may already exist or there was a server error.';
@@ -200,7 +202,7 @@ export default function TenantForm() {
                       onChange={e => setFormData({...formData, phoneNumber: e.target.value})} 
                       className={styles.input} 
                       placeholder="+30 690 1234567" 
-                      pattern="^\+?[0-9. ()-]{7,25}$"
+                      pattern={"^\\+?[0-9. \\(\\)\\-]{7,25}$"}
                       title="Enter a valid phone number (7-25 digits)"
                     />
                   </div>
