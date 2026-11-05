@@ -1,18 +1,19 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../auth';
-import { Settings, User, Mail, CheckCircle, ArrowLeft } from 'lucide-react';
+import { useToast } from '../../../shared/components/Toast';
+import { Settings, User, Mail, ArrowLeft } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { USER_CONSTRAINTS } from '../models/user';
 import styles from './ProfileForm.module.css';
 
 export default function ProfileEditForm() {
-  const { user, refreshUser, hasRole } = useAuth();
+  const { user, refreshUser, hasRole, logout } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const [formData, setFormData] = useState({ username: user?.username || '', email: user?.email || '' });
   const [error, setError] = useState('');
   const [errorDetails, setErrorDetails] = useState([]);
-  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -20,16 +21,6 @@ export default function ProfileEditForm() {
       setFormData({ username: user.username || '', email: user.email || '' });
     }
   }, [user]);
-
-  useEffect(() => {
-    let timeoutId;
-    if (success) {
-      timeoutId = setTimeout(() => navigate('/profile'), 2000);
-    }
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [success, navigate]);
 
   if (hasRole('ADMIN') || user?.isSystem) {
     return (
@@ -55,7 +46,7 @@ export default function ProfileEditForm() {
     setErrorDetails([]);
     setLoading(true);
     try {
-      await apiClient(`/user/${user?.id}`, {
+      const res = await apiClient(`/user/${user?.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
@@ -63,10 +54,19 @@ export default function ProfileEditForm() {
           email: formData.email
         }).toString()
       });
-      setSuccess(true);
+      if (res?.requiresLogin || !hasRole('ADMIN')) {
+        if (logout) await logout();
+        toast.success(res?.message || 'Profile details updated, please log in again.');
+        navigate('/login');
+        return;
+      }
       if (refreshUser) await refreshUser();
+      toast.success('Profile details updated successfully.');
+      navigate('/profile');
     } catch (err) {
-      setError(err.message || 'Failed to update details. Email or Username may be taken.');
+      const errorMsg = err.message || 'Failed to update details. Email or Username may be taken.';
+      setError(errorMsg);
+      toast.error(errorMsg);
       if (Array.isArray(err.details) && err.details.length > 0) {
         setErrorDetails(err.details);
       }
@@ -101,11 +101,6 @@ export default function ProfileEditForm() {
                   ))}
                 </ul>
               )}
-            </div>
-          )}
-          {success && (
-            <div className={`${styles.alert} ${styles.alertSuccess}`}>
-              <CheckCircle size={18} /> Profile details updated successfully! Redirecting...
             </div>
           )}
 

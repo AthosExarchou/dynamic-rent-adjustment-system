@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../../../shared/components/Toast';
 import styles from './AuthForm.module.css';
 
 export default function RegisterForm() {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const [formData, setFormData] = useState({ username: '', email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -19,9 +21,12 @@ export default function RegisterForm() {
 
     try {
       await register(formData.username, formData.email, formData.password);
+      toast.success('Account created successfully! Please sign in.');
       navigate('/login');
     } catch (err) {
-      setError(err.message || 'Registration failed. Please check your details and try again.');
+      const errorMsg = err.message || 'Registration failed. Please check your details and try again.';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

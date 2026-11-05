@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../auth';
+import { useToast } from '../../../shared/components/Toast';
 import { Trash2, AlertTriangle, ArrowLeft } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import styles from './ProfileForm.module.css';
@@ -8,6 +9,7 @@ import styles from './ProfileForm.module.css';
 export default function DeleteAccountConfirm() {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const [formData, setFormData] = useState({ confirmationPhrase: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -15,7 +17,9 @@ export default function DeleteAccountConfirm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.confirmationPhrase !== 'DELETE MY ACCOUNT') {
-      setError('Confirmation phrase does not match.');
+      const phraseError = 'Confirmation phrase does not match.';
+      setError(phraseError);
+      toast.error(phraseError);
       return;
     }
     setError('');
@@ -30,10 +34,13 @@ export default function DeleteAccountConfirm() {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams(payload).toString()
       });
+      toast.success('Your account has been permanently deleted.');
       await logout();
       navigate('/');
     } catch (err) {
-      setError(err.message || 'Failed to delete account. Incorrect password.');
+      const errorMsg = err.message || 'Failed to delete account. Incorrect password.';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

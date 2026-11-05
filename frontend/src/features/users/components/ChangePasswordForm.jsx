@@ -1,32 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../auth';
-import { Key, CheckCircle, ArrowLeft, Lock, Unlock } from 'lucide-react';
+import { useToast } from '../../../shared/components/Toast';
+import { Key, ArrowLeft, Lock, Unlock } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import styles from './ProfileForm.module.css';
 
 export default function ChangePasswordForm() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const [formData, setFormData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    let timeoutId;
-    if (success) {
-      timeoutId = setTimeout(() => navigate('/profile'), 2000);
-    }
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [success, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.newPassword !== formData.confirmPassword) {
-      setError('New password confirmations do not match.');
+      const errorMsg = 'New password confirmations do not match.';
+      setError(errorMsg);
+      toast.error(errorMsg);
       return;
     }
     setError('');
@@ -37,9 +30,12 @@ export default function ChangePasswordForm() {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams(formData).toString()
       });
-      setSuccess(true);
+      toast.success('Password changed successfully.');
+      navigate('/profile');
     } catch (err) {
-      setError(err.message || 'Failed to change password. Old password may be incorrect.');
+      const errorMsg = err.message || 'Failed to change password. Old password may be incorrect.';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -62,11 +58,6 @@ export default function ChangePasswordForm() {
         
         <div className={styles.body}>
           {error && <div className={`${styles.alert} ${styles.alertDanger}`}>{error}</div>}
-          {success && (
-            <div className={`${styles.alert} ${styles.alertSuccess}`}>
-              <CheckCircle size={18} /> Password changed successfully! Redirecting...
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.formGroup}>
