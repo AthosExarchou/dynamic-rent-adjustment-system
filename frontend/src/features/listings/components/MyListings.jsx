@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { MapPin, Building2, Eye, Pencil, Trash2, Users, Power, PowerOff, AlertCircle, Lock, Camera } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { useAuth } from '../../auth';
+import { useToast } from '../../../shared/components/Toast';
+import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
 import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
 import styles from './MyListings.module.css';
 
@@ -15,6 +17,7 @@ const truncateTitle = (title, maxLength = 35) => {
 
 export default function MyListings() {
   const { roles } = useAuth();
+  const toast = useToast();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -48,13 +51,14 @@ export default function MyListings() {
 
   const handleDelete = async () => {
     if (!listingToDelete) return;
+    const target = listingToDelete;
+    setListingToDelete(null);
     try {
-      await apiClient(`/listings/delete/${listingToDelete.id}`, { method: 'POST' });
-      fetchMyListings();
-      setListingToDelete(null);
+      await apiClient(`/listings/delete/${target.id}`, { method: 'POST' });
+      toast.success('Listing deleted successfully.');
+      await fetchMyListings();
     } catch (err) {
-      alert(err.message || 'Failed to delete listing.');
-      setListingToDelete(null);
+      toast.error(err.message || 'Failed to delete listing.');
     }
   };
 
@@ -65,14 +69,14 @@ export default function MyListings() {
   const handleToggle = async () => {
     if (!listingToToggle) return;
     const { id, action } = listingToToggle;
+    setListingToToggle(null);
     setActionLoading(id);
     try {
       await apiClient(`/listings/${action}/${id}`, { method: 'POST' });
+      toast.success(`Listing ${action === 'disable' ? 'disabled' : 'enabled'} successfully.`);
       await fetchMyListings();
-      setListingToToggle(null);
     } catch (err) {
-      alert(err.message || `Failed to ${action} listing.`);
-      setListingToToggle(null);
+      toast.error(err.message || `Failed to ${action} listing.`);
     } finally {
       setActionLoading(null);
     }
@@ -251,12 +255,10 @@ export default function MyListings() {
       )}
 
       {listingToToggle && (
-        <div className={styles.modalBackdrop}>
-          <div className={styles.modalContent}>
-            <h3 className={styles.modalTitle}>
-              {listingToToggle.action === 'disable' ? 'Disable Listing' : 'Enable Listing'}
-            </h3>
-            <p className={styles.modalText}>
+        <ConfirmDialog
+          title={listingToToggle.action === 'disable' ? 'Disable Listing' : 'Enable Listing'}
+          message={
+            <span>
               Are you sure you want to {listingToToggle.action}{' '}
               <strong className={styles.modalHighlight}>
                 &ldquo;{truncateTitle(listingToToggle.title)}&rdquo;
@@ -265,37 +267,32 @@ export default function MyListings() {
               {listingToToggle.action === 'disable'
                 ? 'It will be hidden from public searches and cannot receive new rental applications.'
                 : 'It will be published back to public searches.'}
-            </p>
-            <div className={styles.modalActions}>
-              <button onClick={() => setListingToToggle(null)} className={styles.btn}>Cancel</button>
-              <button
-                onClick={handleToggle}
-                className={`${styles.btn} ${listingToToggle.action === 'disable' ? styles.btnDisable : styles.btnEnable}`}
-              >
-                {listingToToggle.action === 'disable' ? 'Confirm Disable' : 'Confirm Enable'}
-              </button>
-            </div>
-          </div>
-        </div>
+            </span>
+          }
+          confirmLabel={listingToToggle.action === 'disable' ? 'Confirm Disable' : 'Confirm Enable'}
+          variant={listingToToggle.action === 'disable' ? 'warning' : 'primary'}
+          onConfirm={handleToggle}
+          onCancel={() => setListingToToggle(null)}
+        />
       )}
 
       {listingToDelete && (
-        <div className={styles.modalBackdrop}>
-          <div className={styles.modalContent}>
-            <h3 className={styles.modalTitle}>Confirm Deletion</h3>
-            <p className={styles.modalText}>
+        <ConfirmDialog
+          title="Confirm Deletion"
+          message={
+            <span>
               Are you sure you want to delete{' '}
               <strong className={styles.modalHighlight}>
                 &ldquo;{truncateTitle(listingToDelete.title)}&rdquo;
               </strong>
               ? This action cannot be undone.
-            </p>
-            <div className={styles.modalActions}>
-              <button onClick={() => setListingToDelete(null)} className={styles.btn}>Cancel</button>
-              <button onClick={handleDelete} className={`${styles.btn} ${styles.btnDanger}`}>Confirm Delete</button>
-            </div>
-          </div>
-        </div>
+            </span>
+          }
+          confirmLabel="Confirm Delete"
+          variant="danger"
+          onConfirm={handleDelete}
+          onCancel={() => setListingToDelete(null)}
+        />
       )}
     </div>
   );

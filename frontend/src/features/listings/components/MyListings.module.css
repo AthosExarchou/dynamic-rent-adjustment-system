@@ -418,55 +418,9 @@
   margin-bottom: 1.5rem;
 }
 
-/* Confirmation Modal */
-.modalBackdrop {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.55);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  padding: 1.25rem;
-  backdrop-filter: blur(2px);
-}
-
-.modalContent {
-  background-color: var(--background-paper, #ffffff);
-  color: var(--text-primary, #333333);
-  padding: 2rem;
-  border-radius: 0.65rem;
-  max-width: 440px;
-  width: 100%;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-  border: 1px solid var(--border-color, #e2e8f0);
-}
-
-.modalTitle {
-  margin: 0 0 1rem 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-primary, #1e293b);
-}
-
-.modalText {
-  margin: 0 0 1.5rem 0;
-  line-height: 1.55;
-  font-size: 0.95rem;
-  color: var(--text-secondary, #475569);
-  word-break: break-word;
-  overflow-wrap: anywhere;
-}
-
 .modalHighlight {
   font-weight: 600;
   color: var(--text-primary, #0f172a);
   word-break: break-word;
   overflow-wrap: anywhere;
-}
-
-.modalActions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
 }

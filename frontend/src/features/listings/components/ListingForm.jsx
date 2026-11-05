@@ -7,6 +7,8 @@ import { LISTING_CONSTRAINTS } from '../models/listing';
 import { OWNER_CONSTRAINTS } from '../../owners/models/owner';
 import PriceSuggestionWidget from './PriceSuggestionWidget';
 import { getImageUrl, DEFAULT_LISTING_IMAGE, validateImageUrl } from '../../../shared/utils/imageUtils';
+import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
+import { useToast } from '../../../shared/components/Toast';
 import styles from './ListingForm.module.css';
 
 export default function ListingForm() {
@@ -14,6 +16,7 @@ export default function ListingForm() {
   const isEditMode = Boolean(listingId);
   const { user, roles, refreshUser } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     title: '', subtitle: '', description: '', price: '', address: '',
@@ -268,13 +271,26 @@ export default function ListingForm() {
       if (refreshUser && !isEditMode) {
         await refreshUser();
       }
-      if (roles.includes('ADMIN')) {
-        navigate(`/listings/${listingId}`);
+      if (isEditMode) {
+        if (roles.includes('ADMIN')) {
+          toast.success('Listing updated successfully.');
+          navigate(`/listings/${listingId}`);
+        } else {
+          toast.success(
+            willResetToPending
+              ? 'Listing updated successfully! Your property is pending admin approval.'
+              : 'Listing updated successfully.'
+          );
+          navigate('/my-listings');
+        }
       } else {
+        toast.success('Listing created successfully! Awaiting admin approval.');
         navigate('/my-listings');
       }
     } catch (err) {
-      setError(err.message || (isEditMode ? 'Failed to update listing.' : 'Failed to submit listing. Please correct form validation errors.'));
+      const errorMsg = err.message || (isEditMode ? 'Failed to update listing.' : 'Failed to submit listing. Please correct form validation errors.');
+      setError(errorMsg);
+      toast.error(errorMsg);
       if (Array.isArray(err.details) && err.details.length > 0) {
         setErrorDetails(err.details);
       }
@@ -324,7 +340,7 @@ export default function ListingForm() {
           <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
             <Link 
               to={roles.includes('ADMIN') ? `/listings/${listingId}` : '/my-listings'} 
-              className={styles.modalCancelBtn} 
+              className={styles.backActionBtn} 
               style={{ textDecoration: 'none', display: 'inline-block' }}
             >
               {roles.includes('ADMIN') ? 'Back to Property Details' : 'Back to My Properties'}
@@ -527,7 +543,7 @@ export default function ListingForm() {
                 <input id="phoneNumber" type="tel" required
                        minLength={OWNER_CONSTRAINTS.PHONE_MIN}
                        maxLength={OWNER_CONSTRAINTS.PHONE_MAX}
-                       pattern="^\+?[0-9. ()-]{7,25}$"
+                       pattern={"^\\+?[0-9. \\(\\)\\-]{7,25}$"}
                        title="Enter a valid phone number with 7-25 digits."
                        value={formData.phoneNumber}
                        onChange={e => setFormData(
@@ -742,40 +758,21 @@ export default function ListingForm() {
       </div>
 
       {showConfirmModal && (
-        <div className={styles.modalBackdrop}>
-          <div className={styles.modalContent}>
-            <h3 className={styles.modalTitle}>
-              <AlertCircle size={22} />
-              {currentListingStatus === 'APPROVED' ? 'Reset to Pending Approval?' : 'Re-submit for Approval?'}
-            </h3>
-            <p className={styles.modalText}>
-              {currentListingStatus === 'APPROVED'
-                ? 'Saving changes to this approved listing will reset its status to PENDING. It will be temporarily removed from public searches while waiting for administrator re-approval. Do you want to proceed?'
-                : 'Saving changes will reset this rejected listing to PENDING and submit it to the administrator for re-evaluation. Do you want to proceed?'}
-            </p>
-            <div className={styles.modalActions}>
-              <button
-                type="button"
-                onClick={() => setShowConfirmModal(false)}
-                className={styles.modalCancelBtn}
-                disabled={loading}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowConfirmModal(false);
-                  executeSubmit();
-                }}
-                className={styles.modalConfirmBtn}
-                disabled={loading}
-              >
-                {loading ? 'Saving...' : 'Confirm & Save'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmDialog
+          title={currentListingStatus === 'APPROVED' ? 'Reset to Pending Approval?' : 'Re-submit for Approval?'}
+          message={
+            currentListingStatus === 'APPROVED'
+              ? 'Saving changes to this approved listing will reset its status to PENDING. It will be temporarily removed from public searches while waiting for administrator re-approval. Do you want to proceed?'
+              : 'Saving changes will reset this rejected listing to PENDING and submit it to the administrator for re-evaluation. Do you want to proceed?'
+          }
+          confirmLabel="Confirm & Save"
+          variant="warning"
+          onConfirm={() => {
+            setShowConfirmModal(false);
+            executeSubmit();
+          }}
+          onCancel={() => setShowConfirmModal(false)}
+        />
       )}
     </div>
   );

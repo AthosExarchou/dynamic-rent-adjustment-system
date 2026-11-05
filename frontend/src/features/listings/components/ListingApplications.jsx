@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { User, Mail, Phone, Users, CheckCircle, XCircle, ArrowLeft, Home, UserMinus } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
+import { useToast } from '../../../shared/components/Toast';
+import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
 import styles from './ListingApplications.module.css';
 
 export default function ListingApplications() {
@@ -12,6 +14,8 @@ export default function ListingApplications() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
+  const [showUnassignConfirm, setShowUnassignConfirm] = useState(false);
+  const toast = useToast();
   const isMounted = useRef(true);
 
   const fetchApplications = useCallback(async (signal) => {
@@ -49,11 +53,11 @@ export default function ListingApplications() {
     try {
       await apiClient(`/owner/listings/${listingId}/approveApplicant/${tenantId}`, { method: 'POST' });
       if (!isMounted.current) return;
-      alert('Application approved successfully!');
+      toast.success('Application approved successfully!');
       await fetchApplications();
     } catch (err) {
       if (!isMounted.current) return;
-      alert(err.message || 'Failed to approve application.');
+      toast.error(err.message || 'Failed to approve application.');
     } finally {
       if (isMounted.current) setActionLoading(null);
     }
@@ -64,27 +68,27 @@ export default function ListingApplications() {
     try {
       await apiClient(`/owner/listings/${listingId}/rejectApplicant/${tenantId}`, { method: 'POST' });
       if (!isMounted.current) return;
-      alert('Application rejected.');
+      toast.success('Application rejected.');
       await fetchApplications();
     } catch (err) {
       if (!isMounted.current) return;
-      alert(err.message || 'Failed to reject application.');
+      toast.error(err.message || 'Failed to reject application.');
     } finally {
       if (isMounted.current) setActionLoading(null);
     }
   };
 
   const handleUnassignTenant = async () => {
-    if (!window.confirm("Are you sure you want to unassign this tenant? The property will become available for rent again.")) return;
+    setShowUnassignConfirm(false);
     setActionLoading({ id: 'unassign', type: 'unassign' });
     try {
       await apiClient(`/listings/unassign/tenant/${listingId}`, { method: 'POST' });
       if (!isMounted.current) return;
-      alert('Tenant unassigned successfully. The property is now available for rent.');
+      toast.success('Tenant unassigned successfully. The property is now available for rent.');
       await fetchApplications();
     } catch (err) {
       if (!isMounted.current) return;
-      alert(err.message || 'Failed to unassign tenant.');
+      toast.error(err.message || 'Failed to unassign tenant.');
     } finally {
       if (isMounted.current) setActionLoading(null);
     }
@@ -150,7 +154,7 @@ export default function ListingApplications() {
                     )}
                   </div>
                   <button
-                    onClick={handleUnassignTenant}
+                    onClick={() => setShowUnassignConfirm(true)}
                     disabled={actionLoading?.type === 'unassign'}
                     className={styles.unassignBtn}
                   >
@@ -220,6 +224,17 @@ export default function ListingApplications() {
             </div>
           )}
         </>
+      )}
+
+      {showUnassignConfirm && (
+        <ConfirmDialog
+          title="Unassign Tenant"
+          message="Are you sure you want to unassign this tenant? The property will become available for rent again."
+          confirmLabel="Unassign Tenant"
+          variant="warning"
+          onConfirm={handleUnassignTenant}
+          onCancel={() => setShowUnassignConfirm(false)}
+        />
       )}
     </div>
   );
