@@ -1,0 +1,131 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1100;
+  padding: 1rem;
+  backdrop-filter: blur(2px);
+  animation: fadeIn 0.15s ease;
+}
+
+.card {
+  background-color: var(--background-paper);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  max-width: 440px;
+  width: 90%;
+  padding: 1.5rem;
+  animation: scaleIn 0.2s ease;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 0.75rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--text-primary);
+}
+
+.icon_danger { color: var(--color-danger, #ef4444); }
+.icon_warning { color: var(--color-warning, #f59e0b); }
+.icon_primary { color: var(--color-primary-600, #4f46e5); }
+
+.message {
+  color: var(--text-secondary);
+  font-size: 0.925rem;
+  line-height: 1.55;
+  margin: 0 0 1.5rem;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.cancelBtn {
+  padding: 0.55rem 1.15rem;
+  background-color: var(--background-default);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.cancelBtn:hover:not(:disabled) {
+  background-color: var(--border-color);
+}
+
+.cancelBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.confirmBtn {
+  padding: 0.55rem 1.15rem;
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.confirmBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.danger {
+  background-color: var(--color-danger, #ef4444);
+}
+.danger:hover:not(:disabled) {
+  background-color: #dc2626;
+}
+
+.warning {
+  background-color: var(--color-warning, #f59e0b);
+  color: #1f2937;
+}
+.warning:hover:not(:disabled) {
+  background-color: #d97706;
+}
+
+.primary {
+  background-color: var(--color-primary-600, #4f46e5);
+}
+.primary:hover:not(:disabled) {
+  background-color: var(--color-primary-500, #6366f1);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
