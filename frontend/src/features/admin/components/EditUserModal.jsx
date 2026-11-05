@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import apiClient from '../../../shared/api/client';
+import { useToast } from '../../../shared/components/Toast';
 import { USER_CONSTRAINTS } from '../../users/models/user';
 import styles from './AdminModals.module.css';
 
 export default function EditUserModal({ user, onClose, onRefresh }) {
+  const toast = useToast();
   const [formData, setFormData] = useState({ username: '', email: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -22,15 +24,18 @@ export default function EditUserModal({ user, onClose, onRefresh }) {
     setError('');
 
     try {
-      await apiClient(`/user/${user.id}`, {
+      const res = await apiClient(`/user/${user.id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams(formData).toString()
       });
+      toast.success(res?.message || 'User details updated, user must log in again.');
       onRefresh();
       onClose();
     } catch (err) {
-      setError(err.message || 'Failed to update user. Username or email may be taken.');
+      const errorMsg = err.message || 'Failed to update user. Username or email may be taken.';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

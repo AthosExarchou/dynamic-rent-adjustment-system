@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import apiClient from '../../../shared/api/client';
+import { useToast } from '../../../shared/components/Toast';
 import { USER_CONSTRAINTS } from '../../users/models/user';
 import styles from './AdminModals.module.css';
 
 export default function CreateUserModal({ onClose, onRefresh }) {
+  const toast = useToast();
   const [formData, setFormData] = useState({ username: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -23,10 +25,13 @@ export default function CreateUserModal({ onClose, onRefresh }) {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: params.toString()
       });
+      toast.success('User created successfully.');
       onRefresh();
       onClose();
     } catch (err) {
-      setError(err.message || 'Failed to create user. Username or email may be taken.');
+      const errorMsg = err.message || 'Failed to create user. Username or email may be taken.';
+      setError(errorMsg);
+      toast.error(errorMsg);
       if (Array.isArray(err.details) && err.details.length > 0) {
         setErrorDetails(err.details);
       }

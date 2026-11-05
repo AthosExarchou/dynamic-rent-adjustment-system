@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import apiClient from '../../../shared/api/client';
+import { useToast } from '../../../shared/components/Toast';
 import styles from './AdminModals.module.css';
 
 export default function AdminProfileCreationModal({ userId, roleType, onClose, onRefresh }) {
+  const toast = useToast();
   const [formData, setFormData] = useState({ firstName: '', lastName: '', phoneNumber: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -27,10 +29,13 @@ export default function AdminProfileCreationModal({ userId, roleType, onClose, o
           phoneNumber: formData.phoneNumber
         }
       });
+      toast.success(`${roleType === 'OWNER' ? 'Owner' : 'Tenant'} profile created successfully.`);
       onRefresh();
       onClose();
     } catch (err) {
-      setError(err.message || `Failed to create ${roleType.toLowerCase()} profile. Data might be invalid.`);
+      const errorMsg = err.message || `Failed to create ${roleType.toLowerCase()} profile. Data might be invalid.`;
+      setError(errorMsg);
+      toast.error(errorMsg);
       if (Array.isArray(err.details) && err.details.length > 0) {
         setErrorDetails(err.details);
       }

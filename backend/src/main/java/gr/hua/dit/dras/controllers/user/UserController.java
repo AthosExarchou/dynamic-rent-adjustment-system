@@ -159,7 +159,7 @@ public class UserController {
         if (!isAdmin && isSelfEdit) {
             session.invalidate();
             return ResponseEntity.ok(
-                    java.util.Map.of("message", "Profile updated. Please log in again.", "requiresLogin", true)
+                    java.util.Map.of("message", "Profile details updated, please log in again.", "requiresLogin", true)
             );
         } else if (isAdmin && !isSelfEdit) {
             User targetUser = userService.getUser(targetUserId);
@@ -179,6 +179,9 @@ public class UserController {
                     }
                 }
             }
+            return ResponseEntity.ok(
+                    java.util.Map.of("message", "User details updated, user must log in again.")
+            );
         }
 
         return ResponseEntity.ok().build();
