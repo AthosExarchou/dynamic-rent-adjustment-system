@@ -35,7 +35,6 @@ export default function EditUserModal({ user, onClose, onRefresh }) {
     } catch (err) {
       const errorMsg = err.message || 'Failed to update user. Username or email may be taken.';
       setError(errorMsg);
-      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

@@ -26,7 +26,6 @@ export default function RegisterForm() {
     } catch (err) {
       const errorMsg = err.message || 'Registration failed. Please check your details and try again.';
       setError(errorMsg);
-      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

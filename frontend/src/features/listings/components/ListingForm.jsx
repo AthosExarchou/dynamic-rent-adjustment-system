@@ -290,7 +290,6 @@ export default function ListingForm() {
     } catch (err) {
       const errorMsg = err.message || (isEditMode ? 'Failed to update listing.' : 'Failed to submit listing. Please correct form validation errors.');
       setError(errorMsg);
-      toast.error(errorMsg);
       if (Array.isArray(err.details) && err.details.length > 0) {
         setErrorDetails(err.details);
       }

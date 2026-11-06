@@ -66,7 +66,6 @@ export default function ProfileEditForm() {
     } catch (err) {
       const errorMsg = err.message || 'Failed to update details. Email or Username may be taken.';
       setError(errorMsg);
-      toast.error(errorMsg);
       if (Array.isArray(err.details) && err.details.length > 0) {
         setErrorDetails(err.details);
       }

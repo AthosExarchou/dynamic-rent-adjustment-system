@@ -31,7 +31,6 @@ export default function CreateUserModal({ onClose, onRefresh }) {
     } catch (err) {
       const errorMsg = err.message || 'Failed to create user. Username or email may be taken.';
       setError(errorMsg);
-      toast.error(errorMsg);
       if (Array.isArray(err.details) && err.details.length > 0) {
         setErrorDetails(err.details);
       }

@@ -19,7 +19,6 @@ export default function ChangePasswordForm() {
     if (formData.newPassword !== formData.confirmPassword) {
       const errorMsg = 'New password confirmations do not match.';
       setError(errorMsg);
-      toast.error(errorMsg);
       return;
     }
     setError('');
@@ -35,7 +34,6 @@ export default function ChangePasswordForm() {
     } catch (err) {
       const errorMsg = err.message || 'Failed to change password. Old password may be incorrect.';
       setError(errorMsg);
-      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

@@ -19,7 +19,6 @@ export default function DeleteAccountConfirm() {
     if (formData.confirmationPhrase !== 'DELETE MY ACCOUNT') {
       const phraseError = 'Confirmation phrase does not match.';
       setError(phraseError);
-      toast.error(phraseError);
       return;
     }
     setError('');
@@ -40,7 +39,6 @@ export default function DeleteAccountConfirm() {
     } catch (err) {
       const errorMsg = err.message || 'Failed to delete account. Incorrect password.';
       setError(errorMsg);
-      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

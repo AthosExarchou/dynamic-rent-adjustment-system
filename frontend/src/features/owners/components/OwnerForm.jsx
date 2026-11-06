@@ -34,7 +34,6 @@ export default function OwnerForm() {
     } catch (err) {
       const errorMsg = err.message || 'Failed to create owner profile. Please check your details or you might already have one.';
       setError(errorMsg);
-      toast.error(errorMsg);
       if (Array.isArray(err.details) && err.details.length > 0) {
         setErrorDetails(err.details);
       }

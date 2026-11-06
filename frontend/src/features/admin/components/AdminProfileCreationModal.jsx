@@ -35,7 +35,6 @@ export default function AdminProfileCreationModal({ userId, roleType, onClose, o
     } catch (err) {
       const errorMsg = err.message || `Failed to create ${roleType.toLowerCase()} profile. Data might be invalid.`;
       setError(errorMsg);
-      toast.error(errorMsg);
       if (Array.isArray(err.details) && err.details.length > 0) {
         setErrorDetails(err.details);
       }

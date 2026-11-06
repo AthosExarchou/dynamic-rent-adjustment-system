@@ -38,7 +38,6 @@ export default function ContactPage() {
     } catch (err) {
       const errorMsg = err.message || 'Failed to send message. Please try again.';
       setError(errorMsg);
-      toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
     }

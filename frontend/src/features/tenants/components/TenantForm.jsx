@@ -81,7 +81,6 @@ export default function TenantForm() {
     } catch (err) {
       const msg = err.message || 'Failed to submit application. Profile may already exist or there was a server error.';
       setError(msg);
-      toast.error(msg);
       if (Array.isArray(err.details) && err.details.length > 0) {
         setErrorDetails(err.details);
       }
