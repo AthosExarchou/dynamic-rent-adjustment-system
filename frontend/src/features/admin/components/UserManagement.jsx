@@ -1,26 +1,75 @@
-import React, { useEffect, useState } from 'react';
-import { Users } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { Users, Search, Filter, Check, X, SlidersHorizontal, ChevronDown, ChevronUp, Calendar, UserCheck } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { useToast } from '../../../shared/components/Toast';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
+import DatePicker from '../../../shared/components/DatePicker';
 import styles from './AdminDashboard.module.css';
 import EditUserModal from './EditUserModal';
 import AdminProfileCreationModal from './AdminProfileCreationModal';
 import CreateUserModal from './CreateUserModal';
 
+// Role sort priority: ADMIN first, then OWNER, TENANT, USER
+const ROLE_PRIORITY = { ADMIN: 0, OWNER: 1, TENANT: 2, USER: 3 };
+
+function getTopRolePriority(roles) {
+  if (!roles || roles.length === 0) return 99;
+  return Math.min(...roles.map(r => ROLE_PRIORITY[r] ?? 50));
+}
+
+/** "YYYY-MM-DD" of a LocalDateTime ISO string (backend sends "2026-01-15T10:30:00") */
+function toDateOnly(isoStr) {
+  if (!isoStr) return '';
+  return isoStr.slice(0, 10);
+}
+
+/** Offset a "YYYY-MM-DD" string by N days */
+function offsetDateStr(dateStr, days) {
+  if (!dateStr) return '';
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() + days);
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+}
+
+function getTodayStr() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+const EMPTY_FILTER = {
+  search: '',
+  role: '',
+  createdAfter: '',
+  createdBefore: '',
+  lastLoginAfter: '',
+  lastLoginBefore: '',
+};
+
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
-  
+
+  // Filter state (what the user is editing) vs appliedFilter (what's actually filtering the table)
+  const [filter, setFilter] = useState(EMPTY_FILTER);
+  const [appliedFilter, setAppliedFilter] = useState(EMPTY_FILTER);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+  const [filterError, setFilterError] = useState(null);
+
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [creatingProfileFor, setCreatingProfileFor] = useState(null); // { userId, roleType }
-  
+  const [creatingProfileFor, setCreatingProfileFor] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userToDelete, setUserToDelete] = useState(null);
   const toast = useToast();
+
+  const todayStr = getTodayStr();
+
+  const activeFiltersCount = Object.entries(appliedFilter).filter(([, v]) => v !== '').length;
+  const hasActiveFilters = activeFiltersCount > 0;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -54,6 +103,72 @@ export default function UserManagement() {
     }
   };
 
+  // Sorted & filtered users (pure client-side, only re-runs on appliedFilter change)
+  const displayedUsers = useMemo(() => {
+    const q = appliedFilter.search.trim().toLowerCase();
+    return [...users]
+      .filter(u => {
+        // Role filter
+        if (appliedFilter.role && !u.roles.includes(appliedFilter.role)) return false;
+        // Text search: ID, username, email
+        if (q) {
+          const match =
+            String(u.id).includes(q) ||
+            u.username.toLowerCase().includes(q) ||
+            u.email.toLowerCase().includes(q);
+          if (!match) return false;
+        }
+        // Created After / Before
+        if (appliedFilter.createdAfter && toDateOnly(u.createdAt) < appliedFilter.createdAfter) return false;
+        if (appliedFilter.createdBefore && toDateOnly(u.createdAt) > appliedFilter.createdBefore) return false;
+        // Last Login After / Before
+        if (appliedFilter.lastLoginAfter && toDateOnly(u.lastLogin) < appliedFilter.lastLoginAfter) return false;
+        if (appliedFilter.lastLoginBefore && toDateOnly(u.lastLogin) > appliedFilter.lastLoginBefore) return false;
+        return true;
+      })
+      // Sort: by top role priority, then alphabetically by username
+      .sort((a, b) => {
+        const roleDiff = getTopRolePriority(a.roles) - getTopRolePriority(b.roles);
+        if (roleDiff !== 0) return roleDiff;
+        return a.username.localeCompare(b.username);
+      });
+  }, [users, appliedFilter]);
+
+  const handleFilterChange = (key, val) => setFilter(prev => ({ ...prev, [key]: val }));
+
+  const handleFilterSubmit = (e) => {
+    e.preventDefault();
+    setFilterError(null);
+
+    // Date range validations
+    if (filter.createdAfter && filter.createdAfter > todayStr) {
+      setFilterError('Created After date cannot be in the future.'); return;
+    }
+    if (filter.createdBefore && filter.createdBefore > todayStr) {
+      setFilterError('Created Before date cannot be in the future.'); return;
+    }
+    if (filter.createdAfter && filter.createdBefore && filter.createdAfter >= filter.createdBefore) {
+      setFilterError('Created After must be earlier than Created Before.'); return;
+    }
+    if (filter.lastLoginAfter && filter.lastLoginAfter > todayStr) {
+      setFilterError('Last Login After date cannot be in the future.'); return;
+    }
+    if (filter.lastLoginBefore && filter.lastLoginBefore > todayStr) {
+      setFilterError('Last Login Before date cannot be in the future.'); return;
+    }
+    if (filter.lastLoginAfter && filter.lastLoginBefore && filter.lastLoginAfter >= filter.lastLoginBefore) {
+      setFilterError('Last Login After must be earlier than Last Login Before.'); return;
+    }
+
+    setAppliedFilter({ ...filter });
+  };
+
+  const handleFilterReset = () => {
+    setFilterError(null);
+    setFilter(EMPTY_FILTER);
+    setAppliedFilter(EMPTY_FILTER);
+  };
+
   const handleAddRole = async (userId, roleId) => {
     const role = roles.find(r => r.id === roleId);
     try {
@@ -61,7 +176,6 @@ export default function UserManagement() {
       toast.success(`Role ${role?.name || ''} added successfully.`);
       fetchUsersAndRoles();
     } catch (err) {
-      // If backend says profile required, open profile creation modal
       if (err.message && err.message.includes('PROFILE_REQUIRED')) {
          setCreatingProfileFor({ userId, roleType: role.name });
       } else {
@@ -104,21 +218,191 @@ export default function UserManagement() {
           <Users className={styles.titleIcon} size={28} />
           User Management Dashboard
         </h2>
-        <button 
-          className={styles.approveBtn} 
+        <button
+          className={styles.approveBtn}
           onClick={() => setShowCreateModal(true)}
           style={{ padding: '0.4rem 1rem' }}
         >
           + Create User
         </button>
       </div>
-      
+
       <hr className={styles.divider} />
-      
+
+      {/* Filter Card */}
+      <div className={styles.filterCard}>
+        <div className={styles.filterHeader}>
+          <h5 className={styles.filterTitle}>
+            <Filter size={20} />
+            Filter Users
+            {activeFiltersCount > 0 && (
+              <span style={{ fontSize: '0.85rem', opacity: 0.9 }}>({activeFiltersCount} active)</span>
+            )}
+          </h5>
+        </div>
+        <div className={styles.filterBody}>
+          <form onSubmit={handleFilterSubmit} className={styles.filterForm}>
+
+            {/* Search */}
+            <div className={styles.formGroup}>
+              <label className={styles.label}>
+                <Search size={16} /> Search
+              </label>
+              <input
+                type="text"
+                className={styles.input}
+                placeholder="ID, username or email..."
+                value={filter.search}
+                onChange={e => handleFilterChange('search', e.target.value)}
+              />
+            </div>
+
+            {/* Role */}
+            <div className={styles.formGroup}>
+              <label className={styles.label}>
+                <UserCheck size={16} /> Role
+              </label>
+              <select
+                className={styles.input}
+                value={filter.role}
+                onChange={e => handleFilterChange('role', e.target.value)}
+              >
+                <option value="">All Roles</option>
+                <option value="ADMIN">Admin</option>
+                <option value="OWNER">Owner</option>
+                <option value="TENANT">Tenant</option>
+                <option value="USER">User</option>
+              </select>
+            </div>
+
+            {/* Advanced toggle */}
+            <div className={styles.advancedToggleWrapper}>
+              <button
+                type="button"
+                className={styles.advancedToggleBtn}
+                onClick={() => setIsAdvancedOpen(o => !o)}
+              >
+                <SlidersHorizontal size={16} />
+                {isAdvancedOpen ? 'Hide Date Filters' : 'More Filters (Account Created, Last Login)'}
+                {isAdvancedOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+            </div>
+
+            {/* Advanced: date ranges */}
+            {isAdvancedOpen && (
+              <div className={styles.advancedGrid}>
+                {/* Created date range */}
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>
+                    <Calendar size={16} /> Account Created After
+                  </label>
+                  <DatePicker
+                    value={filter.createdAfter}
+                    onChange={val => {
+                      if (val && filter.createdBefore && val >= filter.createdBefore) {
+                        setFilter(prev => ({ ...prev, createdAfter: val, createdBefore: '' }));
+                      } else {
+                        handleFilterChange('createdAfter', val);
+                      }
+                    }}
+                    placeholder="Select start date"
+                    max={
+                      filter.createdBefore
+                        ? (offsetDateStr(filter.createdBefore, -1) < todayStr ? offsetDateStr(filter.createdBefore, -1) : todayStr)
+                        : todayStr
+                    }
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>
+                    <Calendar size={16} /> Account Created Before
+                  </label>
+                  <DatePicker
+                    value={filter.createdBefore}
+                    onChange={val => {
+                      if (val && filter.createdAfter && val <= filter.createdAfter) {
+                        setFilter(prev => ({ ...prev, createdBefore: val, createdAfter: '' }));
+                      } else {
+                        handleFilterChange('createdBefore', val);
+                      }
+                    }}
+                    placeholder="Select end date"
+                    min={filter.createdAfter ? offsetDateStr(filter.createdAfter, 1) : undefined}
+                    max={todayStr}
+                    align="right"
+                  />
+                </div>
+
+                {/* Last Login date range */}
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>
+                    <Calendar size={16} /> Last Login After
+                  </label>
+                  <DatePicker
+                    value={filter.lastLoginAfter}
+                    onChange={val => {
+                      if (val && filter.lastLoginBefore && val >= filter.lastLoginBefore) {
+                        setFilter(prev => ({ ...prev, lastLoginAfter: val, lastLoginBefore: '' }));
+                      } else {
+                        handleFilterChange('lastLoginAfter', val);
+                      }
+                    }}
+                    placeholder="Select start date"
+                    max={
+                      filter.lastLoginBefore
+                        ? (offsetDateStr(filter.lastLoginBefore, -1) < todayStr ? offsetDateStr(filter.lastLoginBefore, -1) : todayStr)
+                        : todayStr
+                    }
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>
+                    <Calendar size={16} /> Last Login Before
+                  </label>
+                  <DatePicker
+                    value={filter.lastLoginBefore}
+                    onChange={val => {
+                      if (val && filter.lastLoginAfter && val <= filter.lastLoginAfter) {
+                        setFilter(prev => ({ ...prev, lastLoginBefore: val, lastLoginAfter: '' }));
+                      } else {
+                        handleFilterChange('lastLoginBefore', val);
+                      }
+                    }}
+                    placeholder="Select end date"
+                    min={filter.lastLoginAfter ? offsetDateStr(filter.lastLoginAfter, 1) : undefined}
+                    max={todayStr}
+                    align="right"
+                  />
+                </div>
+              </div>
+            )}
+
+            {filterError && (
+              <p className={styles.filterError}>{filterError}</p>
+            )}
+
+            <div className={styles.filterBtnWrapper}>
+              <button type="submit" className={styles.filterApplyBtn}>
+                <Check size={16} /> Apply Filters {activeFiltersCount > 0 && `(${activeFiltersCount})`}
+              </button>
+              {hasActiveFilters && (
+                <button type="button" onClick={handleFilterReset} className={styles.filterResetBtn}>
+                  <X size={16} /> Reset
+                </button>
+              )}
+            </div>
+
+          </form>
+        </div>
+      </div>
+
       <div className={styles.tableContainer}>
         <table className={styles.table}>
           <thead>
             <tr>
+              <th>ID</th>
               <th>Username</th>
               <th>Email Address</th>
               <th>Assigned Roles</th>
@@ -126,8 +410,9 @@ export default function UserManagement() {
             </tr>
           </thead>
           <tbody>
-            {users.map(u => (
+            {displayedUsers.map(u => (
               <tr key={u.id}>
+                <td className={styles.idCell}>{u.id}</td>
                 <td>{u.username}</td>
                 <td>{u.email}</td>
                 <td>{u.roles.join(', ')}</td>
@@ -153,16 +438,21 @@ export default function UserManagement() {
             ))}
           </tbody>
         </table>
-        
+
         {loading && <p style={{textAlign: 'center', padding: '1rem'}}>Loading users...</p>}
         {error && <p style={{textAlign: 'center', padding: '1rem', color: 'red'}}>{error}</p>}
         {!loading && !error && users.length === 0 && <p style={{textAlign: 'center', padding: '1rem'}}>No users found.</p>}
+        {!loading && !error && users.length > 0 && displayedUsers.length === 0 && (
+          <p style={{textAlign: 'center', padding: '1rem', color: 'var(--text-secondary)'}}>
+            No users match your filters.
+          </p>
+        )}
       </div>
 
-      <EditUserModal 
-        user={editingUser} 
-        onClose={() => setEditingUser(null)} 
-        onRefresh={fetchUsersAndRoles} 
+      <EditUserModal
+        user={editingUser}
+        onClose={() => setEditingUser(null)}
+        onRefresh={fetchUsersAndRoles}
       />
 
       {showCreateModal && (
