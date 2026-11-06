@@ -87,6 +87,7 @@ export function FavouritesProvider({ children }) {
   });
   const [favourites, setFavourites] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [syncing, setSyncing] = useState(false);
   const [guestFavouritesPending, setGuestFavouritesPending] = useState(() => {
     return isAuthenticated && user?.id ? getGuestFavouriteIds().length : 0;
@@ -182,13 +183,15 @@ export function FavouritesProvider({ children }) {
         } catch {
           // ignore
         }
+        toast.success('Favourites imported successfully!');
       }
     } catch (err) {
       console.error('Failed to import guest favourites into account', err);
+      toast.error(err.message || 'Failed to import favourites into your account.');
     } finally {
       setSyncing(false);
     }
-  }, [isAuthenticated, user?.id]);
+  }, [isAuthenticated, user?.id, toast]);
 
   // Explicitly discard guest favourites without modifying account
   const discardGuestFavourites = useCallback(() => {
@@ -275,24 +278,38 @@ export function FavouritesProvider({ children }) {
   // Clear all favourites across state, storage, and server
   const clearAllFavourites = useCallback(async () => {
     const idsToDelete = [...favouriteIds];
-    setFavouriteIds([]);
-    setFavourites([]);
+    if (idsToDelete.length === 0) return;
 
     if (isAuthenticated && user?.id) {
-      clearUserFavourites(user.id);
-      if (idsToDelete.length > 0) {
-        const results = await Promise.allSettled(
-          idsToDelete.map(id => apiClient(`/favourites/${id}`, { method: 'DELETE' }))
-        );
-        const failures = results.filter(r => r.status === 'rejected');
-        if (failures.length > 0) {
-          console.error('Failed to clear some favourites on server', failures);
-          if (failures.length === idsToDelete.length) {
-            throw new Error('Failed to remove favourites from server.');
+      const results = await Promise.allSettled(
+        idsToDelete.map(id => apiClient(`/favourites/${id}`, { method: 'DELETE' }))
+      );
+      const failures = results.filter(r => r.status === 'rejected');
+      if (failures.length > 0) {
+        console.error('Failed to clear some favourites on server', failures);
+        try {
+          const remaining = await apiClient('/favourites');
+          if (Array.isArray(remaining)) {
+            setFavourites(remaining);
+            const remainingIds = remaining.map(l => l.id);
+            setFavouriteIds(remainingIds);
+            setUserFavouriteIds(user.id, remainingIds);
           }
+        } catch {
+          // If refetch fails, keep existing state
+        }
+        if (failures.length === idsToDelete.length) {
+          throw new Error('Failed to remove favourites from server.');
+        } else {
+          throw new Error(`Failed to remove ${failures.length} of ${idsToDelete.length} favourites.`);
         }
       }
+      setFavouriteIds([]);
+      setFavourites([]);
+      clearUserFavourites(user.id);
     } else {
+      setFavouriteIds([]);
+      setFavourites([]);
       clearGuestFavourites();
     }
   }, [favouriteIds, isAuthenticated, user?.id]);
@@ -300,6 +317,7 @@ export function FavouritesProvider({ children }) {
   // Fetch full listings for Favourites page
   const fetchFavourites = useCallback(async (signal) => {
     setLoading(true);
+    setError(null);
     try {
       if (isAuthenticated) {
         const data = await apiClient('/favourites', signal ? { signal } : {});
@@ -328,6 +346,7 @@ export function FavouritesProvider({ children }) {
     } catch (err) {
       if (err.name === 'AbortError') return;
       console.error('Failed to fetch full favourites list', err);
+      setError(err.message || 'Failed to load favourite listings.');
     } finally {
       setLoading(false);
     }
@@ -343,6 +362,7 @@ export function FavouritesProvider({ children }) {
     fetchFavourites,
     favouriteCount: favouriteIds.length,
     loading,
+    error,
     syncing,
     isAuthenticated,
     guestFavouritesPending,
@@ -357,6 +377,7 @@ export function FavouritesProvider({ children }) {
     clearAllFavourites,
     fetchFavourites,
     loading,
+    error,
     syncing,
     isAuthenticated,
     guestFavouritesPending,

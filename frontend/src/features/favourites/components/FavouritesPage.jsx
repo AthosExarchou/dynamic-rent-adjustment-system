@@ -13,7 +13,8 @@ import {
   Trash2,
   ArrowRight,
   Info,
-  Camera
+  Camera,
+  AlertCircle
 } from 'lucide-react';
 import { useFavourites } from '../context/FavouritesContext';
 import { useAuth } from '../../auth';
@@ -31,6 +32,7 @@ export default function FavouritesPage() {
     fetchFavourites,
     clearAllFavourites,
     loading,
+    error,
     guestFavouritesPending,
     importGuestFavourites,
     discardGuestFavourites,
@@ -227,6 +229,17 @@ export default function FavouritesPage() {
         <div className={styles.loadingContainer}>
           <div className={styles.spinner}></div>
           <p>Loading your favourite listings...</p>
+        </div>
+      ) : error ? (
+        <div className={styles.emptyState}>
+          <div className={styles.emptyIconWrapper}>
+            <AlertCircle size={36} color="var(--color-danger, #ef4444)" />
+          </div>
+          <h2 className={styles.emptyTitle}>Failed to load favourites</h2>
+          <p className={styles.emptyDesc}>{error}</p>
+          <button type="button" onClick={() => fetchFavourites()} className={styles.browseBtn}>
+            Try Again
+          </button>
         </div>
       ) : favourites.length === 0 ? (
         <div className={styles.emptyState}>

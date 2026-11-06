@@ -5,11 +5,13 @@ import { useAuth } from '../../features/auth';
 import { useFavourites } from '../../features/favourites';
 import apiClient from '../api/client';
 import { isNavigablePath } from '../utils/routeUtils';
+import { useToast } from '../components/Toast';
 import Sidebar from './Sidebar';
 import styles from './MainLayout.module.css';
 
 export default function MainLayout() {
   const { isAuthenticated, logout, roles, user } = useAuth();
+  const toast = useToast();
   const {
     favouriteCount,
     guestFavouritesPending,
@@ -123,6 +125,7 @@ export default function MainLayout() {
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
       console.error("Failed to mark as read", error);
+      toast.error(error.message || 'Failed to mark notification as read.');
     }
   };
 
@@ -133,6 +136,7 @@ export default function MainLayout() {
       setUnreadCount(0);
     } catch (error) {
       console.error("Failed to mark all as read", error);
+      toast.error(error.message || 'Failed to mark all notifications as read.');
     }
   };
 
@@ -148,6 +152,7 @@ export default function MainLayout() {
     } catch (error) {
       console.error("Failed to delete notification", error);
       fetchNotifications();
+      toast.error(error.message || 'Failed to delete notification.');
     }
   };
 
@@ -159,6 +164,7 @@ export default function MainLayout() {
     } catch (error) {
       console.error("Failed to clear notifications", error);
       fetchNotifications();
+      toast.error(error.message || 'Failed to clear notifications.');
     }
   };
 
