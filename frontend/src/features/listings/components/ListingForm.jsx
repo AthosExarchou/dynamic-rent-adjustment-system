@@ -404,13 +404,17 @@ export default function ListingForm() {
         )}
         {error && (
           <div className={styles.error}>
-            <div>{error}</div>
-            {errorDetails && errorDetails.length > 1 && (
-              <ul style={{ marginTop: '0.5rem', marginBottom: 0, paddingLeft: '1.25rem' }}>
-                {errorDetails.map((detail, idx) => (
-                  <li key={idx}>{detail}</li>
-                ))}
-              </ul>
+            {errorDetails && errorDetails.length > 1 ? (
+              <div>
+                <div>Please resolve the following errors:</div>
+                <ul style={{ marginTop: '0.5rem', marginBottom: 0, paddingLeft: '1.25rem' }}>
+                  {errorDetails.map((detail, idx) => (
+                    <li key={idx}>{detail}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div>{error}</div>
             )}
           </div>
         )}

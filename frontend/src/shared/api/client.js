@@ -104,11 +104,15 @@ async function apiClient(endpoint, options = {}) {
         const baseMessage = errorBody.message || errorBody.error;
 
         if (errorDetails && errorDetails.length > 0) {
-          const detailText = errorDetails.join(', ');
-          if (baseMessage && baseMessage.toLowerCase() !== 'validation failed' && baseMessage.toLowerCase() !== 'bad request') {
-            errorMessage = `${baseMessage}: ${detailText}`;
+          if (errorDetails.length === 1) {
+            errorMessage = errorDetails[0];
           } else {
-            errorMessage = `Validation failed: ${detailText}`;
+            const detailText = errorDetails.join(', ');
+            if (baseMessage && baseMessage.toLowerCase() !== 'validation failed' && baseMessage.toLowerCase() !== 'bad request') {
+              errorMessage = `${baseMessage}: ${detailText}`;
+            } else {
+              errorMessage = `Validation failed: ${detailText}`;
+            }
           }
         } else if (baseMessage) {
           errorMessage = baseMessage;

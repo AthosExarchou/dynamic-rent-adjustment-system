@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../auth';
 import { useToast } from '../../../shared/components/Toast';
-import { Settings, User, Mail, ArrowLeft } from 'lucide-react';
+import { Settings, User, Mail, ArrowLeft, AlertCircle } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { USER_CONSTRAINTS } from '../models/user';
 import styles from './ProfileForm.module.css';
@@ -92,14 +92,21 @@ export default function ProfileEditForm() {
         <div className={styles.body}>
           {error && (
             <div className={`${styles.alert} ${styles.alertDanger}`}>
-              <div>{error}</div>
-              {errorDetails && errorDetails.length > 1 && (
-                <ul style={{ marginTop: '0.5rem', marginBottom: 0, paddingLeft: '1.25rem' }}>
-                  {errorDetails.map((detail, idx) => (
-                    <li key={idx}>{detail}</li>
-                  ))}
-                </ul>
-              )}
+              <AlertCircle size={20} className={styles.alertIcon} />
+              <div className={styles.alertContent}>
+                {errorDetails && errorDetails.length > 1 ? (
+                  <>
+                    <div className={styles.alertTitle}>Please resolve the following errors:</div>
+                    <ul className={styles.alertList}>
+                      {errorDetails.map((detail, idx) => (
+                        <li key={idx}>{detail}</li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <div>{error}</div>
+                )}
+              </div>
             </div>
           )}
 
