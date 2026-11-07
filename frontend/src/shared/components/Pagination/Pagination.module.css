@@ -1,0 +1,148 @@
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+  padding: 0.75rem 1rem;
+  background-color: var(--background-paper);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg, 0.75rem);
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.08));
+}
+
+/* "Showing X–Y of Z" text */
+.info {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  margin-right: auto;
+}
+
+/* First / Prev / Next / Last arrow buttons */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.navBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 0.5rem);
+  background-color: var(--background-paper);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.navBtn:hover:not(:disabled) {
+  background-color: var(--color-primary-600, #2563eb);
+  border-color: var(--color-primary-600, #2563eb);
+  color: #fff;
+}
+
+.navBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Numbered page pills */
+.pages {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.pageBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.4rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 0.5rem);
+  background-color: var(--background-paper);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pageBtn:hover:not(.active) {
+  background-color: rgba(37, 99, 235, 0.08);
+  border-color: var(--color-primary-600, #2563eb);
+  color: var(--color-primary-600, #2563eb);
+}
+
+.active {
+  background-color: var(--color-primary-600, #2563eb);
+  border-color: var(--color-primary-600, #2563eb);
+  color: #fff;
+  font-weight: 600;
+  cursor: default;
+}
+
+.ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 2rem;
+  color: var(--text-muted, #9ca3af);
+  font-size: 0.85rem;
+  user-select: none;
+}
+
+/* Per-page selector */
+.pageSizeWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.pageSizeLabel {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.pageSizeSelect {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md, 0.5rem);
+  background-color: var(--background-default);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.pageSizeSelect:focus {
+  outline: none;
+  border-color: var(--color-primary-600, #2563eb);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+/* Mobile: stack info and controls */
+@media (max-width: 540px) {
+  .info {
+    width: 100%;
+    text-align: center;
+    margin-right: 0;
+  }
+
+  .pageSizeWrapper {
+    width: 100%;
+    justify-content: center;
+    margin-left: 0;
+  }
+}

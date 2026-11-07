@@ -23,8 +23,11 @@ import PriceDropIndicator, { computeAvgPricePerM2 } from '../../listings/compone
 import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
 import { useToast } from '../../../shared/components/Toast';
+import { Pagination } from '../../../shared/components/Pagination';
 import apiClient from '../../../shared/api/client';
 import styles from './FavouritesPage.module.css';
+
+const PAGE_SIZE = 9;
 
 export default function FavouritesPage() {
   const {
@@ -42,6 +45,7 @@ export default function FavouritesPage() {
   const toast = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('newest');
+  const [currentPage, setCurrentPage] = useState(1);
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
   const [platformAvgPricePerM2, setPlatformAvgPricePerM2] = useState(null);
 
@@ -96,6 +100,24 @@ export default function FavouritesPage() {
 
     return result;
   }, [favourites, searchTerm, sortBy]);
+
+  // Reset to page 1 whenever search keyword or sorting changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, sortBy]);
+
+  // Ensure current page does not exceed available pages
+  useEffect(() => {
+    const maxPage = Math.max(1, Math.ceil(displayedListings.length / PAGE_SIZE));
+    if (currentPage > maxPage) {
+      setCurrentPage(maxPage);
+    }
+  }, [displayedListings.length, currentPage]);
+
+  const paginatedListings = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return displayedListings.slice(start, start + PAGE_SIZE);
+  }, [displayedListings, currentPage]);
 
   const handleClearAll = () => {
     setShowClearAllConfirm(true);
@@ -273,7 +295,7 @@ export default function FavouritesPage() {
         </div>
       ) : (
         <div className={styles.grid}>
-          {displayedListings.map(listing => {
+          {paginatedListings.map(listing => {
             const hasImages = listing.images && listing.images.length > 0;
             const cardImageUrl = hasImages ? (getImageUrl(listing.images[0]) || DEFAULT_LISTING_IMAGE) : DEFAULT_LISTING_IMAGE;
             return (
@@ -390,6 +412,15 @@ export default function FavouritesPage() {
           );
         })}
         </div>
+      )}
+
+      {!loading && !error && displayedListings.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={displayedListings.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
       )}
 
       {showClearAllConfirm && (

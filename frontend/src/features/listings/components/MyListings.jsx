@@ -1,12 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Building2, Eye, Pencil, Trash2, Users, Power, PowerOff, AlertCircle, Lock, Camera } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { useAuth } from '../../auth';
 import { useToast } from '../../../shared/components/Toast';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
+import { Pagination } from '../../../shared/components/Pagination';
 import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
 import styles from './MyListings.module.css';
+
+const PAGE_SIZE = 9;
 
 const truncateTitle = (title, maxLength = 35) => {
   if (!title) return 'this property';
@@ -19,6 +22,7 @@ export default function MyListings() {
   const { roles } = useAuth();
   const toast = useToast();
   const [listings, setListings] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [listingToDelete, setListingToDelete] = useState(null);
@@ -46,6 +50,19 @@ export default function MyListings() {
       setLoading(false);
     }
   };
+
+  // Adjust current page if listings shrink (e.g. after deletion)
+  useEffect(() => {
+    const maxPage = Math.max(1, Math.ceil(listings.length / PAGE_SIZE));
+    if (currentPage > maxPage) {
+      setCurrentPage(maxPage);
+    }
+  }, [listings.length, currentPage]);
+
+  const paginatedListings = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return listings.slice(start, start + PAGE_SIZE);
+  }, [listings, currentPage]);
 
   const confirmDelete = (id, title) => setListingToDelete({ id, title });
 
@@ -102,7 +119,7 @@ export default function MyListings() {
       <hr className={styles.divider} />
 
       <div className={styles.grid}>
-        {listings.map(l => {
+        {paginatedListings.map(l => {
           const isRented = Boolean(l.rented || l.status === 'RENTED');
           const hasImages = l.images && l.images.length > 0;
           const cardImageUrl = hasImages ? (getImageUrl(l.images[0]) || DEFAULT_LISTING_IMAGE) : DEFAULT_LISTING_IMAGE;
@@ -237,6 +254,15 @@ export default function MyListings() {
         })}
       </div>
       
+      {!loading && !error && listings.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={listings.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
+      )}
+
       {loading ? (
         <div className={styles.emptyState}>
           <p>Loading your properties...</p>

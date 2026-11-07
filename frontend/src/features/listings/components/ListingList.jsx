@@ -1,19 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { 
-  Building2, 
-  MapPin, 
-  Bed, 
-  Bath, 
-  Maximize, 
-  ArrowUpToLine, 
-  Home, 
-  Clock, 
-  Search, 
-  Plus, 
-  Filter, 
-  Check, 
-  Euro, 
+import {
+  Building2,
+  MapPin,
+  Bed,
+  Bath,
+  Maximize,
+  ArrowUpToLine,
+  Home,
+  Clock,
+  Search,
+  Plus,
+  Filter,
+  Check,
+  Euro,
   X,
   SlidersHorizontal,
   Compass,
@@ -29,8 +29,11 @@ import apiClient from '../../../shared/api/client';
 import styles from './ListingList.module.css';
 import PriceDropIndicator, { computeAvgPricePerM2 } from './PriceDropIndicator';
 import DatePicker from '../../../shared/components/DatePicker';
+import { Pagination } from '../../../shared/components/Pagination';
 import { LISTING_CONSTRAINTS } from '../models/listing';
 import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
+
+const PAGE_SIZE = 9;
 
 const getTodayStr = () => {
   const now = new Date();
@@ -108,10 +111,31 @@ export default function ListingList() {
     return () => { active = false; };
   }, [isAuthenticated, roles]);
 
-  // Whenever URL search parameters change, fetch and filter listings
+  // Extract filter-only query params to prevent re-fetching on page change
+  const filterParamsString = useMemo(() => {
+    const p = new URLSearchParams(searchParams);
+    p.delete('page');
+    p.sort();
+    return p.toString();
+  }, [searchParams]);
+
+  const currentPage = Math.max(1, Number(searchParams.get('page')) || 1);
+
+  const handlePageChange = useCallback((newPage) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (newPage <= 1) {
+      nextParams.delete('page');
+    } else {
+      nextParams.set('page', String(newPage));
+    }
+    setSearchParams(nextParams);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [searchParams, setSearchParams]);
+
+  // Whenever filter search parameters change, fetch and filter listings
   useEffect(() => {
     const controller = new AbortController();
-    const paramsObj = Object.fromEntries(searchParams.entries());
+    const paramsObj = Object.fromEntries(new URLSearchParams(filterParamsString).entries());
     const hasActive = Object.keys(paramsObj).length > 0;
 
     // Keep form filter state in sync with URL parameters
@@ -151,7 +175,7 @@ export default function ListingList() {
     }
 
     return () => controller.abort();
-  }, [searchParams]);
+  }, [filterParamsString]);
 
   const fetchListings = async (signal) => {
     setLoading(true);
@@ -202,6 +226,20 @@ export default function ListingList() {
       setLoading(false);
     }
   };
+
+  const paginatedListings = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return listings.slice(start, start + PAGE_SIZE);
+  }, [listings, currentPage]);
+
+  useEffect(() => {
+    if (!loading && listings.length > 0) {
+      const maxPage = Math.max(1, Math.ceil(listings.length / PAGE_SIZE));
+      if (currentPage > maxPage) {
+        handlePageChange(maxPage);
+      }
+    }
+  }, [listings.length, currentPage, loading, handlePageChange]);
 
   /** Clamps a numeric filter field to [min, max] when the input loses focus (mirrors ListingForm). */
   const clampField = (field, min, max) => () => {
@@ -648,8 +686,9 @@ export default function ListingList() {
           <p style={{color: 'red'}}>{error}</p>
         </div>
       ) : listings.length > 0 ? (
-        <div className={styles.grid}>
-          {listings.map(l => {
+        <>
+          <div className={styles.grid}>
+          {paginatedListings.map(l => {
             const hasImages = l.images && l.images.length > 0;
             const cardImageUrl = hasImages ? (getImageUrl(l.images[0]) || DEFAULT_LISTING_IMAGE) : DEFAULT_LISTING_IMAGE;
             return (
@@ -731,7 +770,14 @@ export default function ListingList() {
           );
         })}
         </div>
-      ) : (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={listings.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={handlePageChange}
+        />
+      </>
+    ) : (
         <div className={styles.emptyState}>
           <p>
             {searchTerm

@@ -1,17 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, ClipboardCheck, Eye, Camera } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { useToast } from '../../../shared/components/Toast';
+import { Pagination } from '../../../shared/components/Pagination';
 import { LISTING_CONSTRAINTS } from '../../listings/models/listing';
 import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
 import styles from './AdminDashboard.module.css';
 import modalStyles from './AdminModals.module.css';
 
+const PAGE_SIZE = 9;
+
 export default function PendingApprovals() {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [actionLoading, setActionLoading] = useState(null);
   const [rejectTarget, setRejectTarget] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -39,6 +43,19 @@ export default function PendingApprovals() {
       setLoading(false);
     }
   };
+
+  // If listings shrink (e.g. after approval/rejection) and current page is out of bounds, adjust it
+  useEffect(() => {
+    const maxPage = Math.max(1, Math.ceil(listings.length / PAGE_SIZE));
+    if (currentPage > maxPage) {
+      setCurrentPage(maxPage);
+    }
+  }, [listings.length, currentPage]);
+
+  const paginatedListings = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return listings.slice(start, start + PAGE_SIZE);
+  }, [listings, currentPage]);
 
   const handleApprove = async (id) => {
     setActionLoading({ id, type: 'approve' });
@@ -116,7 +133,7 @@ export default function PendingApprovals() {
       <hr className={styles.divider} />
 
       <div className={styles.grid}>
-        {listings.map(l => {
+        {paginatedListings.map(l => {
           const hasImages = l.images && l.images.length > 0;
           const cardImageUrl = hasImages ? (getImageUrl(l.images[0]) || DEFAULT_LISTING_IMAGE) : DEFAULT_LISTING_IMAGE;
           return (
@@ -199,6 +216,15 @@ export default function PendingApprovals() {
           <p className={styles.emptyState}>No listings pending approval at this moment.</p>
         )}
       </div>
+
+      {!loading && !error && listings.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={listings.length}
+          pageSize={PAGE_SIZE}
+          onPageChange={setCurrentPage}
+        />
+      )}
 
       {rejectTarget && (
         <div className={modalStyles.modalOverlay}>

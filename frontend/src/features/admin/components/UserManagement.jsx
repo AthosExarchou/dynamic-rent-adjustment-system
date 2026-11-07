@@ -4,10 +4,13 @@ import apiClient from '../../../shared/api/client';
 import { useToast } from '../../../shared/components/Toast';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
 import DatePicker from '../../../shared/components/DatePicker';
+import { Pagination } from '../../../shared/components/Pagination';
 import styles from './AdminDashboard.module.css';
 import EditUserModal from './EditUserModal';
 import AdminProfileCreationModal from './AdminProfileCreationModal';
 import CreateUserModal from './CreateUserModal';
+
+const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
 // Role sort priority: ADMIN first, then OWNER, TENANT, USER
 const ROLE_PRIORITY = { ADMIN: 0, OWNER: 1, TENANT: 2, USER: 3 };
@@ -56,6 +59,10 @@ export default function UserManagement() {
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [filterError, setFilterError] = useState(null);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -103,6 +110,11 @@ export default function UserManagement() {
     }
   };
 
+  // Reset to page 1 whenever the applied filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [appliedFilter]);
+
   // Sorted & filtered users (pure client-side, only re-runs on appliedFilter change)
   const displayedUsers = useMemo(() => {
     const q = appliedFilter.search.trim().toLowerCase();
@@ -133,6 +145,12 @@ export default function UserManagement() {
         return a.username.localeCompare(b.username);
       });
   }, [users, appliedFilter]);
+
+  // Paginated slice shown in the table
+  const paginatedUsers = useMemo(
+    () => displayedUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [displayedUsers, currentPage, pageSize]
+  );
 
   const handleFilterChange = (key, val) => setFilter(prev => ({ ...prev, [key]: val }));
 
@@ -410,7 +428,7 @@ export default function UserManagement() {
             </tr>
           </thead>
           <tbody>
-            {displayedUsers.map(u => (
+            {paginatedUsers.map(u => (
               <tr key={u.id}>
                 <td className={styles.idCell}>{u.id}</td>
                 <td>{u.username}</td>
@@ -448,6 +466,20 @@ export default function UserManagement() {
           </p>
         )}
       </div>
+
+      {!loading && !error && displayedUsers.length > 0 && (
+        <Pagination
+          currentPage={currentPage}
+          totalItems={displayedUsers.length}
+          pageSize={pageSize}
+          onPageChange={setCurrentPage}
+          pageSizeOptions={PAGE_SIZE_OPTIONS}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setCurrentPage(1);
+          }}
+        />
+      )}
 
       <EditUserModal
         user={editingUser}
