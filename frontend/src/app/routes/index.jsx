@@ -64,7 +64,9 @@ const GlobalErrorBoundary = () => {
   return (
     <div style={{ padding: '4rem 2rem', textAlign: 'center', fontFamily: 'system-ui' }}>
       <h2 style={{ marginBottom: '1rem' }}>Oops! Something went wrong.</h2>
-      <p style={{ color: '#666', marginBottom: '2rem' }}>{error?.message || "An unexpected error occurred."}</p>
+      <p style={{ color: '#666', marginBottom: '2rem', wordBreak: 'break-word', overflowWrap: 'anywhere', maxWidth: '600px', margin: '0 auto 2rem' }}>
+        {error?.message || "An unexpected error occurred."}
+      </p>
       <button 
         onClick={() => window.location.href = '/'}
         style={{ padding: '0.5rem 1.5rem', backgroundColor: '#0d6efd', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}

@@ -9,6 +9,7 @@ export default function EditUserModal({ user, onClose, onRefresh }) {
   const [formData, setFormData] = useState({ username: '', email: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [errorDetails, setErrorDetails] = useState([]);
 
   useEffect(() => {
     if (user) {
@@ -22,6 +23,7 @@ export default function EditUserModal({ user, onClose, onRefresh }) {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setErrorDetails([]);
 
     try {
       const res = await apiClient(`/user/${user.id}`, {
@@ -35,6 +37,9 @@ export default function EditUserModal({ user, onClose, onRefresh }) {
     } catch (err) {
       const errorMsg = err.message || 'Failed to update user. Username or email may be taken.';
       setError(errorMsg);
+      if (Array.isArray(err.details) && err.details.length > 0) {
+        setErrorDetails(err.details);
+      }
     } finally {
       setLoading(false);
     }
@@ -48,7 +53,22 @@ export default function EditUserModal({ user, onClose, onRefresh }) {
           <button onClick={onClose} className={styles.closeBtn}>&times;</button>
         </div>
         <div className={styles.modalBody}>
-          {error && <div className={styles.error}>{error}</div>}
+          {error && (
+            <div className={styles.error}>
+              {errorDetails && errorDetails.length > 1 ? (
+                <div>
+                  <div>Please resolve the following errors:</div>
+                  <ul style={{ marginTop: '0.5rem', marginBottom: 0, paddingLeft: '1.25rem' }}>
+                    {errorDetails.map((detail, idx) => (
+                      <li key={idx}>{detail}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                error
+              )}
+            </div>
+          )}
           <form onSubmit={handleSubmit}>
             <div className={styles.formGroup}>
               <label htmlFor="editUsername" className={styles.label}>Username</label>

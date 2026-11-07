@@ -69,6 +69,8 @@
   margin-bottom: 1.25rem;
   border: 1px solid #fbd5d5;
   font-size: 0.9rem;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .formGroup {

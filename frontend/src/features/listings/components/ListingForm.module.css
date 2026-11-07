@@ -35,6 +35,8 @@
   border-radius: var(--radius-md);
   margin-bottom: var(--spacing-4);
   border: 1px solid #fbd5d5;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .formGroup {

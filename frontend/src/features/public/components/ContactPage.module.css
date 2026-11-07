@@ -445,10 +445,17 @@
   border: 1px solid rgba(239, 68, 68, 0.25);
   font-size: 0.95rem;
   transition: transform 0.2s ease;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .alertError:hover {
   transform: translateY(-1px);
+}
+
+.alertError > div {
+  flex: 1;
+  min-width: 0;
 }
 
 .alertError strong {
@@ -460,6 +467,8 @@
 .alertError p {
   margin: 0;
   color: var(--text-secondary);
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .alertIcon {

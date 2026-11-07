@@ -12,12 +12,14 @@ export default function RegisterForm() {
   const [formData, setFormData] = useState({ username: '', email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [errorDetails, setErrorDetails] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setErrorDetails([]);
 
     try {
       await register(formData.username, formData.email, formData.password);
@@ -26,6 +28,9 @@ export default function RegisterForm() {
     } catch (err) {
       const errorMsg = err.message || 'Registration failed. Please check your details and try again.';
       setError(errorMsg);
+      if (Array.isArray(err.details) && err.details.length > 0) {
+        setErrorDetails(err.details);
+      }
     } finally {
       setLoading(false);
     }
@@ -46,7 +51,18 @@ export default function RegisterForm() {
 
         {error && (
           <div className={`${styles.alert} ${styles.alertDanger}`}>
-            {error}
+            {errorDetails && errorDetails.length > 1 ? (
+              <div>
+                <div style={{ fontWeight: 600, marginBottom: '0.35rem' }}>Please resolve the following errors:</div>
+                <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
+                  {errorDetails.map((detail, idx) => (
+                    <li key={idx}>{detail}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div>{error}</div>
+            )}
           </div>
         )}
         

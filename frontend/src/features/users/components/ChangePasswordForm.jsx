@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../auth';
 import { useToast } from '../../../shared/components/Toast';
-import { Key, ArrowLeft, Lock, Unlock } from 'lucide-react';
+import { Key, ArrowLeft, Lock, Unlock, AlertCircle } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import styles from './ProfileForm.module.css';
 
@@ -55,7 +55,12 @@ export default function ChangePasswordForm() {
         </div>
         
         <div className={styles.body}>
-          {error && <div className={`${styles.alert} ${styles.alertDanger}`}>{error}</div>}
+          {error && (
+            <div className={`${styles.alert} ${styles.alertDanger}`}>
+              <AlertCircle size={20} className={styles.alertIcon} />
+              <div className={styles.alertContent}>{error}</div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className={styles.form}>
             <div className={styles.formGroup}>

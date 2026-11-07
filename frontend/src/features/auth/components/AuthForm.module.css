@@ -72,6 +72,8 @@
   margin-bottom: 1.5rem;
   font-size: 0.95rem;
   animation: fadeIn 0.3s ease-in-out;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .alertDanger {
