@@ -64,7 +64,7 @@ export default function Pagination({
   return (
     <nav className={`${styles.pagination} ${className}`} aria-label="Pagination navigation">
       <span className={styles.info}>
-        Showing <strong>{startItem}</strong>–<strong>{endItem}</strong> of <strong>{totalItems}</strong>
+        Showing <strong>{startItem}</strong>-<strong>{endItem}</strong> of <strong>{totalItems}</strong>
       </span>
 
       <div className={styles.controls}>
