@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Building2, Eye, Pencil, Trash2, Users, Power, PowerOff, AlertCircle, Lock, Camera } from 'lucide-react';
+import { MapPin, Building2, Eye, Pencil, Trash2, Users, Power, PowerOff, AlertCircle, Lock, Camera, Plus } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { useAuth } from '../../auth';
 import { useToast } from '../../../shared/components/Toast';
@@ -21,6 +21,7 @@ const truncateTitle = (title, maxLength = 35) => {
 export default function MyListings() {
   const { roles } = useAuth();
   const toast = useToast();
+  const canCreateListing = !roles.includes('ADMIN');
   const [listings, setListings] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -114,6 +115,11 @@ export default function MyListings() {
         <h2 className={styles.title}>
           <Building2 className={styles.titleIcon} size={28} /> My Properties
         </h2>
+        {canCreateListing && (
+          <Link to="/listings/new" className={`${styles.btn} ${styles.btnSuccess} ${styles.headerBtn} ${styles.pulseBtn}`}>
+            <Plus size={18} /> Create Listing
+          </Link>
+        )}
       </div>
       
       <hr className={styles.divider} />
@@ -274,8 +280,10 @@ export default function MyListings() {
       ) : listings.length === 0 && (
         <div className={styles.emptyState}>
           <p>You have not listed any properties yet.</p>
-          {!roles.includes('ADMIN') && (
-            <Link to="/listings/new" className={`${styles.btn} ${styles.btnSuccess}`}>Create Listing</Link>
+          {canCreateListing && (
+            <Link to="/listings/new" className={`${styles.btn} ${styles.btnSuccess}`}>
+              <Plus size={18} /> Create Listing
+            </Link>
           )}
         </div>
       )}
