@@ -1,0 +1,98 @@
+.container {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.input {
+  width: 100%;
+  padding-right: 2.2rem !important;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.input::-webkit-outer-spin-button,
+.input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.stepper {
+  position: absolute;
+  right: 1px;
+  top: 1px;
+  bottom: 1px;
+  width: 24px;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--border-color);
+  background: var(--background-default);
+  border-top-right-radius: var(--radius-md, 0.375rem);
+  border-bottom-right-radius: var(--radius-md, 0.375rem);
+  overflow: hidden;
+  pointer-events: auto;
+}
+
+.stepBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.stepBtnUp {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.stepBtn:hover:not(:disabled) {
+  background-color: rgba(99, 102, 241, 0.08);
+  color: var(--color-primary-600, #4f46e5);
+}
+
+.stepBtn:active:not(:disabled) {
+  background-color: rgba(99, 102, 241, 0.18);
+  color: var(--color-primary-700, #4338ca);
+}
+
+.stepBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Dark theme hover & active states */
+[data-theme='dark'] .stepper {
+  background: var(--background-default);
+  border-left-color: var(--border-color);
+}
+
+[data-theme='dark'] .stepBtnUp {
+  border-bottom-color: var(--border-color);
+}
+
+[data-theme='dark'] .stepBtn {
+  color: var(--text-secondary);
+}
+
+[data-theme='dark'] .stepBtn:hover:not(:disabled) {
+  background-color: rgba(99, 102, 241, 0.22);
+  color: #a5b4fc;
+}
+
+[data-theme='dark'] .stepBtn:active:not(:disabled) {
+  background-color: rgba(99, 102, 241, 0.35);
+  color: #c7d2fe;
+}
+
+[data-theme='dark'] .stepBtn:disabled {
+  opacity: 0.25;
+}
