@@ -1,0 +1,163 @@
+.container {
+  position: relative;
+  width: 100%;
+}
+
+.trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.35rem;
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  background-color: var(--background-default);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.trigger:hover:not(:disabled) {
+  border-color: rgba(59, 130, 246, 0.6);
+}
+
+.trigger:focus,
+.triggerActive {
+  outline: none;
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.trigger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.triggerContent {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.triggerIcon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.triggerPlaceholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.triggerValue {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.chevron {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+  color: #0d6efd;
+}
+
+/* Floating menu */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  z-index: 1050;
+  width: 100%;
+  min-width: 180px;
+  background-color: var(--background-paper);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  padding: 0.35rem;
+  animation: selectFadeIn 0.16s ease-out;
+}
+
+.dropdownRight {
+  left: auto;
+  right: 0;
+}
+
+@keyframes selectFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.optionsList {
+  max-height: 240px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.optionsList::-webkit-scrollbar {
+  width: 5px;
+}
+
+.optionsList::-webkit-scrollbar-thumb {
+  background-color: rgba(128, 128, 128, 0.3);
+  border-radius: 4px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.option:hover {
+  background-color: rgba(37, 99, 235, 0.08);
+  color: var(--color-primary-600, #2563eb);
+}
+
+.optionSelected {
+  background-color: rgba(37, 99, 235, 0.12);
+  color: var(--color-primary-600, #2563eb);
+  font-weight: 600;
+}
+
+.optionLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.checkIcon {
+  color: var(--color-primary-600, #2563eb);
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}

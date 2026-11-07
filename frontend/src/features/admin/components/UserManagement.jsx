@@ -5,12 +5,21 @@ import { useToast } from '../../../shared/components/Toast';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
 import DatePicker from '../../../shared/components/DatePicker';
 import { Pagination } from '../../../shared/components/Pagination';
+import { Select } from '../../../shared/components/Select';
 import styles from './AdminDashboard.module.css';
 import EditUserModal from './EditUserModal';
 import AdminProfileCreationModal from './AdminProfileCreationModal';
 import CreateUserModal from './CreateUserModal';
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
+
+const ROLE_FILTER_OPTIONS = [
+  { value: '', label: 'All Roles' },
+  { value: 'ADMIN', label: 'Admin' },
+  { value: 'OWNER', label: 'Owner' },
+  { value: 'TENANT', label: 'Tenant' },
+  { value: 'USER', label: 'User' },
+];
 
 // Role sort priority: ADMIN first, then OWNER, TENANT, USER
 const ROLE_PRIORITY = { ADMIN: 0, OWNER: 1, TENANT: 2, USER: 3 };
@@ -280,17 +289,12 @@ export default function UserManagement() {
               <label className={styles.label}>
                 <UserCheck size={16} /> Role
               </label>
-              <select
-                className={styles.input}
+              <Select
                 value={filter.role}
-                onChange={e => handleFilterChange('role', e.target.value)}
-              >
-                <option value="">All Roles</option>
-                <option value="ADMIN">Admin</option>
-                <option value="OWNER">Owner</option>
-                <option value="TENANT">Tenant</option>
-                <option value="USER">User</option>
-              </select>
+                onChange={val => handleFilterChange('role', val)}
+                options={ROLE_FILTER_OPTIONS}
+                placeholder="All Roles"
+              />
             </div>
 
             {/* Advanced toggle */}

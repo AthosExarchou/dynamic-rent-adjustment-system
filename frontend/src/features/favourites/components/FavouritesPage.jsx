@@ -24,10 +24,18 @@ import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../..
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
 import { useToast } from '../../../shared/components/Toast';
 import { Pagination } from '../../../shared/components/Pagination';
+import { Select } from '../../../shared/components/Select';
 import apiClient from '../../../shared/api/client';
 import styles from './FavouritesPage.module.css';
 
 const PAGE_SIZE = 9;
+
+const SORT_OPTIONS = [
+  { value: 'newest', label: 'Recently Added' },
+  { value: 'price-asc', label: 'Price: Low to High' },
+  { value: 'price-desc', label: 'Price: High to Low' },
+  { value: 'size-desc', label: 'Size: Largest First' },
+];
 
 export default function FavouritesPage() {
   const {
@@ -222,17 +230,15 @@ export default function FavouritesPage() {
           </div>
 
           <div className={styles.filterGroup}>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className={styles.sortSelect}
-              aria-label="Sort favourites"
-            >
-              <option value="newest">Sort by: Recently Added</option>
-              <option value="price-asc">Sort by: Price: Low to High</option>
-              <option value="price-desc">Sort by: Price: High to Low</option>
-              <option value="size-desc">Sort by: Size: Largest First</option>
-            </select>
+            <div className={styles.sortSelectWrapper}>
+              <Select
+                value={sortBy}
+                onChange={setSortBy}
+                options={SORT_OPTIONS}
+                prefix="Sort by:"
+                ariaLabel="Sort favourites"
+              />
+            </div>
 
             <button
               type="button"

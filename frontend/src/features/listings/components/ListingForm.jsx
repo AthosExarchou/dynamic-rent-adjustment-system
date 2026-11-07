@@ -9,7 +9,26 @@ import PriceSuggestionWidget from './PriceSuggestionWidget';
 import { getImageUrl, DEFAULT_LISTING_IMAGE, validateImageUrl } from '../../../shared/utils/imageUtils';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
 import { useToast } from '../../../shared/components/Toast';
+import { Select } from '../../../shared/components/Select';
 import styles from './ListingForm.module.css';
+
+const PROPERTY_TYPE_OPTIONS = [
+  { value: 'APARTMENT', label: 'Apartment' },
+  { value: 'HOUSE', label: 'House' },
+  { value: 'STUDIO', label: 'Studio' },
+  { value: 'MAISONETTE', label: 'Maisonette' },
+  { value: 'LOFT', label: 'Loft' },
+  { value: 'VILLA', label: 'Villa' },
+  { value: 'OTHER', label: 'Other' },
+];
+
+const LEASE_TERM_OPTIONS = [
+  { value: 'LONG_TERM', label: 'Long Term' },
+  { value: 'SHORT_TERM', label: 'Short Term' },
+  { value: 'INDEFINITE', label: 'Indefinite' },
+  { value: 'FIXED_TERM', label: 'Fixed Term' },
+  { value: 'OTHER', label: 'Other' },
+];
 
 export default function ListingForm() {
   const { listingId } = useParams();
@@ -455,29 +474,23 @@ export default function ListingForm() {
           <div className={styles.grid3}>
             <div>
               <label htmlFor="propertyType" className={styles.label}>Property Type</label>
-              <select id="propertyType" value={formData.propertyType}
-                      onChange={e => setFormData(
-                          {...formData, propertyType: e.target.value})} className={styles.input}>
-                <option value="APARTMENT">APARTMENT</option>
-                <option value="HOUSE">HOUSE</option>
-                <option value="STUDIO">STUDIO</option>
-                <option value="MAISONETTE">MAISONETTE</option>
-                <option value="LOFT">LOFT</option>
-                <option value="VILLA">VILLA</option>
-                <option value="OTHER">OTHER</option>
-              </select>
+              <Select
+                id="propertyType"
+                value={formData.propertyType}
+                onChange={val => setFormData({ ...formData, propertyType: val })}
+                options={PROPERTY_TYPE_OPTIONS}
+                className={styles.selectTrigger}
+              />
             </div>
             <div>
               <label htmlFor="rentalDuration" className={styles.label}>Lease Term</label>
-              <select id="rentalDuration" value={formData.rentalDuration}
-                      onChange={e => setFormData(
-                          {...formData, rentalDuration: e.target.value})} className={styles.input}>
-                <option value="LONG_TERM">LONG_TERM</option>
-                <option value="SHORT_TERM">SHORT_TERM</option>
-                <option value="INDEFINITE">INDEFINITE</option>
-                <option value="FIXED_TERM">FIXED_TERM</option>
-                <option value="OTHER">OTHER</option>
-              </select>
+              <Select
+                id="rentalDuration"
+                value={formData.rentalDuration}
+                onChange={val => setFormData({ ...formData, rentalDuration: val })}
+                options={LEASE_TERM_OPTIONS}
+                className={styles.selectTrigger}
+              />
             </div>
             <div>
               <label htmlFor="floor" className={styles.label}>Floor</label>

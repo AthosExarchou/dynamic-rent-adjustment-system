@@ -30,10 +30,28 @@ import styles from './ListingList.module.css';
 import PriceDropIndicator, { computeAvgPricePerM2 } from './PriceDropIndicator';
 import DatePicker from '../../../shared/components/DatePicker';
 import { Pagination } from '../../../shared/components/Pagination';
+import { Select } from '../../../shared/components/Select';
 import { LISTING_CONSTRAINTS } from '../models/listing';
 import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
 
 const PAGE_SIZE = 9;
+
+const PROPERTY_TYPE_OPTIONS = [
+  { value: '', label: 'All Property Types' },
+  { value: 'APARTMENT', label: 'Apartment' },
+  { value: 'STUDIO', label: 'Studio' },
+  { value: 'HOUSE', label: 'House' },
+  { value: 'MAISONETTE', label: 'Maisonette' },
+  { value: 'LOFT', label: 'Loft' },
+  { value: 'VILLA', label: 'Villa' },
+  { value: 'OTHER', label: 'Other' },
+];
+
+const ORIGIN_OPTIONS = [
+  { value: '', label: 'All Origins' },
+  { value: 'false', label: 'Direct (DRAS Platform)' },
+  { value: 'true', label: 'External (Scraped Listings)' },
+];
 
 const getTodayStr = () => {
   const now = new Date();
@@ -406,20 +424,12 @@ export default function ListingList() {
               <label className={styles.label}>
                 <Home size={16} /> Property Type
               </label>
-              <select 
-                value={filter.type} 
-                onChange={e => setFilter({...filter, type: e.target.value})}
-                className={styles.input}
-              >
-                <option value="">All Property Types</option>
-                <option value="APARTMENT">Apartment</option>
-                <option value="STUDIO">Studio</option>
-                <option value="HOUSE">House</option>
-                <option value="MAISONETTE">Maisonette</option>
-                <option value="LOFT">Loft</option>
-                <option value="VILLA">Villa</option>
-                <option value="OTHER">Other</option>
-              </select>
+              <Select
+                value={filter.type}
+                onChange={val => setFilter({...filter, type: val})}
+                options={PROPERTY_TYPE_OPTIONS}
+                placeholder="All Property Types"
+              />
             </div>
 
             <div className={styles.formGroup}>
@@ -645,15 +655,12 @@ export default function ListingList() {
                   <label className={styles.label}>
                     <Globe size={16} /> Listing Origin
                   </label>
-                  <select 
-                    value={filter.externalOnly} 
-                    onChange={e => setFilter({...filter, externalOnly: e.target.value})} 
-                    className={styles.input}
-                  >
-                    <option value="">All Origins</option>
-                    <option value="false">Direct (DRAS Platform)</option>
-                    <option value="true">External (Scraped Listings)</option>
-                  </select>
+                  <Select
+                    value={filter.externalOnly}
+                    onChange={val => setFilter({...filter, externalOnly: val})}
+                    options={ORIGIN_OPTIONS}
+                    placeholder="All Origins"
+                  />
                 </div>
               </div>
             )}
