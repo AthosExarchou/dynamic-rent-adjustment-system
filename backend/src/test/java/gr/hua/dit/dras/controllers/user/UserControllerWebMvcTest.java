@@ -220,6 +220,66 @@ class UserControllerWebMvcTest {
     }
 
     @Test
+    @DisplayName("editUser with both username and email already taken returns 400 Bad Request with details list")
+    @WithMockUser(username = "self@test.com", authorities = "USER")
+    void editUser_BothUsernameAndEmailTaken_ReturnsBadRequest() throws Exception {
+        when(userService.getCurrentUserId()).thenReturn(7);
+        when(userService.isUsernameTaken("takenUsername", 7)).thenReturn(true);
+        when(userService.isEmailTaken("taken@test.com", 7)).thenReturn(true);
+
+        mockMvc.perform(post("/user/7")
+                        .with(csrf())
+                        .param("username", "takenUsername")
+                        .param("email", "taken@test.com"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Validation failed"))
+                .andExpect(jsonPath("$.details").isArray())
+                .andExpect(jsonPath("$.details.length()").value(2))
+                .andExpect(jsonPath("$.details[0]").value("This username is already taken."))
+                .andExpect(jsonPath("$.details[1]").value("This email is already registered."));
+
+        verifyNoInteractions(userApplicationService);
+    }
+
+    @Test
+    @DisplayName("editUser with duplicate username returns 400 Bad Request")
+    @WithMockUser(username = "self@test.com", authorities = "USER")
+    void editUser_DuplicateUsername_ReturnsBadRequest() throws Exception {
+        when(userService.getCurrentUserId()).thenReturn(7);
+        when(userService.isUsernameTaken("takenUsername", 7)).thenReturn(true);
+        when(userService.isEmailTaken("unique@test.com", 7)).thenReturn(false);
+
+        mockMvc.perform(post("/user/7")
+                        .with(csrf())
+                        .param("username", "takenUsername")
+                        .param("email", "unique@test.com"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Validation failed"))
+                .andExpect(jsonPath("$.details[0]").value("This username is already taken."));
+
+        verifyNoInteractions(userApplicationService);
+    }
+
+    @Test
+    @DisplayName("editUser with duplicate email returns 400 Bad Request")
+    @WithMockUser(username = "self@test.com", authorities = "USER")
+    void editUser_DuplicateEmail_ReturnsBadRequest() throws Exception {
+        when(userService.getCurrentUserId()).thenReturn(7);
+        when(userService.isUsernameTaken("uniqueUsername", 7)).thenReturn(false);
+        when(userService.isEmailTaken("taken@test.com", 7)).thenReturn(true);
+
+        mockMvc.perform(post("/user/7")
+                        .with(csrf())
+                        .param("username", "uniqueUsername")
+                        .param("email", "taken@test.com"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Validation failed"))
+                .andExpect(jsonPath("$.details[0]").value("This email is already registered."));
+
+        verifyNoInteractions(userApplicationService);
+    }
+
+    @Test
     @DisplayName("deleteRolefromUser by admin returns 200 OK")
     @WithMockUser(authorities = "ADMIN")
     void deleteRolefromUser_Admin_ReturnsOk() throws Exception {
