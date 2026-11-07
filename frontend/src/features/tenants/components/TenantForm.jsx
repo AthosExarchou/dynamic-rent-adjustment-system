@@ -107,7 +107,7 @@ export default function TenantForm() {
             Tenant Rental Application
           </h3>
         </div>
-        
+
         <div className={styles.body}>
           {rentingListingId != null ? (
             <div className={`${styles.alert} ${styles.alertInfo}`}>
@@ -155,57 +155,57 @@ export default function TenantForm() {
               )}
             </div>
           ) : null}
-          
+
           <form onSubmit={handleSubmit} className={styles.form}>
             {!isTenant ? (
               <>
                 <div className={styles.sectionNotice}>
                   <p>You need to create a Tenant Profile before applying. Please fill out your details below.</p>
                 </div>
-                
+
                 <div className={styles.formGrid}>
                   <div className={styles.formGroup}>
                     <label htmlFor="firstName" className={styles.label}>First Name</label>
-                    <input 
-                      id="firstName" 
-                      type="text" 
-                      required 
+                    <input
+                      id="firstName"
+                      type="text"
+                      required
                       maxLength={TENANT_CONSTRAINTS.FIRST_NAME_MAX}
                       value={formData.firstName}
-                      onChange={e => setFormData({...formData, firstName: e.target.value})} 
-                      className={styles.input} 
-                      placeholder="e.g. John" 
+                      onChange={e => setFormData({...formData, firstName: e.target.value})}
+                      className={styles.input}
+                      placeholder="e.g. John"
                     />
                   </div>
-                  
+
                   <div className={styles.formGroup}>
                     <label htmlFor="lastName" className={styles.label}>Last Name</label>
-                    <input 
-                      id="lastName" 
-                      type="text" 
-                      required 
+                    <input
+                      id="lastName"
+                      type="text"
+                      required
                       maxLength={TENANT_CONSTRAINTS.LAST_NAME_MAX}
                       value={formData.lastName}
-                      onChange={e => setFormData({...formData, lastName: e.target.value})} 
-                      className={styles.input} 
-                      placeholder="e.g. Doe" 
+                      onChange={e => setFormData({...formData, lastName: e.target.value})}
+                      className={styles.input}
+                      placeholder="e.g. Doe"
                     />
                   </div>
-                  
+
                   <div className={styles.formGroup}>
                     <label htmlFor="phoneNumber" className={styles.label}>
                       <Phone size={16} /> Phone Number
                     </label>
-                    <input 
-                      id="phoneNumber" 
-                      type="tel" 
-                      required 
+                    <input
+                      id="phoneNumber"
+                      type="tel"
+                      required
                       minLength={TENANT_CONSTRAINTS.PHONE_MIN}
                       maxLength={TENANT_CONSTRAINTS.PHONE_MAX}
                       value={formData.phoneNumber}
-                      onChange={e => setFormData({...formData, phoneNumber: e.target.value})} 
-                      className={styles.input} 
-                      placeholder="+30 690 1234567" 
+                      onChange={e => setFormData({...formData, phoneNumber: e.target.value})}
+                      className={styles.input}
+                      placeholder="+30 690 1234567"
                       pattern={"^\\+?[0-9. \\(\\)\\-]{7,25}$"}
                       title="Enter a valid phone number (7-25 digits)"
                     />
@@ -225,9 +225,9 @@ export default function TenantForm() {
             <hr className={styles.divider} />
 
             <div className={styles.formActions}>
-              <button 
-                type="submit" 
-                disabled={loading || alreadyApplied || rentingListingId != null} 
+              <button
+                type="submit"
+                disabled={loading || alreadyApplied || rentingListingId != null}
                 className={`${styles.btn} ${(alreadyApplied || rentingListingId != null) ? styles.btnDisabled : styles.btnSuccess}`}
               >
                 {rentingListingId != null ? (

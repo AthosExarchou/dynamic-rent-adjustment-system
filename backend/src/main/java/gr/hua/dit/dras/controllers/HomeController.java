@@ -26,7 +26,7 @@ public class HomeController {
     ) {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(Map.of(
-                "error", "Validation failed", 
+                "error", "Validation failed",
                 "details", bindingResult.getAllErrors().stream()
                         .map(e -> e.getDefaultMessage())
                         .toList()

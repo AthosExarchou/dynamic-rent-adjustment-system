@@ -12,7 +12,7 @@ export default function NotFoundPage() {
         </div>
         <h1 className={styles.titleText}>404 - Page Not Found</h1>
         <p className={styles.description}>
-          The resource you are looking for no longer exists or has been moved. 
+          The resource you are looking for no longer exists or has been moved.
           Please check the URL or try returning to the home page.
         </p>
         <Link to="/" className={`${styles.btn} ${styles.btnPrimary}`}>

@@ -1,17 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Building2, 
-  Target, 
-  BarChart3, 
-  ShieldCheck, 
-  TrendingUp, 
-  Users, 
-  Bell, 
-  Lock, 
-  Scale, 
-  HeartHandshake, 
-  ArrowRight, 
+  Building2,
+  Target,
+  BarChart3,
+  ShieldCheck,
+  TrendingUp,
+  Users,
+  Bell,
+  Lock,
+  Scale,
+  HeartHandshake,
+  ArrowRight,
   Mail,
   CheckCircle2
 } from 'lucide-react';

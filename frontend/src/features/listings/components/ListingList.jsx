@@ -217,7 +217,7 @@ export default function ListingList() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      
+
       // Dynamically transfer all non-empty filter parameters
       Object.entries(filterValues).forEach(([key, val]) => {
         if (val !== undefined && val !== null && String(val).trim() !== '') {
@@ -410,13 +410,13 @@ export default function ListingList() {
               <label className={styles.label}>
                 <Search size={16} /> Search / Title
               </label>
-              <input 
-                type="text" 
-                value={filter.title} 
-                onChange={e => setFilter({...filter, title: e.target.value})} 
-                className={styles.input} 
+              <input
+                type="text"
+                value={filter.title}
+                onChange={e => setFilter({...filter, title: e.target.value})}
+                className={styles.input}
                 maxLength={LISTING_CONSTRAINTS.TITLE_MAX}
-                placeholder="e.g. Studio, Athens..." 
+                placeholder="e.g. Studio, Athens..."
               />
             </div>
 
@@ -436,15 +436,15 @@ export default function ListingList() {
               <label className={styles.label}>
                 <Euro size={16} /> Min Rent (€)
               </label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 min={LISTING_CONSTRAINTS.PRICE_MIN}
                 max={LISTING_CONSTRAINTS.PRICE_MAX}
-                value={filter.minPrice} 
-                onChange={e => setFilter({...filter, minPrice: e.target.value})} 
+                value={filter.minPrice}
+                onChange={e => setFilter({...filter, minPrice: e.target.value})}
                 onBlur={clampField('minPrice', LISTING_CONSTRAINTS.PRICE_MIN, LISTING_CONSTRAINTS.PRICE_MAX)}
-                className={styles.input} 
-                placeholder="e.g. 300" 
+                className={styles.input}
+                placeholder="e.g. 300"
               />
             </div>
 
@@ -452,15 +452,15 @@ export default function ListingList() {
               <label className={styles.label}>
                 <Euro size={16} /> Max Rent (€)
               </label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 min={LISTING_CONSTRAINTS.PRICE_MIN}
                 max={LISTING_CONSTRAINTS.PRICE_MAX}
-                value={filter.maxPrice} 
-                onChange={e => setFilter({...filter, maxPrice: e.target.value})} 
+                value={filter.maxPrice}
+                onChange={e => setFilter({...filter, maxPrice: e.target.value})}
                 onBlur={clampField('maxPrice', LISTING_CONSTRAINTS.PRICE_MIN, LISTING_CONSTRAINTS.PRICE_MAX)}
-                className={styles.input} 
-                placeholder="e.g. 1500" 
+                className={styles.input}
+                placeholder="e.g. 1500"
               />
             </div>
 
@@ -485,13 +485,13 @@ export default function ListingList() {
                   <label className={styles.label}>
                     <MapPin size={16} /> Municipality (Δήμος)
                   </label>
-                  <input 
-                    type="text" 
-                    value={filter.municipality} 
-                    onChange={e => setFilter({...filter, municipality: e.target.value})} 
-                    className={styles.input} 
+                  <input
+                    type="text"
+                    value={filter.municipality}
+                    onChange={e => setFilter({...filter, municipality: e.target.value})}
+                    className={styles.input}
                     maxLength={LISTING_CONSTRAINTS.ADDRESS_MAX}
-                    placeholder="e.g. Αθηναίων, Καλλιθέας" 
+                    placeholder="e.g. Αθηναίων, Καλλιθέας"
                   />
                 </div>
 
@@ -499,13 +499,13 @@ export default function ListingList() {
                   <label className={styles.label}>
                     <Compass size={16} /> District / Area (Περιοχή)
                   </label>
-                  <input 
-                    type="text" 
-                    value={filter.district} 
-                    onChange={e => setFilter({...filter, district: e.target.value})} 
-                    className={styles.input} 
+                  <input
+                    type="text"
+                    value={filter.district}
+                    onChange={e => setFilter({...filter, district: e.target.value})}
+                    className={styles.input}
                     maxLength={LISTING_CONSTRAINTS.SUBTITLE_MAX}
-                    placeholder="e.g. Κυψέλη, Παγκράτι" 
+                    placeholder="e.g. Κυψέλη, Παγκράτι"
                   />
                 </div>
 
@@ -514,15 +514,15 @@ export default function ListingList() {
                   <label className={styles.label}>
                     <Bed size={16} /> Min Bedrooms
                   </label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     min={LISTING_CONSTRAINTS.BEDROOMS_MIN}
                     max={LISTING_CONSTRAINTS.BEDROOMS_MAX}
-                    value={filter.minBedrooms} 
-                    onChange={e => setFilter({...filter, minBedrooms: e.target.value})} 
+                    value={filter.minBedrooms}
+                    onChange={e => setFilter({...filter, minBedrooms: e.target.value})}
                     onBlur={clampField('minBedrooms', LISTING_CONSTRAINTS.BEDROOMS_MIN, LISTING_CONSTRAINTS.BEDROOMS_MAX)}
-                    className={styles.input} 
-                    placeholder="e.g. 1" 
+                    className={styles.input}
+                    placeholder="e.g. 1"
                   />
                 </div>
 
@@ -530,15 +530,15 @@ export default function ListingList() {
                   <label className={styles.label}>
                     <Bed size={16} /> Max Bedrooms
                   </label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     min={LISTING_CONSTRAINTS.BEDROOMS_MIN}
                     max={LISTING_CONSTRAINTS.BEDROOMS_MAX}
-                    value={filter.maxBedrooms} 
-                    onChange={e => setFilter({...filter, maxBedrooms: e.target.value})} 
+                    value={filter.maxBedrooms}
+                    onChange={e => setFilter({...filter, maxBedrooms: e.target.value})}
                     onBlur={clampField('maxBedrooms', LISTING_CONSTRAINTS.BEDROOMS_MIN, LISTING_CONSTRAINTS.BEDROOMS_MAX)}
-                    className={styles.input} 
-                    placeholder="e.g. 4" 
+                    className={styles.input}
+                    placeholder="e.g. 4"
                   />
                 </div>
 
@@ -546,15 +546,15 @@ export default function ListingList() {
                   <label className={styles.label}>
                     <Bath size={16} /> Min Bathrooms
                   </label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     min={LISTING_CONSTRAINTS.BATHROOMS_MIN}
                     max={LISTING_CONSTRAINTS.BATHROOMS_MAX}
-                    value={filter.minBathrooms} 
-                    onChange={e => setFilter({...filter, minBathrooms: e.target.value})} 
+                    value={filter.minBathrooms}
+                    onChange={e => setFilter({...filter, minBathrooms: e.target.value})}
                     onBlur={clampField('minBathrooms', LISTING_CONSTRAINTS.BATHROOMS_MIN, LISTING_CONSTRAINTS.BATHROOMS_MAX)}
-                    className={styles.input} 
-                    placeholder="e.g. 1" 
+                    className={styles.input}
+                    placeholder="e.g. 1"
                   />
                 </div>
 
@@ -562,15 +562,15 @@ export default function ListingList() {
                   <label className={styles.label}>
                     <Bath size={16} /> Max Bathrooms
                   </label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     min={LISTING_CONSTRAINTS.BATHROOMS_MIN}
                     max={LISTING_CONSTRAINTS.BATHROOMS_MAX}
-                    value={filter.maxBathrooms} 
-                    onChange={e => setFilter({...filter, maxBathrooms: e.target.value})} 
+                    value={filter.maxBathrooms}
+                    onChange={e => setFilter({...filter, maxBathrooms: e.target.value})}
                     onBlur={clampField('maxBathrooms', LISTING_CONSTRAINTS.BATHROOMS_MIN, LISTING_CONSTRAINTS.BATHROOMS_MAX)}
-                    className={styles.input} 
-                    placeholder="e.g. 3" 
+                    className={styles.input}
+                    placeholder="e.g. 3"
                   />
                 </div>
 
@@ -579,15 +579,15 @@ export default function ListingList() {
                   <label className={styles.label}>
                     <Clock size={16} /> Min Year Built
                   </label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     min={LISTING_CONSTRAINTS.YEAR_BUILT_MIN}
                     max={currentMaxYear}
-                    value={filter.minYear} 
-                    onChange={e => setFilter({...filter, minYear: e.target.value})} 
+                    value={filter.minYear}
+                    onChange={e => setFilter({...filter, minYear: e.target.value})}
                     onBlur={clampField('minYear', LISTING_CONSTRAINTS.YEAR_BUILT_MIN, currentMaxYear)}
-                    className={styles.input} 
-                    placeholder="e.g. 1990" 
+                    className={styles.input}
+                    placeholder="e.g. 1990"
                   />
                 </div>
 
@@ -595,15 +595,15 @@ export default function ListingList() {
                   <label className={styles.label}>
                     <Clock size={16} /> Max Year Built
                   </label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     min={LISTING_CONSTRAINTS.YEAR_BUILT_MIN}
                     max={currentMaxYear}
-                    value={filter.maxYear} 
-                    onChange={e => setFilter({...filter, maxYear: e.target.value})} 
+                    value={filter.maxYear}
+                    onChange={e => setFilter({...filter, maxYear: e.target.value})}
                     onBlur={clampField('maxYear', LISTING_CONSTRAINTS.YEAR_BUILT_MIN, currentMaxYear)}
-                    className={styles.input} 
-                    placeholder="e.g. 2024" 
+                    className={styles.input}
+                    placeholder="e.g. 2024"
                   />
                 </div>
 
@@ -741,7 +741,7 @@ export default function ListingList() {
                     <PriceDropIndicator listing={l} avgPricePerM2={avgPricePerM2} />
                   </h5>
                 </div>
-                
+
                 <div className={styles.apartmentInfo}>
                   <div className={styles.infoItem}><MapPin size={16} /> <span>{l.address}</span></div>
                   <div className={styles.infoItem}><ArrowUpToLine size={16} /> <span>Floor {l.floor || 'G'}</span></div>
@@ -803,7 +803,7 @@ export default function ListingList() {
           )}
         </div>
       )}
-      
+
       {/* Bottom CTA */}
       <div className={styles.bottomCta}>
         {isUserOnly && (

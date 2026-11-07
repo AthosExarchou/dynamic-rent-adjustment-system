@@ -214,7 +214,7 @@ class UserServiceTest {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(otherUser));
 
         boolean taken = userService.isUsernameTaken("testuser", 1);
-        
+
         assertThat(taken).isTrue();
     }
 
@@ -224,7 +224,7 @@ class UserServiceTest {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
 
         boolean taken = userService.isUsernameTaken("testuser", 1);
-        
+
         assertThat(taken).isFalse();
     }
 
@@ -236,7 +236,7 @@ class UserServiceTest {
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(otherUser));
 
         boolean taken = userService.isEmailTaken("test@test.com", 1);
-        
+
         assertThat(taken).isTrue();
     }
 
@@ -246,7 +246,7 @@ class UserServiceTest {
         when(userRepository.findByEmail("test@test.com")).thenReturn(Optional.of(testUser));
 
         boolean taken = userService.isEmailTaken("test@test.com", 1);
-        
+
         assertThat(taken).isFalse();
     }
 

@@ -12,7 +12,7 @@ export default function ForbiddenPage() {
         </div>
         <h1 className={styles.titleText}>403 - Access Denied</h1>
         <p className={styles.description}>
-          You do not have permission to view this page. If you believe this is a mistake, 
+          You do not have permission to view this page. If you believe this is a mistake,
           please contact an administrator or sign in with an authorized account.
         </p>
         <Link to="/" className={`${styles.btn} ${styles.btnPrimary}`}>

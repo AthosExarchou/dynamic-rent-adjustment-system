@@ -357,9 +357,9 @@ export default function ListingForm() {
             </div>
           </div>
           <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-            <Link 
-              to={roles.includes('ADMIN') ? `/listings/${listingId}` : '/my-listings'} 
-              className={styles.backActionBtn} 
+            <Link
+              to={roles.includes('ADMIN') ? `/listings/${listingId}` : '/my-listings'}
+              className={styles.backActionBtn}
               style={{ textDecoration: 'none', display: 'inline-block' }}
             >
               {roles.includes('ADMIN') ? 'Back to Property Details' : 'Back to My Properties'}
@@ -418,7 +418,7 @@ export default function ListingForm() {
             )}
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit}>
           <div className={styles.formGroup}>
             <label htmlFor="title" className={styles.label}>Title</label>

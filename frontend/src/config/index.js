@@ -1,6 +1,6 @@
 /**
  * Global application configuration.
- * 
+ *
  * Centralizes environment variables and application-wide constants.
  * This prevents `import.meta.env` from being scattered throughout the codebase
  * and provides a single place to set defaults or validate variables.

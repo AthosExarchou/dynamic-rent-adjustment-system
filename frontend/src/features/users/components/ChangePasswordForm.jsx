@@ -53,7 +53,7 @@ export default function ChangePasswordForm() {
             <Key className={styles.titleIcon} size={24} /> Change Password
           </h2>
         </div>
-        
+
         <div className={styles.body}>
           {error && (
             <div className={`${styles.alert} ${styles.alertDanger}`}>
@@ -67,49 +67,49 @@ export default function ChangePasswordForm() {
               <label htmlFor="oldPassword" className={styles.label}>
                 <Unlock size={16} /> Current Password
               </label>
-              <input 
-                id="oldPassword" 
-                type="password" 
-                required 
+              <input
+                id="oldPassword"
+                type="password"
+                required
                 maxLength={100}
-                value={formData.oldPassword} 
-                onChange={e => setFormData({...formData, oldPassword: e.target.value})} 
-                className={styles.input} 
+                value={formData.oldPassword}
+                onChange={e => setFormData({...formData, oldPassword: e.target.value})}
+                className={styles.input}
               />
             </div>
-            
+
             <div className={styles.formGroup}>
               <label htmlFor="newPassword" className={styles.label}>
                 <Lock size={16} /> New Password
               </label>
-              <input 
-                id="newPassword" 
-                type="password" 
-                required 
+              <input
+                id="newPassword"
+                type="password"
+                required
                 maxLength={100}
-                value={formData.newPassword} 
-                onChange={e => setFormData({...formData, newPassword: e.target.value})} 
-                className={styles.input} 
+                value={formData.newPassword}
+                onChange={e => setFormData({...formData, newPassword: e.target.value})}
+                className={styles.input}
               />
             </div>
-            
+
             <div className={styles.formGroup}>
               <label htmlFor="confirmPassword" className={styles.label}>
                 <Lock size={16} /> Confirm New Password
               </label>
-              <input 
-                id="confirmPassword" 
-                type="password" 
-                required 
+              <input
+                id="confirmPassword"
+                type="password"
+                required
                 maxLength={100}
-                value={formData.confirmPassword} 
-                onChange={e => setFormData({...formData, confirmPassword: e.target.value})} 
-                className={styles.input} 
+                value={formData.confirmPassword}
+                onChange={e => setFormData({...formData, confirmPassword: e.target.value})}
+                className={styles.input}
               />
             </div>
-            
+
             <hr className={styles.divider} />
-            
+
             <div className={styles.formActions}>
               <button type="submit" disabled={loading} className={`${styles.btn} ${styles.btnPrimary}`}>
                 {loading ? 'Updating Password...' : 'Update Password'}

@@ -136,7 +136,6 @@ public class ListingApplicationService {
                         "Your OWNER role has been revoked by the Administrator.");
             }
 
-
         } else {
             if (ownerId == null) {
                 owner = ownerService.getOwner(null);
@@ -383,7 +382,7 @@ public class ListingApplicationService {
         User user = requireUser();
         Listing listing = requireListing(listingId);
         validateModificationRights(listing, user);
-        
+
         if (listing.getTenant() != null) {
             throw new IllegalStateException("Cannot unassign owner from a rented listing.");
         }

@@ -67,19 +67,19 @@ export default function CreateUserModal({ onClose, onRefresh }) {
             <div className={styles.formGroup}>
               <label htmlFor="createUsername" className={styles.label}>Username</label>
               <input id="createUsername" type="text" required maxLength={USER_CONSTRAINTS.USERNAME_MAX} value={formData.username}
-                     onChange={e => setFormData({...formData, username: e.target.value})} 
+                     onChange={e => setFormData({...formData, username: e.target.value})}
                      className={styles.input} />
             </div>
             <div className={styles.formGroup}>
               <label htmlFor="createEmail" className={styles.label}>Email Address</label>
               <input id="createEmail" type="email" required maxLength={USER_CONSTRAINTS.EMAIL_MAX} value={formData.email}
-                     onChange={e => setFormData({...formData, email: e.target.value})} 
+                     onChange={e => setFormData({...formData, email: e.target.value})}
                      className={styles.input} />
             </div>
             <div className={styles.formGroup}>
               <label htmlFor="createPassword" className={styles.label}>Password</label>
               <input id="createPassword" type="password" required maxLength={USER_CONSTRAINTS.PASSWORD_MAX} value={formData.password}
-                     onChange={e => setFormData({...formData, password: e.target.value})} 
+                     onChange={e => setFormData({...formData, password: e.target.value})}
                      className={styles.input} />
             </div>
             <div className={styles.modalFooter}>

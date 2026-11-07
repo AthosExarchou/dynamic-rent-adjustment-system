@@ -188,18 +188,18 @@ export default function ListingApplications() {
                       <Phone size={16} className={styles.iconSecondary} />
                       <span>{a.phoneNumber}</span>
                     </p>
-                    
+
                     {!isRented ? (
                       <div className={styles.actions}>
-                        <button 
-                          onClick={() => handleApprove(a.id)} 
+                        <button
+                          onClick={() => handleApprove(a.id)}
                           disabled={actionLoading?.id === a.id}
                           className={`${styles.btn} ${styles.btnSuccess}`}
                         >
                           <CheckCircle size={16} /> {actionLoading?.id === a.id && actionLoading?.type === 'approve' ? 'Approving...' : 'Approve'}
                         </button>
-                        <button 
-                          onClick={() => handleReject(a.id)} 
+                        <button
+                          onClick={() => handleReject(a.id)}
                           disabled={actionLoading?.id === a.id}
                           className={`${styles.btn} ${styles.btnDanger}`}
                         >

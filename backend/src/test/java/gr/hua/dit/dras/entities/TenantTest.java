@@ -55,7 +55,7 @@ class TenantTest {
     @Test
     void testProcessRejectionChangesStatusWhenNoOtherApplications() {
         tenant.applyToListing(listing1);
-        
+
         tenant.processRejection(listing1);
 
         assertThat(tenant.getAppliedListings()).doesNotContain(listing1);
@@ -66,14 +66,14 @@ class TenantTest {
     void testProcessRejectionDoesNotChangeStatusWhenOtherApplicationsExist() {
         tenant.applyToListing(listing1);
         tenant.applyToListing(listing2);
-        
+
         tenant.processRejection(listing1);
 
         assertThat(tenant.getAppliedListings()).doesNotContain(listing1);
         assertThat(tenant.getAppliedListings()).contains(listing2);
         assertThat(tenant.getRentalStatus()).isEqualTo(RentalStatus.APPLIED);
     }
-    
+
     @Test
     void testProcessRejectionDoesNotChangeStatusWhenAlreadyRenting() {
         tenant.applyToListing(listing1);

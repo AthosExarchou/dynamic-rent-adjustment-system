@@ -1192,7 +1192,7 @@ def run_scraper(config: ScraperConfig):
     try:
         # Loops through result pages for Spitogatos Athens
         base_search_url = "https://www.spitogatos.gr/enoikiaseis-katoikies/athina-kentro/selida_{}"
-        
+
         # State Management
         state_file = DATA_DIR / "scraper_state.json"
         state = {}
@@ -1707,7 +1707,7 @@ def run_scraper(config: ScraperConfig):
         # Cleanup
         import sys
         exc_type, _, _ = sys.exc_info()
-        
+
         logger.info("Shutting down browser and virtual display")
         if exc_type is KeyboardInterrupt:
             logger.warning("KeyboardInterrupt detected. Skipping graceful Playwright shutdown to prevent deadlocks.")
@@ -1750,7 +1750,7 @@ def build_parser() -> argparse.ArgumentParser:
                 1. python spitogatos_scraper.py --mode normal --max-pages 3 --push-backend
                 2. python spitogatos_scraper.py --full --headful --display-mode virtual
                 3. python spitogatos_scraper.py --max-pages 5 --push-backend --headful
-            
+
             Notes:
                 - The scraper runs in headless mode by default
                 - Use '--headful' to launch a visible browser for debugging
@@ -1870,7 +1870,7 @@ def main():
         end_time = dt.datetime.now()
         duration = end_time - start_time
         total_seconds = duration.total_seconds()
-        
+
         # Calculate tracked sleep
         time_spent_sleeping = _total_sleep_time
         true_runtime = max(0.0, total_seconds - time_spent_sleeping)

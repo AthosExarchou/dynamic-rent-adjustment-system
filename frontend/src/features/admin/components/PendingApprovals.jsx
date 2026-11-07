@@ -170,7 +170,7 @@ export default function PendingApprovals() {
               <div className={styles.cardContent}>
               <h3 className={styles.cardTitle}>{l.title}</h3>
               <p className={styles.address}><MapPin size={16} /> {l.address}</p>
-              
+
               <div className={styles.specs}>
                 <span><strong>Rent:</strong> €{l.price}/mo</span>
                 <span><strong>Size:</strong> {l.sizeM2} m²</span>

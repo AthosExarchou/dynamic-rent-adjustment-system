@@ -58,7 +58,7 @@ export default function DeleteAccountConfirm() {
             <AlertTriangle className={styles.titleIconLight} size={24} /> Delete Account
           </h2>
         </div>
-        
+
         <div className={styles.body}>
           <div className={`${styles.alert} ${styles.alertWarning}`}>
             <AlertTriangle size={24} />
@@ -66,7 +66,7 @@ export default function DeleteAccountConfirm() {
               <strong>Warning:</strong> Deleting your account is permanent. All your data, property listings, and rental histories will be irrecoverably lost.
             </div>
           </div>
-          
+
           {error && (
             <div className={`${styles.alert} ${styles.alertDanger}`}>
               <AlertCircle size={20} className={styles.alertIcon} />
@@ -79,35 +79,35 @@ export default function DeleteAccountConfirm() {
               <label htmlFor="confirmationPhrase" className={`${styles.label} ${styles.textDanger}`}>
                 Type "DELETE MY ACCOUNT" to confirm:
               </label>
-              <input 
-                id="confirmationPhrase" 
-                type="text" 
-                required 
+              <input
+                id="confirmationPhrase"
+                type="text"
+                required
                 maxLength={30}
-                value={formData.confirmationPhrase} 
-                onChange={e => setFormData({...formData, confirmationPhrase: e.target.value})} 
-                className={`${styles.input} ${styles.inputDanger}`} 
-                placeholder="DELETE MY ACCOUNT" 
+                value={formData.confirmationPhrase}
+                onChange={e => setFormData({...formData, confirmationPhrase: e.target.value})}
+                className={`${styles.input} ${styles.inputDanger}`}
+                placeholder="DELETE MY ACCOUNT"
               />
             </div>
-            
+
             <div className={styles.formGroup}>
               <label htmlFor="password" className={styles.label}>
                 Enter your password:
               </label>
-              <input 
-                id="password" 
-                type="password" 
-                required 
+              <input
+                id="password"
+                type="password"
+                required
                 maxLength={100}
-                value={formData.password} 
-                onChange={e => setFormData({...formData, password: e.target.value})} 
-                className={styles.input} 
+                value={formData.password}
+                onChange={e => setFormData({...formData, password: e.target.value})}
+                className={styles.input}
               />
             </div>
-            
+
             <hr className={styles.divider} />
-            
+
             <div className={styles.formActions}>
               <button type="submit" disabled={loading} className={`${styles.btn} ${styles.btnDanger}`}>
                 <Trash2 size={18} /> {loading ? 'Deleting...' : 'Delete Account Permanently'}

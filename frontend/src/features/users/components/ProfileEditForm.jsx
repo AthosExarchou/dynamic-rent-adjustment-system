@@ -88,7 +88,7 @@ export default function ProfileEditForm() {
             <Settings className={styles.titleIcon} size={24} /> Edit Profile Details
           </h2>
         </div>
-        
+
         <div className={styles.body}>
           {error && (
             <div className={`${styles.alert} ${styles.alertDanger}`}>
@@ -115,34 +115,34 @@ export default function ProfileEditForm() {
               <label htmlFor="username" className={styles.label}>
                 <User size={16} /> Username
               </label>
-              <input 
-                id="username" 
-                type="text" 
-                required 
+              <input
+                id="username"
+                type="text"
+                required
                 maxLength={USER_CONSTRAINTS.USERNAME_MAX}
-                value={formData.username} 
-                onChange={e => setFormData({...formData, username: e.target.value})} 
-                className={styles.input} 
+                value={formData.username}
+                onChange={e => setFormData({...formData, username: e.target.value})}
+                className={styles.input}
               />
             </div>
-            
+
             <div className={styles.formGroup}>
               <label htmlFor="email" className={styles.label}>
                 <Mail size={16} /> Email Address
               </label>
-              <input 
-                id="email" 
-                type="email" 
-                required 
+              <input
+                id="email"
+                type="email"
+                required
                 maxLength={USER_CONSTRAINTS.EMAIL_MAX}
-                value={formData.email} 
-                onChange={e => setFormData({...formData, email: e.target.value})} 
-                className={styles.input} 
+                value={formData.email}
+                onChange={e => setFormData({...formData, email: e.target.value})}
+                className={styles.input}
               />
             </div>
-            
+
             <hr className={styles.divider} />
-            
+
             <div className={styles.formActions}>
               <button type="submit" disabled={loading} className={`${styles.btn} ${styles.btnPrimary}`}>
                 {loading ? 'Saving Changes...' : 'Save Changes'}

@@ -121,7 +121,7 @@ export default function MyListings() {
           </Link>
         )}
       </div>
-      
+
       <hr className={styles.divider} />
 
       <div className={styles.grid}>
@@ -170,7 +170,7 @@ export default function MyListings() {
                 </div>
 
                 {l.subtitle && <p className={styles.subtitle}>{l.subtitle}</p>}
-                
+
                 <div className={styles.apartmentInfo}>
                   <p className={styles.address}>
                     <MapPin size={16} /> <span>{l.address}</span>
@@ -199,7 +199,7 @@ export default function MyListings() {
                     </div>
                   </div>
                 )}
-                
+
                 <div className={styles.cardFooter}>
                   <Link to={`/listings/${l.id}`} state={{ from: '/my-listings' }} className={`${styles.btn} ${styles.btnOutlineSecondary}`}>
                     <Eye size={16} /> View
@@ -218,7 +218,7 @@ export default function MyListings() {
                       <Pencil size={16} /> Edit
                     </Link>
                   )}
-                  
+
                   <Link to={`/my-listings/${l.id}/apps`} className={`${styles.btn} ${styles.btnPrimary}`}>
                     <Users size={16} /> Applications
                   </Link>
@@ -259,7 +259,7 @@ export default function MyListings() {
           );
         })}
       </div>
-      
+
       {!loading && !error && listings.length > 0 && (
         <Pagination
           currentPage={currentPage}

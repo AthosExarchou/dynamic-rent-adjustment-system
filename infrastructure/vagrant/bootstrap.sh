@@ -24,11 +24,11 @@ if ! command -v docker >/dev/null 2>&1; then
       "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
       $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
       tee /etc/apt/sources.list.d/docker.list > /dev/null
-      
+
     apt-get update -y
     # Install official Docker packages and the docker-compose-plugin
     apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-    
+
     systemctl enable docker
     systemctl start docker
 else
@@ -45,7 +45,7 @@ echo "Installing Jenkins..."
 if ! command -v jenkins >/dev/null 2>&1; then
     curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key | tee /etc/apt/keyrings/jenkins-keyring.asc > /dev/null
     echo deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/ | tee /etc/apt/sources.list.d/jenkins.list > /dev/null
-    
+
     apt-get update -y
     apt-get install -y jenkins
     systemctl enable jenkins

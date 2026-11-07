@@ -30,4 +30,3 @@ public interface NotificationRepository extends JpaRepository<Notification, Inte
     @Query("DELETE FROM Notification n WHERE n.id = :id AND n.user.id = :userId")
     int deleteByIdAndUserId(@Param("id") Integer id, @Param("userId") Integer userId);
 }
-

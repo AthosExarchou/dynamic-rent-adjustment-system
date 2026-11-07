@@ -21,7 +21,7 @@ export default function MainLayout() {
   } = useFavourites();
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
-  
+
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('theme') || 'light';
   });
@@ -34,7 +34,7 @@ export default function MainLayout() {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const notifRef = useRef(null);
 
   // Close dropdowns when clicking outside
@@ -50,7 +50,7 @@ export default function MainLayout() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-  
+
   const handleLogout = async () => {
     await logout();
     setIsDropdownOpen(false);
@@ -63,7 +63,6 @@ export default function MainLayout() {
     localStorage.setItem('theme', nextTheme);
     document.documentElement.setAttribute('data-theme', nextTheme);
   };
-
 
   const location = useLocation();
   const pathnames = location.pathname.split('/').filter(x => x);
@@ -191,7 +190,7 @@ export default function MainLayout() {
           const to = `/${pathnames.slice(0, index + 1).join('/')}`;
           const title = value.charAt(0).toUpperCase() + value.slice(1).replace(/-/g, ' ');
           const isClickable = !last && isNavigablePath(to);
-          
+
           return (
             <React.Fragment key={to}>
               <ChevronRight size={14} className={styles.breadcrumbSeparator} />
@@ -220,8 +219,8 @@ export default function MainLayout() {
             <div className={styles.topbar}>
               <div className={styles.topbarLeft}>
                 {/* Mobile Menu Toggle */}
-                <button 
-                  className={styles.mobileToggle} 
+                <button
+                  className={styles.mobileToggle}
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                   aria-expanded={isMobileMenuOpen}
                   aria-label="Toggle navigation"
@@ -230,7 +229,7 @@ export default function MainLayout() {
                   <span className={`${styles.togglerBar} ${styles.bar2}`}></span>
                   <span className={`${styles.togglerBar} ${styles.bar3}`}></span>
                 </button>
-                
+
                 {/* Brand is visible on mobile only since desktop has sidebar */}
                 <Link to="/" className={styles.mobileBrand} onClick={closeMobileMenu}>
                   <Building2 size={24} /> DRAS
@@ -247,7 +246,7 @@ export default function MainLayout() {
                 <form className={styles.searchContainer} onSubmit={handleSearchSubmit} role="search">
                   <button
                     type="submit"
-                    className={styles.searchBtn} 
+                    className={styles.searchBtn}
                     aria-label="Search"
                   >
                     <Search className={styles.searchIcon} size={16} />
@@ -295,8 +294,8 @@ export default function MainLayout() {
                 {/* Notification Bell - only for authenticated users */}
                 {isAuthenticated && (
                   <div className={styles.dropdown} ref={notifRef}>
-                    <button 
-                      className={styles.iconBtn} 
+                    <button
+                      className={styles.iconBtn}
                       aria-label="Notifications"
                       onClick={() => setIsNotifOpen(!isNotifOpen)}
                     >
@@ -334,8 +333,8 @@ export default function MainLayout() {
                             <div className={styles.notifEmpty}>No notifications</div>
                           ) : (
                             notifications.map(notif => (
-                              <div 
-                                key={notif.id} 
+                              <div
+                                key={notif.id}
                                 className={`${styles.notifItem} ${!notif.read ? styles.unread : ''}`}
                                 onClick={() => handleMarkAsRead(notif.id, notif.read)}
                               >
@@ -362,23 +361,23 @@ export default function MainLayout() {
                   </div>
                 )}
 
-                <button 
-                  onClick={toggleTheme} 
-                  className={styles.themeToggle} 
-                  aria-label="Toggle theme" 
+                <button
+                  onClick={toggleTheme}
+                  className={styles.themeToggle}
+                  aria-label="Toggle theme"
                 >
                   {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
                 </button>
 
                 {/* Account Dropdown */}
                 <div className={styles.dropdown} ref={dropdownRef}>
-                  <button 
+                  <button
                     className={styles.dropdownToggle}
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   >
                     <UserCircle size={18} /> Account
                   </button>
-                  
+
                   {isDropdownOpen && (
                     <ul className={styles.dropdownMenu}>
                       {!isAuthenticated ? (
@@ -453,7 +452,6 @@ export default function MainLayout() {
           </div>
         )}
 
-
       {/* Main Content Area */}
       <main className={styles.mainContent}>
         <ScrollRestoration />
@@ -464,7 +462,7 @@ export default function MainLayout() {
       <footer className={styles.footer}>
         <div className={styles.container}>
           <div className={styles.footerGrid}>
-            
+
             <div className={styles.footerCol}>
               <h5 className={styles.footerBrand}>Dynamic Rent Adjustment System</h5>
               <p className={styles.footerText}>

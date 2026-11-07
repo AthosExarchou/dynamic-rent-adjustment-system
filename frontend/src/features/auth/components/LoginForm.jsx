@@ -44,38 +44,38 @@ export default function LoginForm() {
             {error}
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.formGroup}>
             <label htmlFor="loginEmail" className={styles.label}>Email</label>
-            <input 
+            <input
               id="loginEmail"
-              type="email" 
-              required 
+              type="email"
+              required
               maxLength="50"
-              value={email} 
-              onChange={e => setEmail(e.target.value)} 
-              className={styles.input} 
-              placeholder="Enter your email" 
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className={styles.input}
+              placeholder="Enter your email"
             />
           </div>
-          
+
           <div className={styles.formGroup}>
             <label htmlFor="loginPassword" className={styles.label}>Password</label>
             <div className={styles.inputGroup}>
-              <input 
+              <input
                 id="loginPassword"
-                type={showPassword ? 'text' : 'password'} 
-                required 
+                type={showPassword ? 'text' : 'password'}
+                required
                 maxLength="100"
-                value={password} 
-                onChange={e => setPassword(e.target.value)} 
-                className={styles.input} 
-                placeholder="Enter your password" 
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className={styles.input}
+                placeholder="Enter your password"
               />
-              <button 
-                type="button" 
-                onClick={() => setShowPassword(!showPassword)} 
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
                 className={styles.toggleBtn}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
@@ -87,12 +87,12 @@ export default function LoginForm() {
           <div className={styles.formOptions} style={{ justifyContent: 'flex-end' }}>
             <Link to="/contact" className={styles.forgotLink}>Forgot Password?</Link>
           </div>
-          
+
           <button type="submit" disabled={loading} className={styles.submitBtn}>
             {loading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
-        
+
         <div className={styles.footerText}>
           Don't have an account? <Link to="/register" className={styles.footerLink}>Register here</Link>
         </div>

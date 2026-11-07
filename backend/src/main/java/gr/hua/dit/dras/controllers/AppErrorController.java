@@ -25,7 +25,7 @@ public class AppErrorController implements ErrorController {
 
         Object status = request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
         int statusCode = 500;
-        
+
         if (status != null) {
             try {
                 statusCode = Integer.parseInt(status.toString());

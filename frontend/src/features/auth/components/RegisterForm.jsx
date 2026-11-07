@@ -65,54 +65,54 @@ export default function RegisterForm() {
             )}
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.formGroup}>
             <label htmlFor="username" className={styles.label}>User Name</label>
-            <input 
+            <input
               id="username"
-              type="text" 
-              required 
+              type="text"
+              required
               maxLength="20"
-              value={formData.username} 
-              onChange={handleChange} 
-              className={styles.input} 
-              placeholder="Choose a username" 
+              value={formData.username}
+              onChange={handleChange}
+              className={styles.input}
+              placeholder="Choose a username"
             />
           </div>
 
           <div className={styles.formGroup}>
             <label htmlFor="email" className={styles.label}>Email Address</label>
-            <input 
+            <input
               id="email"
-              type="email" 
-              required 
+              type="email"
+              required
               maxLength="50"
-              value={formData.email} 
-              onChange={handleChange} 
-              className={styles.input} 
-              placeholder="Enter your email" 
+              value={formData.email}
+              onChange={handleChange}
+              className={styles.input}
+              placeholder="Enter your email"
             />
           </div>
-          
+
           <div className={styles.formGroup}>
             <label htmlFor="password" className={styles.label}>Password</label>
             <div className={styles.inputGroup}>
-              <input 
+              <input
                 id="password"
-                type={showPassword ? 'text' : 'password'} 
-                required 
+                type={showPassword ? 'text' : 'password'}
+                required
                 maxLength="100"
-                value={formData.password} 
-                onChange={handleChange} 
-                className={styles.input} 
+                value={formData.password}
+                onChange={handleChange}
+                className={styles.input}
                 placeholder="Enter a secure password"
                 pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
                 title="Must contain at least 8 characters, including an uppercase letter, a lowercase letter, a number, and a special character (@$!%*?&)."
               />
-              <button 
-                type="button" 
-                onClick={() => setShowPassword(!showPassword)} 
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
                 className={styles.toggleBtn}
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
@@ -123,12 +123,12 @@ export default function RegisterForm() {
               Must contain 8+ characters, including uppercase, lowercase, a number, and a special character.
             </div>
           </div>
-          
+
           <button type="submit" disabled={loading} className={styles.submitBtn}>
             {loading ? 'Signing Up...' : 'Sign Up'}
           </button>
         </form>
-        
+
         <div className={styles.footerText}>
           Already have an account? <Link to="/login" className={styles.footerLink}>Sign in</Link>
         </div>

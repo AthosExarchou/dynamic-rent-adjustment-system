@@ -241,7 +241,7 @@ class ListingApplicationServiceTest {
         when(userService.getCurrentUserOptional()).thenReturn(Optional.of(testUser));
         when(listingService.getListing(100)).thenReturn(testListing);
         when(tenantService.getTenant(5)).thenReturn(testTenant);
-        
+
         listingApplicationService.rejectTenantApplication(100, 5);
 
         verify(listingService).validateListingModificationRights(testListing, testUser);
@@ -265,7 +265,7 @@ class ListingApplicationServiceTest {
     @DisplayName("Should throw when deleting listing with active rental")
     void shouldThrowWhenDeletingRentedListing() {
         testListing.setTenant(testTenant); // Simulate active rental
-        
+
         when(userService.getCurrentUserOptional()).thenReturn(Optional.of(testUser));
         when(listingService.getListing(100)).thenReturn(testListing);
 

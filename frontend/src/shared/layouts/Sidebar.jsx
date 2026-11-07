@@ -47,7 +47,7 @@ export default function Sidebar({ isOpen, onClose }) {
     <>
       {/* Mobile overlay */}
       {isOpen && <div className={styles.mobileOverlay} onClick={onClose}></div>}
-      
+
       <aside className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
         <div className={styles.sidebarHeader}>
           <div className={styles.sidebarLogo}>DRAS</div>

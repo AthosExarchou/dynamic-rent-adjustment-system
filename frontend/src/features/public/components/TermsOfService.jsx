@@ -20,7 +20,7 @@ const SECTIONS = [
 export default function TermsOfService() {
   const [activeSection, setActiveSection] = useState('section1');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
+
   const sectionRefs = useRef({});
 
   useEffect(() => {

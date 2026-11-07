@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  MapPin, 
-  Phone, 
-  Mail, 
-  Clock, 
-  Send, 
-  CheckCircle2, 
-  AlertCircle, 
+  MapPin,
+  Phone,
+  Mail,
+  Clock,
+  Send,
+  CheckCircle2,
+  AlertCircle,
   MessageSquare,
   HelpCircle,
   Building
@@ -229,9 +229,9 @@ export default function ContactPage() {
             </div>
 
             <div className={styles.submitWrapper}>
-              <button 
-                type="submit" 
-                className={styles.submitBtn} 
+              <button
+                type="submit"
+                className={styles.submitBtn}
                 disabled={isSubmitting}
                 aria-busy={isSubmitting}
               >

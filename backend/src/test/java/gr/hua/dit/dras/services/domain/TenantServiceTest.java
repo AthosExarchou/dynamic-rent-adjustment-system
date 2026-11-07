@@ -82,10 +82,10 @@ public class TenantServiceTest {
         User user = new User();
         ReflectionTestUtils.setField(user, "id", 1);
         user.setRoles(new HashSet<>());
-        
+
         Role role = new Role();
         role.setName("TENANT");
-        
+
         when(userService.getUser(1)).thenReturn(user);
         when(tenantRepository.findByUserId(1)).thenReturn(Optional.empty());
         when(roleRepository.findByName("TENANT")).thenReturn(Optional.of(role));
@@ -105,7 +105,7 @@ public class TenantServiceTest {
         assertThat(result.getPhoneNumber()).isEqualTo("1234567890");
         assertThat(result.getRentalStatus()).isEqualTo(RentalStatus.APPLIED);
         assertThat(result.getUser()).isEqualTo(user);
-        
+
         verify(tenantRepository).save(any(Tenant.class));
         verify(userService).updateUser(user);
         assertThat(user.getRoles()).contains(role);
@@ -139,12 +139,12 @@ public class TenantServiceTest {
     void unassignTenantFromListing_shouldUnassign() {
         Tenant tenant = new Tenant();
         ReflectionTestUtils.setField(tenant, "id", 1);
-        
+
         Listing listing = new Listing();
         ReflectionTestUtils.setField(listing, "id", 10);
         listing.setStatus(RENTED);
         listing.setTenant(tenant);
-        
+
         when(listingRepository.findById(10)).thenReturn(Optional.of(listing));
         when(tenantRepository.findById(1)).thenReturn(Optional.of(tenant));
 
@@ -238,7 +238,7 @@ public class TenantServiceTest {
 
         Listing listing = new Listing();
         ReflectionTestUtils.setField(listing, "id", 10);
-        
+
         Set<Tenant> applicants = new HashSet<>();
         applicants.add(tenant);
         listing.setApplicants(applicants);
@@ -294,7 +294,7 @@ public class TenantServiceTest {
 
         User ownerUser = new User();
         ReflectionTestUtils.setField(ownerUser, "id", 2);
-        
+
         Owner owner = new Owner();
         owner.setUser(ownerUser);
 

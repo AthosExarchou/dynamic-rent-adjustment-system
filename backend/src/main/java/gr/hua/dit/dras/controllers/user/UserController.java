@@ -296,8 +296,6 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-
-
     /* Allows users to delete their own account */
     @Secured("USER")
     @PostMapping("/user/delete/self")

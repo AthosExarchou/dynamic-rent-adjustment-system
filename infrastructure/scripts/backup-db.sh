@@ -35,7 +35,7 @@ docker exec -e PGPASSWORD="${DATABASE_PASSWORD}" "$CONTAINER_NAME" pg_dump -U "$
 
 if [ $? -eq 0 ]; then
     echo "Backup successful! Saved to: $BACKUP_FILE"
-    
+
     # Keep only the last 7 backups to save space
     ls -tp "${BACKUP_DIR}"/dras_db_backup_*.sql | grep -v '/$' | tail -n +8 | xargs -I {} rm -- {} 2>/dev/null
 else

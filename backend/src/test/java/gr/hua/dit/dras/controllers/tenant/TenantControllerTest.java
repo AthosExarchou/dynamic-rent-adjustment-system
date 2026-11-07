@@ -102,7 +102,7 @@ public class TenantControllerTest {
 
         Map<String, String> payload = new HashMap<>();
         payload.put("firstName", "");
-        
+
         ResponseEntity<?> response = tenantController.rentListing(listing.getId(), payload);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());

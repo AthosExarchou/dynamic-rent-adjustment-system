@@ -318,7 +318,7 @@ public class ListingController {
     @GetMapping("/{id}/applications")
     public ResponseEntity<?> viewApplications(@PathVariable Integer id) {
         Listing listing = listingApplicationService.viewApplications(id);
-        
+
         List<Map<String, Object>> applicants = listing.getApplicants().stream()
             .map(t -> {
                 Map<String, Object> map = new java.util.HashMap<>();

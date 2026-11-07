@@ -182,9 +182,9 @@ export default function DatePicker({
       </button>
 
       {isOpen && (
-        <div 
-          className={`${styles.dropdown} ${dropdownAlign === 'right' ? styles.dropdownRight : ''}`} 
-          role="dialog" 
+        <div
+          className={`${styles.dropdown} ${dropdownAlign === 'right' ? styles.dropdownRight : ''}`}
+          role="dialog"
           aria-label="Calendar"
         >
           {/* Calendar Header */}

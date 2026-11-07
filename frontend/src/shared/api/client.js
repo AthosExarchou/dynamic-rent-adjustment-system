@@ -56,8 +56,8 @@ async function apiClient(endpoint, options = {}) {
   };
 
   if (body) {
-    fetchConfig.body = (body instanceof FormData || typeof body === 'string') 
-      ? body 
+    fetchConfig.body = (body instanceof FormData || typeof body === 'string')
+      ? body
       : JSON.stringify(body);
   }
 

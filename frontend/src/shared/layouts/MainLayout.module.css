@@ -57,7 +57,6 @@
   color: transparent;
 }
 
-
 .mobileToggle {
   display: none;
   background: transparent;
@@ -641,7 +640,7 @@
   .mobileToggle {
     display: flex;
   }
-  
+
   .mobileBrand {
     display: flex;
   }
@@ -654,16 +653,16 @@
     width: auto;
     padding: 0;
   }
-  
+
   .dropdown {
     width: 100%;
   }
-  
+
   .dropdownToggle {
     width: 100%;
     justify-content: center;
   }
-  
+
   .dropdownMenu {
     width: 100%;
     position: static;
@@ -671,7 +670,7 @@
     border-color: transparent;
     padding: 0;
   }
-  
+
   .footerGrid {
     grid-template-columns: 1fr;
     gap: 2rem;

@@ -51,7 +51,7 @@ const withSuspense = (Component) => (
 
 const GlobalErrorBoundary = () => {
   const error = useRouteError();
-  
+
   if (error && error.message && error.message.includes('Failed to fetch dynamically imported module')) {
     const reloadCount = parseInt(sessionStorage.getItem('chunk_reload_count') || '0', 10);
     if (reloadCount < 2) {
@@ -67,7 +67,7 @@ const GlobalErrorBoundary = () => {
       <p style={{ color: '#666', marginBottom: '2rem', wordBreak: 'break-word', overflowWrap: 'anywhere', maxWidth: '600px', margin: '0 auto 2rem' }}>
         {error?.message || "An unexpected error occurred."}
       </p>
-      <button 
+      <button
         onClick={() => window.location.href = '/'}
         style={{ padding: '0.5rem 1.5rem', backgroundColor: '#0d6efd', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
       >

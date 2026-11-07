@@ -56,9 +56,9 @@ class OwnerServiceTest {
         testOwner = new Owner();
         ReflectionTestUtils.setField(testOwner, "id", 10);
         testOwner.setUser(testUser);
-        
+
         ownerRole = new Role("OWNER");
-        
+
         testListing = new Listing();
         ReflectionTestUtils.setField(testListing, "id", 100);
     }
@@ -122,7 +122,7 @@ class OwnerServiceTest {
                 1, "John", "Doe", "1234567890"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("User already has an Owner profile");
-        
+
         verify(ownerRepository, never()).save(any());
     }
 

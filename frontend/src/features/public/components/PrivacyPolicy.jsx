@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  ShieldCheck, 
-  ChevronDown, 
-  List, 
-  Database, 
-  Lock, 
-  TrendingUp, 
-  Share2, 
-  UserCheck, 
-  Clock, 
-  Mail, 
+  ShieldCheck,
+  ChevronDown,
+  List,
+  Database,
+  Lock,
+  TrendingUp,
+  Share2,
+  UserCheck,
+  Clock,
+  Mail,
   CheckCircle2
 } from 'lucide-react';
 import styles from './PrivacyPolicy.module.css';
@@ -166,7 +166,7 @@ export default function PrivacyPolicy() {
               <h2 className={styles.sectionTitle}>2. Information We Collect</h2>
             </div>
             <p>We collect information necessary to operate the application and support user accounts:</p>
-            
+
             <div className={styles.subCard}>
               <h3 className={styles.subCardTitle}>A. User Account Details</h3>
               <p>Username, email address, and encrypted passwords (hashed with BCrypt). Plain-text passwords are never stored.</p>
@@ -204,7 +204,7 @@ export default function PrivacyPolicy() {
               <h2 className={styles.sectionTitle}>3. How We Use Your Data</h2>
             </div>
             <p>Data collected by DRAS is used for specific platform operations:</p>
-            
+
             <ul className={styles.bulletList}>
               <li><strong>Authentication & Role Management:</strong> Verifying logins and maintaining permissions for Users, Tenants, Owners, and Admins.</li>
               <li><strong>Rental Applications:</strong> Allowing tenants to apply for listings and enabling owners to review applicant details.</li>

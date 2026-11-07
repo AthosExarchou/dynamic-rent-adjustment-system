@@ -102,7 +102,7 @@ class OwnerControllerTest {
         when(userService.currentUserHasRole("ADMIN")).thenReturn(false);
 
         ResponseEntity<?> response = ownerController.showListings(10);
-        
+
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         List<?> body = (List<?>) response.getBody();
         assertThat(body).hasSize(1);

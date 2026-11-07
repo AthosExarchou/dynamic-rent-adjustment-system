@@ -66,7 +66,7 @@ public class TenantController {
             if (payload == null) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Missing profile data."));
             }
-            
+
             String firstName = payload.get("firstName");
             String lastName = payload.get("lastName");
             String phoneNumber = payload.get("phoneNumber");

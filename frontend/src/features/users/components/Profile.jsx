@@ -28,7 +28,7 @@ export default function Profile() {
         <div className={styles.cardHeader}>
           <h3 className={styles.cardTitle}>Account Details</h3>
         </div>
-        
+
         <div className={styles.body}>
           <div className={styles.profileGrid}>
             <div className={styles.infoGroup}>
@@ -88,17 +88,17 @@ export default function Profile() {
                   <Settings size={18} /> Edit Profile Details
                 </Link>
               )}
-              
+
               {!roles.includes('OWNER') && !roles.includes('ADMIN') && !user?.isSystem && (
                 <Link to="/owner/new" className={`${styles.actionBtn} ${styles.btnOutlinePrimary}`}>
                   <Briefcase size={18} /> Register as Owner
                 </Link>
               )}
-              
+
               <Link to="/profile/password" className={`${styles.actionBtn} ${styles.btnOutlinePrimary}`}>
                 <Key size={18} /> Change Password
               </Link>
-              
+
               {!roles.includes('ADMIN') && !user?.isSystem && (
                 <Link to="/profile/delete" className={`${styles.actionBtn} ${styles.btnDanger}`}>
                   <Trash2 size={18} /> Delete Account

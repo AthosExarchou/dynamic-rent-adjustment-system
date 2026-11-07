@@ -112,11 +112,11 @@ public class ListingServiceTest {
         Listing listing = new Listing();
         ReflectionTestUtils.setField(listing, "id", 1);
         listing.setExternal(false);
-        
+
         Tenant tenant = new Tenant();
         ReflectionTestUtils.setField(tenant, "id", 10);
         listing.setTenant(tenant);
-        
+
         Owner owner = new Owner();
         ReflectionTestUtils.setField(owner, "id", 20);
         listing.setOwner(owner);
@@ -494,7 +494,7 @@ public class ListingServiceTest {
         Listing listing = new Listing();
         ReflectionTestUtils.setField(listing, "id", 1);
         listing.setStatus(ListingStatus.PENDING);
-        
+
         when(listingRepository.findById(1)).thenReturn(Optional.of(listing));
 
         listingService.approveListing(1);
@@ -509,7 +509,7 @@ public class ListingServiceTest {
         Listing listing = new Listing();
         ReflectionTestUtils.setField(listing, "id", 1);
         listing.setStatus(ListingStatus.PENDING);
-        
+
         when(listingRepository.findById(1)).thenReturn(Optional.of(listing));
 
         listingService.rejectListing(1);
@@ -593,10 +593,10 @@ public class ListingServiceTest {
         User ownerUser = new User();
         ReflectionTestUtils.setField(ownerUser, "id", 1);
         ownerUser.setRoles(Set.of(new Role("OWNER")));
-        
+
         Owner owner = new Owner();
         owner.setUser(ownerUser);
-        
+
         Listing listing = new Listing();
         listing.setStatus(ListingStatus.RENTED);
         listing.setOwner(owner);
@@ -612,10 +612,10 @@ public class ListingServiceTest {
         User ownerUser = new User();
         ReflectionTestUtils.setField(ownerUser, "id", 1);
         ownerUser.setRoles(Set.of(new Role("OWNER")));
-        
+
         Owner owner = new Owner();
         owner.setUser(ownerUser);
-        
+
         Listing listing = new Listing();
         listing.setStatus(ListingStatus.RENTED);
         listing.setOwner(owner);
@@ -629,7 +629,7 @@ public class ListingServiceTest {
         Listing listing = new Listing();
         Tenant tenant = new Tenant();
         ReflectionTestUtils.setField(tenant, "id", 1);
-        
+
         listing.setApplicants(new HashSet<>());
         listing.addApplicant(tenant);
 

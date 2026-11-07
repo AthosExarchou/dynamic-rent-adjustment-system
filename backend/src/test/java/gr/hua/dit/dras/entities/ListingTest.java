@@ -133,7 +133,7 @@ class ListingTest {
         assertThat(listing.getApplicants()).isEmpty();
 
         assertThat(rejectedTenants).containsExactly(tenant2);
-        
+
         assertThat(tenant1.getListing()).isEqualTo(listing);
         assertThat(tenant1.getAppliedListings()).doesNotContain(listing);
         assertThat(tenant2.getAppliedListings()).doesNotContain(listing);
@@ -184,7 +184,7 @@ class ListingTest {
     @DisplayName("Should set tenant's rental status to RENTING when rented")
     void testRentToSetsRentalStatus() {
         listing.addApplicant(tenant1);
-        
+
         listing.rentTo(tenant1);
 
         assertThat(tenant1.getRentalStatus()).isEqualTo(RentalStatus.RENTING);

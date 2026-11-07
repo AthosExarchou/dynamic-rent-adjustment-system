@@ -10,7 +10,7 @@ export default function ProtectedRoute({ children, requiredRole }) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
         <div style={{
-          width: '30px', height: '30px', border: '3px solid #f3f3f3', 
+          width: '30px', height: '30px', border: '3px solid #f3f3f3',
           borderTop: '3px solid #0d6efd', borderRadius: '50%', animation: 'spin 1s linear infinite'
         }} />
         <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>

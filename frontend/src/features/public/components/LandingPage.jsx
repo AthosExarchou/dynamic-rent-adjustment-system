@@ -3,15 +3,15 @@ import { Link } from 'react-router-dom';
 import apiClient from '../../../shared/api/client';
 import { FavouriteButton } from '../../favourites';
 import {
-  Building2, 
-  ShieldCheck, 
-  Headset, 
-  ChevronDown, 
-  ChevronUp, 
-  Bed, 
-  Bath, 
-  Maximize, 
-  Calendar, 
+  Building2,
+  ShieldCheck,
+  Headset,
+  ChevronDown,
+  ChevronUp,
+  Bed,
+  Bath,
+  Maximize,
+  Calendar,
   Search,
   UserPlus,
   LogIn,
@@ -498,7 +498,7 @@ export default function LandingPage() {
         {/* Ready to Get Started */}
         <section className={`${styles.section} ${styles.textCenter}`}>
           <h2 className={styles.sectionTitle}>Ready to Get Started?</h2>
-          
+
           {!isAuthenticated ? (
             <div className={styles.ctaWrapper}>
               <p className={styles.ctaDesc}>Sign up today to find the perfect rental property or list your own.</p>

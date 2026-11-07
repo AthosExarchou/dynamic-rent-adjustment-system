@@ -1,13 +1,13 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
-import { 
-  Building2, 
-  MapPin, 
-  Bed, 
-  Bath, 
-  Maximize, 
-  ArrowUpToLine, 
-  Home, 
+import {
+  Building2,
+  MapPin,
+  Bed,
+  Bath,
+  Maximize,
+  ArrowUpToLine,
+  Home,
   Clock,
   ArrowLeft,
   CheckCircle2,
@@ -168,7 +168,7 @@ export default function ListingDetail() {
       <p>Loading property details...</p>
     </div>
   );
-  
+
   if (error || !listing) return (
     <div className={styles.loadingContainer}>
       <p>{error || "Listing not found."}</p>
@@ -184,7 +184,7 @@ export default function ListingDetail() {
 
   return (
     <div className={styles.container}>
-      
+
       <div className={styles.topActions}>
         <Link to={backPath} className={styles.backLink}>
           <ArrowLeft size={20} /> {backLabel}
@@ -221,7 +221,7 @@ export default function ListingDetail() {
             ) : null}
           </div>
         </div>
-        
+
         <div className={styles.body}>
           <div className={styles.titleSection}>
             <h1 className={styles.mainTitle}>{listing.title}</h1>
@@ -340,13 +340,13 @@ export default function ListingDetail() {
 
           <div className={styles.specsSection}>
             <h5 className={styles.sectionHeading}>Property Specifications</h5>
-            
+
             <div className={styles.specsGrid}>
               <div className={styles.specItem}>
                 <div className={styles.specLabel}><MapPin size={16} /> Address</div>
                 <div className={styles.specValue}>{listing.address}</div>
               </div>
-              
+
               <div className={styles.specItem}>
                 <div className={styles.specLabel}><Home size={16} /> Property Type</div>
                 <div className={styles.specValue}>{listing.propertyType}</div>
@@ -388,8 +388,8 @@ export default function ListingDetail() {
             <FavouriteButton listing={listing} variant="button" showText={true} />
 
             {canEdit && !listing.rented && listing.status !== 'RENTED' && (
-              <Link 
-                to={`/listings/edit/${listing.id}`} 
+              <Link
+                to={`/listings/edit/${listing.id}`}
                 state={{ from: `/listings/${listing.id}` }}
                 className={`${styles.btn} ${styles.btnEdit}`}
               >
@@ -430,8 +430,8 @@ export default function ListingDetail() {
                   <CheckCircle2 size={18} /> Application Submitted
                 </div>
               ) : (
-                <Link 
-                  to={`/tenant/rent/${listing.id}`} 
+                <Link
+                  to={`/tenant/rent/${listing.id}`}
                   state={{ fromListingDetail: true }}
                   className={`${styles.btn} ${styles.btnPrimary}`}
                 >

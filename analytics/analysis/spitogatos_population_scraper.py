@@ -119,7 +119,7 @@ def get_population():
                     size_match = re.search(r"(\d+(?:[.,]\d+)?)\s*τ\.μ\.", title)
                     if size_match:
                         size_m2 = float(size_match.group(1).replace(",", "."))
-                        
+
                     if not size_m2 or size_m2 == 0:
                         continue
 

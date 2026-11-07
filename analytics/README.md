@@ -108,7 +108,7 @@ analytics/
 
 ## Integration with Backend
 
-The collected listings can be imported into the main DRAS system. The backend provides an import API endpoint for ingesting external listings. 
+The collected listings can be imported into the main DRAS system. The backend provides an import API endpoint for ingesting external listings.
 
 > **Note:** The backend enforces a maximum batch size limit of 500 for external listings per import request to maintain system stability and performance. Ensure your payload respects this limitation.
 

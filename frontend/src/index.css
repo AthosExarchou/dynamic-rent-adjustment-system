@@ -1,6 +1,6 @@
 :root {
   /* Dynamic Rent Adjustment System - Design Tokens */
-  
+
   /* Primary Colors - Premium Modern Blue/Indigo */
   --color-primary-50: #eef2ff;
   --color-primary-100: #e0e7ff;
@@ -27,18 +27,18 @@
   /* Typography */
   --font-family-base: 'Inter', system-ui, -apple-system, sans-serif;
   --font-size-base: 16px;
-  
+
   /* Spacing */
   --spacing-1: 0.25rem;
   --spacing-2: 0.5rem;
   --spacing-4: 1rem;
   --spacing-8: 2rem;
-  
+
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  
+
   /* Border Radius */
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
