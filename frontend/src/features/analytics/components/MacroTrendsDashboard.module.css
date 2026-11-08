@@ -550,9 +550,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  cursor: help;
+  cursor: pointer;
   margin-left: 0.25rem;
   vertical-align: middle;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .helpIcon {
