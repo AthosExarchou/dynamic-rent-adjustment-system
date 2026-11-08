@@ -29,6 +29,7 @@ import { useAuth } from '../../auth';
 import { FavouriteButton } from '../../favourites';
 import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
 import { InfoTooltip } from '../../../shared/components/InfoTooltip';
+import { LocationMap } from '../../../shared/components/Map';
 import styles from './ListingDetail.module.css';
 import PriceDropIndicator, { computeAvgPricePerM2 } from './PriceDropIndicator';
 
@@ -390,6 +391,30 @@ export default function ListingDetail() {
               </div>
             </div>
           </div>
+
+          <hr className={styles.divider} />
+
+          {/* Approximate Map Location */}
+          {listing.address && (
+            <div className={styles.mapSection}>
+              <div className={styles.mapHeader}>
+                <div className={styles.mapHeaderIcon}>
+                  <MapPin size={22} />
+                </div>
+                <div>
+                  <h5 className={styles.mapTitle}>Approximate Location</h5>
+                  <p className={styles.mapSubtitle}>{listing.address}</p>
+                </div>
+              </div>
+              <LocationMap
+                address={listing.address}
+                title={listing.title}
+                subtitle={listing.address}
+                approximate={true}
+                height={380}
+              />
+            </div>
+          )}
 
           <div className={styles.actionsSection}>
             <FavouriteButton listing={listing} variant="button" showText={true} />

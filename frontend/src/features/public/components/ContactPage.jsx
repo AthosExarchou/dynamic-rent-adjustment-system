@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { useToast } from '../../../shared/components/Toast';
+import { LocationMap } from '../../../shared/components/Map';
 import styles from './ContactPage.module.css';
 
 export default function ContactPage() {
@@ -254,19 +255,14 @@ export default function ContactPage() {
             <p className={styles.mapSubtitle}>Athens, Greece</p>
           </div>
         </div>
-        <div className={styles.mapContainer}>
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3144.381488219614!2d23.72583861532298!3d37.98380997972232!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14a1bd1f0b0a8d5b%3A0x33b47f0d0d0d0d0d!2sAcropolis%20of%20Athens!5e0!3m2!1sen!2sgr!4v1663332221111!5m2!1sen!2sgr"
-            width="100%"
-            height="420"
-            style={{ border: 0 }}
-            allowFullScreen
-            sandbox="allow-scripts allow-same-origin allow-popups"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-            title="DRAS Office Location"
-          />
-        </div>
+        <LocationMap
+          coordinates={{ lat: 37.9838, lon: 23.7275 }}
+          address="Athens, Greece"
+          title="DRAS Main Office"
+          subtitle="Athens, Greece"
+          approximate={false}
+          height={420}
+        />
       </section>
 
       {/* FAQ Banner */}
