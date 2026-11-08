@@ -31,6 +31,7 @@ import PriceDropIndicator, { computeAvgPricePerM2 } from './PriceDropIndicator';
 import DatePicker from '../../../shared/components/DatePicker';
 import { Pagination } from '../../../shared/components/Pagination';
 import { Select } from '../../../shared/components/Select';
+import { NumberInput } from '../../../shared/components/NumberInput';
 import { LISTING_CONSTRAINTS } from '../models/listing';
 import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
 import { InfoTooltip } from '../../../shared/components/InfoTooltip';
@@ -434,15 +435,16 @@ export default function ListingList() {
             </div>
 
             <div className={styles.formGroup}>
-              <label className={styles.label}>
+              <label htmlFor="minPrice" className={styles.label}>
                 <Euro size={16} /> Min Rent (€)
               </label>
-              <input
-                type="number"
+              <NumberInput
+                id="minPrice"
+                name="minPrice"
                 min={LISTING_CONSTRAINTS.PRICE_MIN}
                 max={LISTING_CONSTRAINTS.PRICE_MAX}
                 value={filter.minPrice}
-                onChange={e => setFilter({...filter, minPrice: e.target.value})}
+                onChange={e => setFilter(prev => ({ ...prev, minPrice: e.target.value }))}
                 onBlur={clampField('minPrice', LISTING_CONSTRAINTS.PRICE_MIN, LISTING_CONSTRAINTS.PRICE_MAX)}
                 className={styles.input}
                 placeholder="e.g. 300"
@@ -450,15 +452,16 @@ export default function ListingList() {
             </div>
 
             <div className={styles.formGroup}>
-              <label className={styles.label}>
+              <label htmlFor="maxPrice" className={styles.label}>
                 <Euro size={16} /> Max Rent (€)
               </label>
-              <input
-                type="number"
+              <NumberInput
+                id="maxPrice"
+                name="maxPrice"
                 min={LISTING_CONSTRAINTS.PRICE_MIN}
                 max={LISTING_CONSTRAINTS.PRICE_MAX}
                 value={filter.maxPrice}
-                onChange={e => setFilter({...filter, maxPrice: e.target.value})}
+                onChange={e => setFilter(prev => ({ ...prev, maxPrice: e.target.value }))}
                 onBlur={clampField('maxPrice', LISTING_CONSTRAINTS.PRICE_MIN, LISTING_CONSTRAINTS.PRICE_MAX)}
                 className={styles.input}
                 placeholder="e.g. 1500"
@@ -512,15 +515,16 @@ export default function ListingList() {
 
                 {/* Rooms: Bedrooms & Bathrooms */}
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>
+                  <label htmlFor="minBedrooms" className={styles.label}>
                     <Bed size={16} /> Min Bedrooms
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
+                    id="minBedrooms"
+                    name="minBedrooms"
                     min={LISTING_CONSTRAINTS.BEDROOMS_MIN}
                     max={LISTING_CONSTRAINTS.BEDROOMS_MAX}
                     value={filter.minBedrooms}
-                    onChange={e => setFilter({...filter, minBedrooms: e.target.value})}
+                    onChange={e => setFilter(prev => ({ ...prev, minBedrooms: e.target.value }))}
                     onBlur={clampField('minBedrooms', LISTING_CONSTRAINTS.BEDROOMS_MIN, LISTING_CONSTRAINTS.BEDROOMS_MAX)}
                     className={styles.input}
                     placeholder="e.g. 1"
@@ -528,15 +532,16 @@ export default function ListingList() {
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>
+                  <label htmlFor="maxBedrooms" className={styles.label}>
                     <Bed size={16} /> Max Bedrooms
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
+                    id="maxBedrooms"
+                    name="maxBedrooms"
                     min={LISTING_CONSTRAINTS.BEDROOMS_MIN}
                     max={LISTING_CONSTRAINTS.BEDROOMS_MAX}
                     value={filter.maxBedrooms}
-                    onChange={e => setFilter({...filter, maxBedrooms: e.target.value})}
+                    onChange={e => setFilter(prev => ({ ...prev, maxBedrooms: e.target.value }))}
                     onBlur={clampField('maxBedrooms', LISTING_CONSTRAINTS.BEDROOMS_MIN, LISTING_CONSTRAINTS.BEDROOMS_MAX)}
                     className={styles.input}
                     placeholder="e.g. 4"
@@ -544,15 +549,16 @@ export default function ListingList() {
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>
+                  <label htmlFor="minBathrooms" className={styles.label}>
                     <Bath size={16} /> Min Bathrooms
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
+                    id="minBathrooms"
+                    name="minBathrooms"
                     min={LISTING_CONSTRAINTS.BATHROOMS_MIN}
                     max={LISTING_CONSTRAINTS.BATHROOMS_MAX}
                     value={filter.minBathrooms}
-                    onChange={e => setFilter({...filter, minBathrooms: e.target.value})}
+                    onChange={e => setFilter(prev => ({ ...prev, minBathrooms: e.target.value }))}
                     onBlur={clampField('minBathrooms', LISTING_CONSTRAINTS.BATHROOMS_MIN, LISTING_CONSTRAINTS.BATHROOMS_MAX)}
                     className={styles.input}
                     placeholder="e.g. 1"
@@ -560,15 +566,16 @@ export default function ListingList() {
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>
+                  <label htmlFor="maxBathrooms" className={styles.label}>
                     <Bath size={16} /> Max Bathrooms
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
+                    id="maxBathrooms"
+                    name="maxBathrooms"
                     min={LISTING_CONSTRAINTS.BATHROOMS_MIN}
                     max={LISTING_CONSTRAINTS.BATHROOMS_MAX}
                     value={filter.maxBathrooms}
-                    onChange={e => setFilter({...filter, maxBathrooms: e.target.value})}
+                    onChange={e => setFilter(prev => ({ ...prev, maxBathrooms: e.target.value }))}
                     onBlur={clampField('maxBathrooms', LISTING_CONSTRAINTS.BATHROOMS_MIN, LISTING_CONSTRAINTS.BATHROOMS_MAX)}
                     className={styles.input}
                     placeholder="e.g. 3"
@@ -577,15 +584,16 @@ export default function ListingList() {
 
                 {/* Year Built */}
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>
+                  <label htmlFor="minYear" className={styles.label}>
                     <Clock size={16} /> Min Year Built
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
+                    id="minYear"
+                    name="minYear"
                     min={LISTING_CONSTRAINTS.YEAR_BUILT_MIN}
                     max={currentMaxYear}
                     value={filter.minYear}
-                    onChange={e => setFilter({...filter, minYear: e.target.value})}
+                    onChange={e => setFilter(prev => ({ ...prev, minYear: e.target.value }))}
                     onBlur={clampField('minYear', LISTING_CONSTRAINTS.YEAR_BUILT_MIN, currentMaxYear)}
                     className={styles.input}
                     placeholder="e.g. 1990"
@@ -593,15 +601,16 @@ export default function ListingList() {
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>
+                  <label htmlFor="maxYear" className={styles.label}>
                     <Clock size={16} /> Max Year Built
                   </label>
-                  <input
-                    type="number"
+                  <NumberInput
+                    id="maxYear"
+                    name="maxYear"
                     min={LISTING_CONSTRAINTS.YEAR_BUILT_MIN}
                     max={currentMaxYear}
                     value={filter.maxYear}
-                    onChange={e => setFilter({...filter, maxYear: e.target.value})}
+                    onChange={e => setFilter(prev => ({ ...prev, maxYear: e.target.value }))}
                     onBlur={clampField('maxYear', LISTING_CONSTRAINTS.YEAR_BUILT_MIN, currentMaxYear)}
                     className={styles.input}
                     placeholder="e.g. 2024"
