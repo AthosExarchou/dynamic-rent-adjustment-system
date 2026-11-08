@@ -5,6 +5,7 @@ import gr.hua.dit.dras.config.LoginSuccessHandler;
 import gr.hua.dit.dras.config.SecurityConfig;
 import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.repositories.UserRepository;
+import gr.hua.dit.dras.services.infrastructure.EmailService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,9 @@ class RestAuthControllerTest {
 
     @MockitoBean
     private LoginSuccessHandler loginSuccessHandler;
+
+    @MockitoBean
+    private EmailService emailService;
 
     @Test
     @DisplayName("Login with valid credentials returns 200 OK and UserDTO")
@@ -127,5 +131,65 @@ class RestAuthControllerTest {
     void logout_ReturnsOk() throws Exception {
         mockMvc.perform(post("/auth/logout"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Forgot password with active account returns 200 OK and dispatches recovery request")
+    void forgotPassword_ActiveAccount_ReturnsOkAndSendsEmail() throws Exception {
+        User user = new User();
+        user.setUsername("active_user");
+        user.setEmail("active@example.com");
+
+        when(userRepository.findByEmail("active@example.com")).thenReturn(Optional.of(user));
+        when(emailService.sendContactUsEmail(any())).thenReturn(true);
+
+        String payload = """
+                {
+                    "email": "active@example.com"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("active@example.com"))
+                .andExpect(jsonPath("$.message").value("Password reset request submitted successfully."));
+
+        verify(emailService).sendContactUsEmail(any());
+    }
+
+    @Test
+    @DisplayName("Forgot password with non-existent email returns 404 Not Found")
+    void forgotPassword_NonExistentEmail_ReturnsNotFound() throws Exception {
+        when(userRepository.findByEmail("nonexistent@example.com")).thenReturn(Optional.empty());
+
+        String payload = """
+                {
+                    "email": "nonexistent@example.com"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("No active account found with this email address."));
+    }
+
+    @Test
+    @DisplayName("Forgot password with blank email returns 400 Bad Request")
+    void forgotPassword_BlankEmail_ReturnsBadRequest() throws Exception {
+        String payload = """
+                {
+                    "email": "   "
+                }
+                """;
+
+        mockMvc.perform(post("/auth/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Email is required."));
     }
 }

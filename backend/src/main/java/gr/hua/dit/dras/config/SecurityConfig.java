@@ -107,7 +107,7 @@ public class SecurityConfig {
                         tokenRepository.setCookieName("XSRF-TOKEN-DRAS");
                         csrf.csrfTokenRepository(tokenRepository)
                             .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                            .ignoringRequestMatchers("/auth/login", "/auth/logout", "/notifications/**", "/favourites/**", "/saveUser");
+                            .ignoringRequestMatchers("/auth/login", "/auth/logout", "/auth/forgot-password", "/notifications/**", "/favourites/**", "/saveUser");
                 })
                 .addFilterAfter(new OncePerRequestFilter() {
                     @Override
