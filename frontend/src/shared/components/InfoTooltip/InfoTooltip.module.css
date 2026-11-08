@@ -37,40 +37,48 @@
   color: #38bdf8;
 }
 
+/* Tooltip floating bubble rendered into document.body to avoid parent card clipping */
 .tooltipBubble {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
-  transform: translate(-50%, 0);
+  position: fixed;
   width: max-content;
   min-width: 170px;
-  max-width: 260px;
+  max-width: 270px;
   background-color: #1e293b;
   color: #f8fafc;
   font-size: 0.75rem;
   font-weight: 400;
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
-  z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
   pointer-events: none;
   line-height: 1.35;
   white-space: normal;
   text-align: left;
   text-transform: none;
   letter-spacing: normal;
+  box-sizing: border-box;
   animation: tooltipFadeIn 0.15s ease-in-out;
 }
 
-.tooltipBubble::after {
-  content: '';
+.tooltipArrow {
   position: absolute;
-  top: 100%;
-  left: 50%;
   transform: translateX(-50%);
+  width: 0;
+  height: 0;
   border-width: 5px;
   border-style: solid;
+  pointer-events: none;
+}
+
+.placementTop .tooltipArrow {
+  top: 100%;
   border-color: #1e293b transparent transparent transparent;
+}
+
+.placementBottom .tooltipArrow {
+  bottom: 100%;
+  border-color: transparent transparent #1e293b transparent;
 }
 
 [data-theme="dark"] .tooltipBubble {
@@ -79,17 +87,21 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-[data-theme="dark"] .tooltipBubble::after {
+[data-theme="dark"] .placementTop .tooltipArrow {
   border-color: #334155 transparent transparent transparent;
+}
+
+[data-theme="dark"] .placementBottom .tooltipArrow {
+  border-color: transparent transparent #334155 transparent;
 }
 
 @keyframes tooltipFadeIn {
   from {
     opacity: 0;
-    transform: translate(-50%, 3px);
+    transform: scale(0.96);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, 0);
+    transform: scale(1);
   }
 }
