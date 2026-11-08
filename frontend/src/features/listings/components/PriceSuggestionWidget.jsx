@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { TrendingUp, Check, ChevronDown, ChevronUp, Database } from 'lucide-react';
+import { TrendingUp, Check, ChevronDown, ChevronUp, Database, ExternalLink } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import styles from './PriceSuggestionWidget.module.css';
 
@@ -111,7 +111,19 @@ export default function PriceSuggestionWidget({ formData, onApplyPrice }) {
             Market Price Suggestion
           </h4>
         </div>
-        {loading && <span className={styles.loadingSpinner} title="Calculating..." />}
+        <div className={styles.widgetActions}>
+          {loading && <span className={styles.loadingSpinner} title="Calculating..." />}
+          <a
+            href="/market-trends"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.macroTrendsLink}
+            title="Open Market Intelligence & Macro Trends in a new tab"
+          >
+            <span>Macro Trends</span>
+            <ExternalLink size={13} className={styles.macroTrendsIcon} />
+          </a>
+        </div>
       </div>
 
       {error && <div style={{ color: '#ef4444', fontSize: '0.85rem' }}>{error}</div>}
