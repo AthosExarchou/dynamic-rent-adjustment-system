@@ -14,6 +14,7 @@ const NotFoundPage = lazy(() => import('../../features/public/components/NotFoun
 
 const LoginForm = lazy(() => import('../../features/auth/components/LoginForm'));
 const RegisterForm = lazy(() => import('../../features/auth/components/RegisterForm'));
+const ForgotPassword = lazy(() => import('../../features/auth/components/ForgotPassword'));
 
 const ListingList = lazy(() => import('../../features/listings/components/ListingList'));
 const ListingDetail = lazy(() => import('../../features/listings/components/ListingDetail'));
@@ -95,6 +96,7 @@ export const router = createBrowserRouter([
       { path: 'favourites', element: withSuspense(FavouritesPage) },
       { path: 'login', element: withSuspense(LoginForm) },
       { path: 'register', element: withSuspense(RegisterForm) },
+      { path: 'forgot-password', element: withSuspense(ForgotPassword) },
 
       // Protected User Routes
       { path: 'profile', element: <ProtectedRoute>{withSuspense(Profile)}</ProtectedRoute> },

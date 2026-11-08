@@ -16,6 +16,7 @@ export const NAVIGABLE_ROUTES = [
   '/listings/new',
   '/login',
   '/register',
+  '/forgot-password',
   '/profile',
   '/profile/edit',
   '/profile/password',

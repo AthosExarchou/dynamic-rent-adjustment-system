@@ -85,7 +85,12 @@ export default function LoginForm() {
           </div>
 
           <div className={styles.formOptions} style={{ justifyContent: 'flex-end' }}>
-            <Link to="/contact" className={styles.forgotLink}>Forgot Password?</Link>
+            <Link
+              to={email ? `/forgot-password?email=${encodeURIComponent(email)}` : '/forgot-password'}
+              className={styles.forgotLink}
+            >
+              Forgot Password?
+            </Link>
           </div>
 
           <button type="submit" disabled={loading} className={styles.submitBtn}>
