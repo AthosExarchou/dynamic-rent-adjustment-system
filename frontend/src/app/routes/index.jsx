@@ -29,6 +29,7 @@ const DeleteAccountConfirm = lazy(() => import('../../features/users/components/
 
 const UserManagement = lazy(() => import('../../features/admin/components/UserManagement'));
 const PendingApprovals = lazy(() => import('../../features/admin/components/PendingApprovals'));
+const MacroTrendsDashboard = lazy(() => import('../../features/analytics/components/MacroTrendsDashboard'));
 
 const TenantForm = lazy(() => import('../../features/tenants/components/TenantForm'));
 const OwnerForm = lazy(() => import('../../features/owners/components/OwnerForm'));
@@ -108,6 +109,9 @@ export const router = createBrowserRouter([
       // Owner Routes
       { path: 'my-listings', element: <ProtectedRoute requiredRole="OWNER">{withSuspense(MyListings)}</ProtectedRoute> },
       { path: 'my-listings/:listingId/apps', element: <ProtectedRoute requiredRole="OWNER">{withSuspense(ListingApplications)}</ProtectedRoute> },
+
+      // Market Intelligence & Macro Trends (Owner & Admin)
+      { path: 'market-trends', element: <ProtectedRoute requiredRole={['ADMIN', 'OWNER']}>{withSuspense(MacroTrendsDashboard)}</ProtectedRoute> },
 
       // Admin Routes
       { path: 'admin/users', element: <ProtectedRoute requiredRole="ADMIN">{withSuspense(UserManagement)}</ProtectedRoute> },

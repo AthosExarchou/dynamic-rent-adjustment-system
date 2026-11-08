@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Home, Building2, Key, CheckSquare, Users, Info, MessageSquare, X, Search, Heart } from 'lucide-react';
+import { Home, Building2, Key, CheckSquare, Users, Info, MessageSquare, X, Search, Heart, TrendingUp } from 'lucide-react';
 import { useAuth } from '../../features/auth';
 import { useFavourites } from '../../features/favourites';
 import styles from './Sidebar.module.css';
@@ -104,11 +104,20 @@ export default function Sidebar({ isOpen, onClose }) {
           </NavLink>
 
           {isOwner && (
-            <NavLink to="/my-listings" className={({ isActive }) =>
-                isActive ? `${styles.sidebarLink} ${styles.active}` : styles.sidebarLink} onClick={onClose}>
-              <Key size={20} />
-              My Properties
-            </NavLink>
+            <>
+              <NavLink to="/my-listings" className={({ isActive }) =>
+                  isActive ? `${styles.sidebarLink} ${styles.active}` : styles.sidebarLink} onClick={onClose}>
+                <Key size={20} />
+                My Properties
+              </NavLink>
+              {!isAdmin && (
+                <NavLink to="/market-trends" className={({ isActive }) =>
+                    isActive ? `${styles.sidebarLink} ${styles.active}` : styles.sidebarLink} onClick={onClose}>
+                  <TrendingUp size={20} />
+                  Market Trends
+                </NavLink>
+              )}
+            </>
           )}
 
           {isAdmin && (
@@ -123,6 +132,12 @@ export default function Sidebar({ isOpen, onClose }) {
                   isActive ? `${styles.sidebarLink} ${styles.active}` : styles.sidebarLink} onClick={onClose}>
                 <Users size={20} />
                 Users
+              </NavLink>
+
+              <NavLink to="/market-trends" className={({ isActive }) =>
+                  isActive ? `${styles.sidebarLink} ${styles.active}` : styles.sidebarLink} onClick={onClose}>
+                <TrendingUp size={20} />
+                Market Intelligence
               </NavLink>
             </>
           )}
