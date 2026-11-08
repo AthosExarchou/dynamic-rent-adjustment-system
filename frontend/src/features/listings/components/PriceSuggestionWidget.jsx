@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { TrendingUp, Check, ChevronDown, ChevronUp, Database, ExternalLink } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
+import { InfoTooltip } from '../../../shared/components/InfoTooltip';
 import styles from './PriceSuggestionWidget.module.css';
 
 /**
@@ -109,6 +110,7 @@ export default function PriceSuggestionWidget({ formData, onApplyPrice }) {
         <div className={styles.widgetTitleGroup}>
           <h4 className={styles.widgetTitle}>
             Market Price Suggestion
+            <InfoTooltip text="Automated rental price suggestion calculated by combining weekly Athens time-series projections with regional market benchmarks." />
           </h4>
         </div>
         <div className={styles.widgetActions}>
@@ -139,7 +141,9 @@ export default function PriceSuggestionWidget({ formData, onApplyPrice }) {
                 </span>
               </div>
               <div className={styles.rangeText}>
-                Estimated Market Range {suggestion.marginPercentage ? `(±${suggestion.marginPercentage}%)` : ''}:{' '}
+                Estimated Market Range {suggestion.marginPercentage ? `(±${suggestion.marginPercentage}%)` : ''}
+                <InfoTooltip text="Estimated rental price range based on the suggested price and property-specific adjustments." />
+                {': '}
                 <span className={styles.rangeValues}>
                   €{suggestion.minPrice} - €{suggestion.maxPrice} / mo
                 </span>
@@ -194,16 +198,26 @@ export default function PriceSuggestionWidget({ formData, onApplyPrice }) {
               <div className={styles.insightCard}>
                 <div className={styles.insightTitle}>
                   <TrendingUp size={14} className={styles.forecastIcon} />
-                  {suggestion.arimaForecast?.modelStatus === 'STATISTICAL_BASELINE'
-                    ? 'Statistical Baseline (Historical Trend)'
-                    : `Auto-ARIMA Micro-Forecast (${suggestion.arimaForecast?.horizonWeeks || 5}-Week Projection)`}
+                  <span>
+                    {suggestion.arimaForecast?.modelStatus === 'STATISTICAL_BASELINE'
+                      ? 'Statistical Baseline (Historical Trend)'
+                      : `Auto-ARIMA Micro-Forecast (${suggestion.arimaForecast?.horizonWeeks || 5}-Week Projection)`}
+                  </span>
+                  <InfoTooltip text={
+                    suggestion.arimaForecast?.modelStatus === 'STATISTICAL_BASELINE'
+                      ? "Historical baseline average computed from recent Athens listings when insufficient time-series observations exist for full ARIMA estimation."
+                      : "Short-term statistical projection derived from weekly Athens rental data to capture recent pricing momentum."
+                  } />
                 </div>
                 <div>
                   {suggestion.arimaForecast?.modelStatus === 'STATISTICAL_BASELINE' ? (
                     <>
                       Historical Baseline Average:{' '}
                       <strong>€{suggestion.arimaForecast?.predictedPricePerM2}/m²</strong> (Recent variability:{' '}
-                      €{suggestion.arimaForecast?.lowerBoundPerM2} - €{suggestion.arimaForecast?.upperBoundPerM2}/m²). Trend signal:{' '}
+                      €{suggestion.arimaForecast?.lowerBoundPerM2} - €{suggestion.arimaForecast?.upperBoundPerM2}/m²).{' '}
+                      <InfoTooltip text="Directional indicator derived from recent weekly scraped rental listings across Athens.">
+                        Trend signal
+                      </InfoTooltip>:{' '}
                       <strong>{suggestion.arimaForecast?.trend}</strong> (
                       {suggestion.arimaForecast?.trendPercentage > 0 ? '+' : ''}
                       {suggestion.arimaForecast?.trendPercentage}%).
@@ -211,8 +225,14 @@ export default function PriceSuggestionWidget({ formData, onApplyPrice }) {
                   ) : (
                     <>
                       Forecasted Price:{' '}
-                      <strong>€{suggestion.arimaForecast?.predictedPricePerM2}/m²</strong> (95% PI:{' '}
-                      €{suggestion.arimaForecast?.lowerBoundPerM2} - €{suggestion.arimaForecast?.upperBoundPerM2}/m²). Trend signal:{' '}
+                      <strong>€{suggestion.arimaForecast?.predictedPricePerM2}/m²</strong> ({' '}
+                      <InfoTooltip text="95% Prediction Interval: a model-based range representing the uncertainty around the projected weekly rental price per square meter, based on recent observations.">
+                        95% PI
+                      </InfoTooltip>:{' '}
+                      €{suggestion.arimaForecast?.lowerBoundPerM2} - €{suggestion.arimaForecast?.upperBoundPerM2}/m²).{' '}
+                      <InfoTooltip text="Directional indicator derived from recent weekly scraped rental listings across Athens.">
+                        Trend signal
+                      </InfoTooltip>:{' '}
                       <strong>{suggestion.arimaForecast?.trend}</strong> (
                       {suggestion.arimaForecast?.trendPercentage > 0 ? '+' : ''}
                       {suggestion.arimaForecast?.trendPercentage}%).
@@ -224,14 +244,17 @@ export default function PriceSuggestionWidget({ formData, onApplyPrice }) {
               <div className={`${styles.insightCard} ${styles.insightCardScraped}`}>
                 <div className={styles.insightTitle}>
                   <Database size={14} className={styles.benchmarkIcon} />
-                  Scraped Real Estate Market Benchmark
+                  <span>Scraped Real Estate Market Benchmark</span>
+                  <InfoTooltip text="Market benchmark calculated from active scraped Athens listings for the selected property category." />
                   {suggestion.marketBenchmark?.propertyTypeStatus === 'MEASURED' ? (
                     <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#10b981', marginLeft: '6px' }}>
                       (Measured: {suggestion.marketBenchmark?.propertyTypeSampleCount} listings)
+                      <InfoTooltip size={12} text="Benchmark computed directly from active scraped listings in the dataset." />
                     </span>
                   ) : (
                     <span style={{ fontSize: '0.75rem', fontWeight: 'normal', color: '#f59e0b', marginLeft: '6px' }}>
                       (Domain Prior Estimate)
+                      <InfoTooltip size={12} text="Fewer than 5 comparable properties of this type are available in the active dataset, so the system uses a reference baseline instead of a measured market benchmark." />
                     </span>
                   )}
                 </div>

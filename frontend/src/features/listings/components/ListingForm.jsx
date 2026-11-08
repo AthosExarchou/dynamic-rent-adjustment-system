@@ -11,6 +11,7 @@ import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
 import { useToast } from '../../../shared/components/Toast';
 import { Select } from '../../../shared/components/Select';
 import { NumberInput } from '../../../shared/components/NumberInput';
+import { InfoTooltip } from '../../../shared/components/InfoTooltip';
 import styles from './ListingForm.module.css';
 
 const PROPERTY_TYPE_OPTIONS = [
@@ -443,7 +444,10 @@ export default function ListingForm() {
 
           <div className={styles.grid2}>
             <div>
-              <label htmlFor="price" className={styles.label}>Rent / Month (€)</label>
+              <label htmlFor="price" className={styles.label}>
+                Rent / Month (€)
+                <InfoTooltip text="Monthly base rental price requested for the property, excluding utility bills." />
+              </label>
               <NumberInput
                 id="price"
                 required
@@ -456,7 +460,10 @@ export default function ListingForm() {
               />
             </div>
             <div>
-              <label htmlFor="sizeM2" className={styles.label}>Area Size (m²)</label>
+              <label htmlFor="sizeM2" className={styles.label}>
+                Area Size (m²)
+                <InfoTooltip text="Usable internal living area in square meters." />
+              </label>
               <NumberInput
                 id="sizeM2"
                 required
@@ -496,7 +503,10 @@ export default function ListingForm() {
               />
             </div>
             <div>
-              <label htmlFor="rentalDuration" className={styles.label}>Lease Term</label>
+              <label htmlFor="rentalDuration" className={styles.label}>
+                Lease Term
+                <InfoTooltip text="Indicates the preferred duration or structure of the lease agreement for this property." />
+              </label>
               <Select
                 id="rentalDuration"
                 value={formData.rentalDuration}
@@ -506,7 +516,10 @@ export default function ListingForm() {
               />
             </div>
             <div>
-              <label htmlFor="floor" className={styles.label}>Floor</label>
+              <label htmlFor="floor" className={styles.label}>
+                Floor
+                <InfoTooltip text="Use 0 for ground floor, negative numbers for basement levels, and positive numbers for upper floors." />
+              </label>
               <NumberInput
                 id="floor"
                 required
@@ -564,7 +577,10 @@ export default function ListingForm() {
 
           {!isOwner && !isEditMode && (
             <div className={styles.ownerSection}>
-              <h4 className={styles.ownerTitle}>Register Owner Profile</h4>
+              <h4 className={styles.ownerTitle}>
+                Register Owner Profile
+                <InfoTooltip text="Required for publishing listings so prospective tenants and administrators can contact the property owner." />
+              </h4>
               <div className={styles.grid2}>
                 <div>
                   <label htmlFor="firstName" className={styles.label}>First Name</label>

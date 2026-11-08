@@ -33,6 +33,7 @@ import { Pagination } from '../../../shared/components/Pagination';
 import { Select } from '../../../shared/components/Select';
 import { LISTING_CONSTRAINTS } from '../models/listing';
 import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
+import { InfoTooltip } from '../../../shared/components/InfoTooltip';
 
 const PAGE_SIZE = 9;
 
@@ -654,6 +655,7 @@ export default function ListingList() {
                 <div className={styles.formGroup}>
                   <label className={styles.label}>
                     <Globe size={16} /> Listing Origin
+                    <InfoTooltip text="Filter between listings posted directly by platform owners and external listings scraped for market comparison." />
                   </label>
                   <Select
                     value={filter.externalOnly}

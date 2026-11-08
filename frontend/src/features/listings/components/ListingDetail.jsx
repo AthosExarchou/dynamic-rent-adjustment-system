@@ -28,6 +28,7 @@ import apiClient from '../../../shared/api/client';
 import { useAuth } from '../../auth';
 import { FavouriteButton } from '../../favourites';
 import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
+import { InfoTooltip } from '../../../shared/components/InfoTooltip';
 import styles from './ListingDetail.module.css';
 import PriceDropIndicator, { computeAvgPricePerM2 } from './PriceDropIndicator';
 
@@ -353,7 +354,10 @@ export default function ListingDetail() {
               </div>
 
               <div className={styles.specItem}>
-                <div className={styles.specLabel}><Maximize size={16} /> Area</div>
+                <div className={styles.specLabel}>
+                  <Maximize size={16} /> Area
+                  <InfoTooltip text="Usable internal living area in square meters." size={13} />
+                </div>
                 <div className={styles.specValue}>{listing.sizeM2} m²</div>
               </div>
 
@@ -378,7 +382,10 @@ export default function ListingDetail() {
               </div>
 
               <div className={styles.specItem}>
-                <div className={styles.specLabel}><Clock size={16} /> Rental Duration</div>
+                <div className={styles.specLabel}>
+                  <Clock size={16} /> Rental Duration
+                  <InfoTooltip text="Preferred lease agreement term specified by the property owner." size={13} />
+                </div>
                 <div className={styles.specValue}>{listing.rentalDuration}</div>
               </div>
             </div>
