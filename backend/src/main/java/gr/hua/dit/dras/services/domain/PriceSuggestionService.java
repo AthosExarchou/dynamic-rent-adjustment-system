@@ -132,12 +132,27 @@ public class PriceSuggestionService {
         double liveDbAvg = 14.50;
         int liveDbCount = 0;
         if (externalListings != null && !externalListings.isEmpty()) {
-            OptionalDouble avgOpt = externalListings.stream()
-                    .filter(l -> l.getPricePerM2() != null && l.getPricePerM2() > 0)
-                    .mapToInt(Listing::getPricePerM2)
-                    .average();
-            if (avgOpt.isPresent()) {
-                liveDbAvg = round(avgOpt.getAsDouble());
+            long totalArea = 0;
+            long weightedSum = 0;
+            long fallbackPpm2Sum = 0;
+            int count = 0;
+
+            for (Listing l : externalListings) {
+                if (l.getPricePerM2() != null && l.getPricePerM2() > 0) {
+                    int ppm2 = l.getPricePerM2();
+                    int area = l.getSizeM2() != null && l.getSizeM2() > 0 ? l.getSizeM2() : 0;
+                    if (area > 0) {
+                        weightedSum += (long) ppm2 * area;
+                        totalArea += area;
+                    }
+                    fallbackPpm2Sum += ppm2;
+                    count++;
+                }
+            }
+
+            if (count > 0) {
+                double avg = totalArea > 0 ? (double) weightedSum / totalArea : (double) fallbackPpm2Sum / count;
+                liveDbAvg = round(avg);
                 liveDbCount = externalListings.size();
             }
         }
@@ -216,10 +231,24 @@ public class PriceSuggestionService {
                     .toList();
 
             if (!typeListings.isEmpty()) {
-                double dbTypeAvg = typeListings.stream()
-                        .mapToInt(Listing::getPricePerM2)
-                        .average()
-                        .orElse(propertyTypeAvgPpm2);
+                long typeArea = 0;
+                long typeWeightedSum = 0;
+                long typeFallbackPpm2Sum = 0;
+
+                for (Listing l : typeListings) {
+                    int ppm2 = l.getPricePerM2();
+                    int area = l.getSizeM2() != null && l.getSizeM2() > 0 ? l.getSizeM2() : 0;
+                    if (area > 0) {
+                        typeWeightedSum += (long) ppm2 * area;
+                        typeArea += area;
+                    }
+                    typeFallbackPpm2Sum += ppm2;
+                }
+
+                double dbTypeAvg = typeArea > 0
+                        ? (double) typeWeightedSum / typeArea
+                        : (double) typeFallbackPpm2Sum / typeListings.size();
+
                 // Blend database scraped average with dataset benchmark
                 propertyTypeAvgPpm2 = round((propertyTypeAvgPpm2 * 0.5) + (dbTypeAvg * 0.5));
                 comparableCount += typeListings.size();

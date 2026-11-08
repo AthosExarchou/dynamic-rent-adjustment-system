@@ -3,7 +3,8 @@ import { TrendingDown } from 'lucide-react';
 import styles from './PriceDropIndicator.module.css';
 
 /**
- * Computes the average pricePerM2 across all listings (ignoring nulls/zeros).
+ * Computes the area-weighted average pricePerM2 across all listings (ignoring nulls/zeros).
+ * Falls back to simple mean if size/area data is unavailable.
  * @param {Array} listings
  * @returns {number|null}
  */
@@ -11,9 +12,18 @@ export function computeAvgPricePerM2(listings) {
   if (!listings || listings.length === 0)
     return null;
 
-  const valid = listings.filter(l => l.pricePerM2 > 0);
+  const valid = listings.filter(l => l && l.pricePerM2 > 0);
   if (valid.length === 0)
     return null;
+
+  const totalArea = valid.reduce((sum, l) => sum + (Number(l.sizeM2) > 0 ? Number(l.sizeM2) : 0), 0);
+  if (totalArea > 0) {
+    const totalWeightedSum = valid.reduce((sum, l) => {
+      const area = Number(l.sizeM2) > 0 ? Number(l.sizeM2) : 0;
+      return sum + (l.pricePerM2 * area);
+    }, 0);
+    return totalWeightedSum / totalArea;
+  }
 
   return valid.reduce((sum, l) => sum + l.pricePerM2, 0) / valid.length;
 }
