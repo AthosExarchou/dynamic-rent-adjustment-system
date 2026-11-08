@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth';
 import { UserCircle, Mail, Shield, Settings, Key, Trash2, Briefcase, Calendar, Clock, Lock } from 'lucide-react';
+import { InfoTooltip } from '../../../shared/components/InfoTooltip';
 import styles from './Profile.module.css';
 
 const formatDate = (dateStr) => {
@@ -71,6 +72,7 @@ export default function Profile() {
             <div className={styles.infoGroup}>
               <div className={styles.infoLabel}>
                 <Shield size={18} /> Account Roles
+                <InfoTooltip text="Platform access roles assigned to your account. You can register as an owner to list and manage properties." />
               </div>
               <div className={styles.rolesContainer}>
                 {roles.map(role => (

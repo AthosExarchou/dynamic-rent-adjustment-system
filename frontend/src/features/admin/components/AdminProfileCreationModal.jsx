@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import apiClient from '../../../shared/api/client';
 import { useToast } from '../../../shared/components/Toast';
+import { InfoTooltip } from '../../../shared/components/InfoTooltip';
 import styles from './AdminModals.module.css';
 
 export default function AdminProfileCreationModal({ userId, roleType, onClose, onRefresh }) {
@@ -47,7 +48,10 @@ export default function AdminProfileCreationModal({ userId, roleType, onClose, o
     <div className={styles.modalOverlay}>
       <div className={styles.modalCard}>
         <div className={styles.modalHeader}>
-          <h3>Create {roleType === 'OWNER' ? 'Owner' : 'Tenant'} Profile</h3>
+          <h3>
+            Create {roleType === 'OWNER' ? 'Owner' : 'Tenant'} Profile
+            <InfoTooltip text={`Provides required contact information to grant the ${roleType === 'OWNER' ? 'Owner' : 'Tenant'} role.`} />
+          </h3>
           <button onClick={onClose} className={styles.closeBtn}>&times;</button>
         </div>
         <div className={styles.modalBody}>
@@ -84,7 +88,10 @@ export default function AdminProfileCreationModal({ userId, roleType, onClose, o
                          {...formData, lastName: e.target.value})} className={styles.input} />
             </div>
             <div className={styles.formGroup}>
-              <label htmlFor="modalPhone" className={styles.label}>Phone Number</label>
+              <label htmlFor="modalPhone" className={styles.label}>
+                Phone Number
+                <InfoTooltip text="Contact phone number formatted with an international dial code (e.g. +30)." />
+              </label>
               <input id="modalPhone" type="tel" required
                      minLength={7}
                      maxLength={25}

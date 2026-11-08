@@ -93,7 +93,7 @@ export default function Pagination({
         <div className={styles.pages}>
           {getPageNumbers().map((page, idx) =>
             page === '...' ? (
-              <span key={`ellipsis-${idx}`} className={styles.ellipsis}>…</span>
+              <span key={`ellipsis-${idx}`} className={styles.ellipsis}>...</span>
             ) : (
               <button
                 key={page}

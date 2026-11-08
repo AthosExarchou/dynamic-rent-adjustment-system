@@ -5,6 +5,7 @@ import apiClient from '../../../shared/api/client';
 import { useAuth } from '../../auth';
 import { useToast } from '../../../shared/components/Toast';
 import { OWNER_CONSTRAINTS } from '../models/owner';
+import { InfoTooltip } from '../../../shared/components/InfoTooltip';
 import styles from './OwnerForm.module.css';
 
 export default function OwnerForm() {
@@ -49,6 +50,10 @@ export default function OwnerForm() {
           <h3 className={styles.title}>
             <Briefcase className={styles.titleIcon} size={28} />
             Register as Owner
+            <InfoTooltip
+              className={styles.headerTooltip}
+              text="An owner profile registers your contact details so prospective tenants and platform administrators can reach you regarding your listings."
+            />
           </h3>
         </div>
 
@@ -107,6 +112,7 @@ export default function OwnerForm() {
               <div className={styles.formGroup}>
                 <label htmlFor="ownerPhone" className={styles.label}>
                   <Phone size={16} /> Phone Number
+                  <InfoTooltip text="Contact phone number formatted with an international dial code (e.g. +30)." />
                 </label>
                 <input
                   id="ownerPhone"

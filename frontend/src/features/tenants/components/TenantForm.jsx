@@ -5,6 +5,7 @@ import { UserPlus, UserCheck, Phone, CheckCircle, ChevronRight, ArrowLeft, Info 
 import apiClient from '../../../shared/api/client';
 import { useToast } from '../../../shared/components/Toast';
 import { TENANT_CONSTRAINTS } from '../models/tenant';
+import { InfoTooltip } from '../../../shared/components/InfoTooltip';
 import styles from './TenantForm.module.css';
 
 export default function TenantForm() {
@@ -160,7 +161,10 @@ export default function TenantForm() {
             {!isTenant ? (
               <>
                 <div className={styles.sectionNotice}>
-                  <p>You need to create a Tenant Profile before applying. Please fill out your details below.</p>
+                  <p>
+                    You need to create a Tenant Profile before applying. Please fill out your details below.
+                    <InfoTooltip text="Your contact information is shared with the property owner to review your rental application." />
+                  </p>
                 </div>
 
                 <div className={styles.formGrid}>
@@ -195,6 +199,7 @@ export default function TenantForm() {
                   <div className={styles.formGroup}>
                     <label htmlFor="phoneNumber" className={styles.label}>
                       <Phone size={16} /> Phone Number
+                      <InfoTooltip text="Contact phone number formatted with an international dial code (e.g. +30)." />
                     </label>
                     <input
                       id="phoneNumber"

@@ -38,6 +38,15 @@
   opacity: 0.9;
 }
 
+.headerTooltip svg {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.headerTooltip:hover svg,
+.headerTooltip:focus svg {
+  color: #ffffff;
+}
+
 .body {
   padding: 2rem;
 }
