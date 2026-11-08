@@ -1,0 +1,305 @@
+.mapWrapper {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-lg, 0.5rem);
+  overflow: hidden;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background-color: var(--background-default, #f8fafc);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.mapCanvas {
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* Modern styling for Official OpenStreetMap tiles */
+.mapTileLayer {
+  filter: saturate(0.88) contrast(1.02);
+  transition: filter 0.3s ease;
+}
+
+[data-theme='dark'] .mapTileLayer {
+  filter: brightness(0.65) invert(1) contrast(2) hue-rotate(185deg) saturate(0.35) brightness(0.88);
+}
+
+/* Floating Toolbar */
+.mapToolbar {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.toolBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 0.5rem;
+  background-color: var(--background-paper, #ffffff);
+  color: var(--text-primary, #1e293b);
+  border: 1px solid var(--border-color, #e2e8f0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.toolBtn:hover {
+  background-color: #0d6efd;
+  color: #ffffff;
+  border-color: #0d6efd;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(13, 110, 253, 0.25);
+}
+
+[data-theme='dark'] .toolBtn {
+  background-color: #1e293b;
+  color: #f1f5f9;
+  border-color: #334155;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='dark'] .toolBtn:hover {
+  background-color: #3b82f6;
+  color: #ffffff;
+  border-color: #3b82f6;
+}
+
+/* Ctrl + Scroll Gesture Hint Overlay */
+.gestureHintOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  z-index: 1000;
+  pointer-events: none;
+  animation: fadeIn 0.15s ease;
+}
+
+.gestureHintOverlay span {
+  background-color: rgba(15, 23, 42, 0.9);
+  color: #ffffff;
+  padding: 0.75rem 1.4rem;
+  border-radius: 50px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  letter-spacing: 0.01em;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Loading & Error Overlays */
+.loadingOverlay,
+.errorOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background-color: var(--background-default, #f8fafc);
+  color: var(--text-secondary, #64748b);
+  font-size: 0.95rem;
+  z-index: 5;
+}
+
+.spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid rgba(13, 110, 253, 0.15);
+  border-top-color: #0d6efd;
+  border-radius: 50%;
+  animation: mapSpin 0.9s linear infinite;
+}
+
+@keyframes mapSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.errorIcon {
+  color: #ef4444;
+  opacity: 0.8;
+}
+
+.fallbackLink {
+  color: #0d6efd;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.fallbackLink:hover {
+  text-decoration: underline;
+}
+
+/* Custom Marker Styling */
+.markerContainer {
+  background: transparent;
+  border: none;
+}
+
+.markerPinWrapper {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.markerBadge {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  border: 2px solid #ffffff;
+  z-index: 2;
+  transition: transform 0.2s ease;
+}
+
+.markerBadge:hover {
+  transform: scale(1.1);
+}
+
+.markerPulse {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: rgba(37, 99, 235, 0.35);
+  animation: pulseEffect 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  z-index: 1;
+}
+
+@keyframes pulseEffect {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(0.85);
+    opacity: 0;
+  }
+}
+
+/* Custom Popup Styling */
+.popupContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.2rem;
+  font-family: inherit;
+}
+
+.popupTitle {
+  font-size: 0.95rem;
+  color: #1e293b;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.popupSubtitle {
+  font-size: 0.82rem;
+  color: #64748b;
+  line-height: 1.3;
+}
+
+.popupNotice {
+  font-size: 0.75rem;
+  color: #2563eb;
+  font-weight: 600;
+  margin-top: 0.15rem;
+}
+
+/* Leaflet UI Overrides */
+:global(.leaflet-control-zoom) {
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
+  border-radius: 0.5rem !important;
+  overflow: hidden;
+  margin-right: 1rem !important;
+  margin-bottom: 1rem !important;
+}
+
+:global(.leaflet-control-zoom a) {
+  background-color: var(--background-paper, #ffffff) !important;
+  color: var(--text-primary, #1e293b) !important;
+  border-bottom: 1px solid var(--border-color, #e2e8f0) !important;
+  width: 32px !important;
+  height: 32px !important;
+  line-height: 32px !important;
+  font-size: 15px !important;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+:global(.leaflet-control-zoom a:hover) {
+  background-color: #0d6efd !important;
+  color: #ffffff !important;
+}
+
+:global(.leaflet-control-attribution) {
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(4px);
+  font-size: 10px !important;
+  color: #64748b !important;
+  padding: 2px 6px !important;
+  border-top-left-radius: 4px;
+}
+
+[data-theme='dark'] :global(.leaflet-control-attribution) {
+  background: rgba(15, 23, 42, 0.75) !important;
+  color: #94a3b8 !important;
+}
+
+[data-theme='dark'] :global(.leaflet-control-attribution a) {
+  color: #60a5fa !important;
+}
+
+[data-theme='dark'] :global(.leaflet-control-zoom a) {
+  background-color: #1e293b !important;
+  color: #f1f5f9 !important;
+  border-bottom: 1px solid #334155 !important;
+}
+
+[data-theme='dark'] :global(.leaflet-control-zoom a:hover) {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+:global(.leaflet-popup-content-wrapper) {
+  border-radius: 0.5rem !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+  padding: 4px !important;
+}
+
+:global(.leaflet-popup-content) {
+  margin: 8px 12px !important;
+}
