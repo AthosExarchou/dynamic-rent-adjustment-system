@@ -11,69 +11,14 @@ import {
   Minus,
   Activity,
   History,
-  HelpCircle,
   BookOpen,
   ChevronDown,
   ChevronUp,
   Info
 } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
+import { InfoTooltip } from '../../../shared/components/InfoTooltip';
 import styles from './MacroTrendsDashboard.module.css';
-
-function InfoTooltip({ text, children }) {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (!visible) return;
-    const handleClickOutside = () => setVisible(false);
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [visible]);
-
-  const icon = (
-    <span
-      className={styles.tooltipContainer}
-      onClick={(e) => {
-        e.stopPropagation();
-        setVisible((v) => !v);
-      }}
-      onMouseEnter={() => setVisible(true)}
-      onMouseLeave={() => setVisible(false)}
-      onFocus={() => setVisible(true)}
-      onBlur={() => setVisible(false)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          setVisible((v) => !v);
-        } else if (e.key === 'Escape') {
-          setVisible(false);
-        }
-      }}
-      tabIndex={0}
-      role="button"
-      aria-label={text}
-      aria-expanded={visible}
-    >
-      <HelpCircle size={14} className={styles.helpIcon} />
-      {visible && (
-        <span className={styles.tooltipBubble} role="tooltip">
-          {text}
-        </span>
-      )}
-    </span>
-  );
-
-  if (!children) {
-    return icon;
-  }
-
-  return (
-    <span className={styles.tooltipNoWrap}>
-      {children}
-      {icon}
-    </span>
-  );
-}
 
 export default function MacroTrendsDashboard() {
   const [data, setData] = useState(null);

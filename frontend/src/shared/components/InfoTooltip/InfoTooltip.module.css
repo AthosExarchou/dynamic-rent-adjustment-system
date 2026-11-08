@@ -1,0 +1,95 @@
+/* InfoTooltip Component Styling */
+.tooltipNoWrap {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.tooltipContainer {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-left: 0.25rem;
+  vertical-align: middle;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.helpIcon {
+  color: var(--text-secondary, #64748b);
+  opacity: 0.7;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.tooltipContainer:hover .helpIcon,
+.tooltipContainer:focus .helpIcon {
+  opacity: 1;
+  color: var(--color-primary-600, #0d6efd);
+}
+
+[data-theme="dark"] .tooltipContainer:hover .helpIcon,
+[data-theme="dark"] .tooltipContainer:focus .helpIcon {
+  color: #38bdf8;
+}
+
+.tooltipBubble {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translate(-50%, 0);
+  width: max-content;
+  min-width: 170px;
+  max-width: 260px;
+  background-color: #1e293b;
+  color: #f8fafc;
+  font-size: 0.75rem;
+  font-weight: 400;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  z-index: 1000;
+  pointer-events: none;
+  line-height: 1.35;
+  white-space: normal;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: normal;
+  animation: tooltipFadeIn 0.15s ease-in-out;
+}
+
+.tooltipBubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: #1e293b transparent transparent transparent;
+}
+
+[data-theme="dark"] .tooltipBubble {
+  background-color: #334155;
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .tooltipBubble::after {
+  border-color: #334155 transparent transparent transparent;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 3px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
