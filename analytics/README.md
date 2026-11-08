@@ -93,16 +93,55 @@ The script outputs:
 - `outputs/price_predictions.json`: Model metrics consumed by the Spring Boot backend (`/api/listings/price-suggestion`)
 - `outputs/micro_forecast_athens.png`: Forecast plot with 95% confidence intervals
 
+### 3. Macroeconomic SARIMA Forecasting & Bank of Greece Open Data Engine
+The macroeconomic forecasting engine (`analytics/models/arima_macro.py`) models the long-term quarterly residential property price index published by the **Bank of Greece** ([Dataset 5: Index of Apartment Prices by Geographical Area](https://opendata.bankofgreece.gr/en/dataset/5)).
+
+It features automated, time-based TTL checking against the Bank of Greece API to keep quarterly price index data dynamically synchronized without redundant downloads:
+
+**Run macroeconomic quarterly SARIMA forecasting (with 14-day TTL auto-check):**
+```bash
+python3 analytics/models/arima_macro.py
+```
+
+**Force re-sync and download the latest release from the Bank of Greece API:**
+```bash
+python3 analytics/models/arima_macro.py --force-update
+```
+
+**Run offline / bypass API check using local cached dataset:**
+```bash
+python3 analytics/models/arima_macro.py --no-update
+```
+
+**Run standalone Bank of Greece updater module:**
+```bash
+python3 analytics/analysis/bog_updater.py
+```
+
+The script outputs:
+- `outputs/macro_predictions.json`: Macroeconomic metrics and 8-quarter index projections consumed by the Spring Boot backend (`/api/analytics/macro-forecast`) and displayed on the DRAS Market Intelligence dashboard (`/market-trends`)
+- `outputs/macro_forecast_plot.png`: Athens apartment price index forecast plot with 95% prediction intervals
+- `outputs/SARIMA_Model_Summary.txt`: Detailed statsmodels SARIMAX mathematical summary
+- `data/bog_dataset_metadata.json`: Synchronization metadata tracking last checked date, active quarter, and TTL settings
+- `data/bank_of_greece_apartment_index.csv`: Normalized CSV time series ready for analytics
+
+### 4. Running Unit Tests
+Execute the analytical and data update unit test suite:
+```bash
+python3 -m unittest analytics/tests/test_arima_macro.py
+```
+
 ## Project Structure
 
 ```text
 analytics/
-├── analysis/           # Data analysis scripts and Jupyter notebooks
-├── data/               # Raw and processed datasets
+├── analysis/           # Data analysis scripts
+├── data/               # Raw and processed datasets (Bank of Greece CSV/Excel, Spitogatos CSVs)
 ├── scrapers/           # Web scraping scripts (Spitogatos active scraper, Rentola legacy)
-├── models/             # Machine learning models (arima_micro.py, arima_macro.py)
-├── outputs/            # Generated forecasts, plots, and price_predictions.json
-├── requirements.txt    # Python dependencies (playwright, pandas, pmdarima, statsmodels, etc.)
+├── models/             # Time-series forecasting models (arima_micro.py, arima_macro.py)
+├── outputs/            # Generated forecasts, plots, and prediction JSON payloads
+├── tests/              # Python test suite
+├── requirements.txt    # Python dependencies (openpyxl, pmdarima, statsmodels, etc.)
 └── scraper.log         # Logs from scraper execution
 ```
 
