@@ -299,10 +299,11 @@
   margin-top: 0.5rem;
   background-color: var(--background-paper);
   border: 1px solid var(--border-color);
-  border-radius: 0.375rem;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  border-radius: 0.5rem;
+  box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.15);
   padding: 0.5rem 0;
   min-width: 12rem;
+  max-width: 90vw;
   list-style: none;
   z-index: 1000;
   animation: dropdownFade 0.2s ease;
@@ -652,23 +653,7 @@
   .navActions {
     width: auto;
     padding: 0;
-  }
-
-  .dropdown {
-    width: 100%;
-  }
-
-  .dropdownToggle {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .dropdownMenu {
-    width: 100%;
-    position: static;
-    box-shadow: none;
-    border-color: transparent;
-    padding: 0;
+    gap: 0.75rem;
   }
 
   .footerGrid {

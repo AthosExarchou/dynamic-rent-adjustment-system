@@ -374,6 +374,8 @@ export default function MainLayout() {
                   <button
                     className={styles.dropdownToggle}
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    aria-expanded={isDropdownOpen}
+                    aria-haspopup="true"
                   >
                     <UserCircle size={18} /> Account
                   </button>
