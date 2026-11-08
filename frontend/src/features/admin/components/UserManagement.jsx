@@ -6,6 +6,7 @@ import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
 import DatePicker from '../../../shared/components/DatePicker';
 import { Pagination } from '../../../shared/components/Pagination';
 import { Select } from '../../../shared/components/Select';
+import { InfoTooltip } from '../../../shared/components/InfoTooltip';
 import styles from './AdminDashboard.module.css';
 import EditUserModal from './EditUserModal';
 import AdminProfileCreationModal from './AdminProfileCreationModal';
@@ -427,7 +428,10 @@ export default function UserManagement() {
               <th>ID</th>
               <th>Username</th>
               <th>Email Address</th>
-              <th>Assigned Roles</th>
+              <th>
+                Assigned Roles
+                <InfoTooltip text="Platform access permissions. Assigning the Owner role requires an existing Owner profile with contact details." />
+              </th>
               <th className={styles.centerAlign}>Manage Roles / Actions</th>
             </tr>
           </thead>

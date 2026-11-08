@@ -44,6 +44,7 @@
   display: flex;
   flex-direction: row;
   overflow: hidden;
+  min-width: 0;
 }
 
 @media (max-width: 768px) {
@@ -153,15 +154,44 @@
 }
 
 .cardTitle {
-  margin-bottom: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  min-width: 0;
 }
 
 .address {
   color: var(--text-secondary);
+  font-size: 0.95rem;
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  min-width: 0;
+}
+
+.addressIcon,
+.address svg {
+  color: #0d6efd;
+  flex-shrink: 0;
+}
+
+.addressText,
+.address span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .specs {

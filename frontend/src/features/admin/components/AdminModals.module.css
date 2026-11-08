@@ -59,6 +59,8 @@
   color: var(--text-secondary);
   margin-bottom: 1.25rem;
   font-size: 0.95rem;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .error {

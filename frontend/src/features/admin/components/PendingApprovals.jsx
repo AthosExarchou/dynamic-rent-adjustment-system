@@ -6,6 +6,7 @@ import { useToast } from '../../../shared/components/Toast';
 import { Pagination } from '../../../shared/components/Pagination';
 import { LISTING_CONSTRAINTS } from '../../listings/models/listing';
 import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
+import { InfoTooltip } from '../../../shared/components/InfoTooltip';
 import styles from './AdminDashboard.module.css';
 import modalStyles from './AdminModals.module.css';
 
@@ -168,10 +169,13 @@ export default function PendingApprovals() {
                 )}
               </div>
               <div className={styles.cardContent}>
-              <h3 className={styles.cardTitle}>{l.title}</h3>
-              <p className={styles.address}><MapPin size={16} /> {l.address}</p>
+                <h3 className={styles.cardTitle} title={l.title}>{l.title}</h3>
+                <p className={styles.address} title={l.address}>
+                  <MapPin size={16} className={styles.addressIcon} />
+                  <span className={styles.addressText}>{l.address}</span>
+                </p>
 
-              <div className={styles.specs}>
+                <div className={styles.specs}>
                 <span><strong>Rent:</strong> €{l.price}/mo</span>
                 <span><strong>Size:</strong> {l.sizeM2} m²</span>
                 <span><strong>Bedrooms:</strong> {l.bedrooms}</span>
@@ -242,6 +246,7 @@ export default function PendingApprovals() {
                 <div className={modalStyles.formGroup}>
                   <label htmlFor="rejectionReasonInput" className={modalStyles.label}>
                     Reason for Rejection <span style={{ color: 'var(--color-danger, #ef4444)' }}>*</span>
+                    <InfoTooltip text="This feedback is visible to the property owner to help them correct and resubmit their listing." />
                     <span style={{ fontWeight: 400, color: 'var(--text-secondary)', marginLeft: '0.5rem', fontSize: '0.8rem' }}>
                       (max {LISTING_CONSTRAINTS.REJECTION_REASON_MAX} characters)
                     </span>
