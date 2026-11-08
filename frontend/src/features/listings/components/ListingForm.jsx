@@ -49,6 +49,7 @@ export default function ListingForm() {
   const [imageMode, setImageMode] = useState('upload'); // 'upload' | 'url'
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [urlError, setUrlError] = useState('');
+  const [uploadError, setUploadError] = useState('');
   const [validatingUrl, setValidatingUrl] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const maxImages = 10;
@@ -141,20 +142,32 @@ export default function ListingForm() {
 
   const handleAddFiles = (newFiles) => {
     if (!newFiles || !newFiles.length) return;
+    setUploadError('');
+
+    if (images.length >= maxImages) {
+      setUploadError(`Maximum of ${maxImages} property images reached.`);
+      return;
+    }
+
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
 
     const filesArray = Array.from(newFiles);
     const oversized = filesArray.filter(f => f.size > MAX_FILE_SIZE);
     if (oversized.length > 0) {
-      setError(`Some files exceed the 20MB limit: ${oversized.map(f => f.name).join(', ')}`);
+      setUploadError(`Some files exceed the 20MB limit: ${oversized.map(f => f.name).join(', ')}`);
       return;
     }
 
     const incoming = filesArray.filter(f => validTypes.includes(f.type));
     if (!incoming.length) {
-      setError('Please select valid image files (JPG, PNG, WebP, or GIF).');
+      setUploadError('Please select valid image files (JPG, PNG, WebP, or GIF).');
       return;
+    }
+
+    if (incoming.length < filesArray.length) {
+      const skippedCount = filesArray.length - incoming.length;
+      setUploadError(`${skippedCount} unsupported file(s) were skipped. Only JPG, PNG, WebP, or GIF are supported.`);
     }
 
     setImages(prev => {
@@ -248,6 +261,7 @@ export default function ListingForm() {
     setLoading(true);
     setError('');
     setErrorDetails([]);
+    setUploadError('');
 
     const formDataPayload = new FormData();
     formDataPayload.append('title', formData.title);
@@ -623,6 +637,7 @@ export default function ListingForm() {
                     onClick={() => {
                       setImageMode('upload');
                       setUrlError('');
+                      setUploadError('');
                     }}
                   >
                     <Upload size={14} /> Upload Files
@@ -633,6 +648,7 @@ export default function ListingForm() {
                     onClick={() => {
                       setImageMode('url');
                       setUrlError('');
+                      setUploadError('');
                     }}
                   >
                     <Globe size={14} /> Add from URL
@@ -647,61 +663,74 @@ export default function ListingForm() {
               </div>
             ) : imageMode === 'upload' ? (
               /* Drag & Drop File Upload Area */
-              <div
-                className={`${styles.dropzone} ${isDragging ? styles.dropzoneActive : ''}`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setIsDragging(true);
-                }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setIsDragging(false);
-                  if (e.dataTransfer.files) {
-                    handleAddFiles(e.dataTransfer.files);
-                  }
-                }}
-                onClick={() => fileInputRef.current?.click()}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    fileInputRef.current?.click();
-                  }
-                }}
-              >
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={(e) => {
-                    if (e.target.files) {
-                      handleAddFiles(e.target.files);
-                    }
-                    e.target.value = '';
+              <>
+                <div
+                  className={`${styles.dropzone} ${isDragging ? styles.dropzoneActive : ''} ${uploadError ? styles.dropzoneError : ''}`}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
                   }}
-                  multiple
-                  accept="image/jpeg,image/png,image/webp,image/gif"
-                  style={{ display: 'none' }}
-                />
-                <UploadCloud size={36} className={styles.dropzoneIcon} />
-                <p className={styles.dropzoneTitle}>
-                  Drag & drop property photos here, or <span className={styles.browseLink}>browse</span>
-                </p>
-                <p className={styles.dropzoneSubtitle}>
-                  Supports JPG, PNG, WebP or GIF (maximum {maxImages} photos)
-                </p>
-                <button
-                  type="button"
-                  className={styles.switchModeLink}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setImageMode('url');
-                    setUrlError('');
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    if (e.dataTransfer.files) {
+                      handleAddFiles(e.dataTransfer.files);
+                    }
+                  }}
+                  onClick={() => {
+                    setUploadError('');
+                    fileInputRef.current?.click();
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      setUploadError('');
+                      fileInputRef.current?.click();
+                    }
                   }}
                 >
-                  <Globe size={13} /> Or add image by web URL
-                </button>
-              </div>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        handleAddFiles(e.target.files);
+                      }
+                      e.target.value = '';
+                    }}
+                    multiple
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    style={{ display: 'none' }}
+                  />
+                  <UploadCloud size={36} className={styles.dropzoneIcon} />
+                  <p className={styles.dropzoneTitle}>
+                    Drag & drop property photos here, or <span className={styles.browseLink}>browse</span>
+                  </p>
+                  <p className={styles.dropzoneSubtitle}>
+                    Supports JPG, PNG, WebP or GIF (maximum {maxImages} photos)
+                  </p>
+                  <button
+                    type="button"
+                    className={styles.switchModeLink}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setImageMode('url');
+                      setUrlError('');
+                      setUploadError('');
+                    }}
+                  >
+                    <Globe size={13} /> Or add image by web URL
+                  </button>
+                </div>
+                {uploadError && (
+                  <p className={styles.uploadErrorMessage}>
+                    <AlertCircle size={15} />
+                    {uploadError}
+                  </p>
+                )}
+              </>
             ) : (
               /* Image URL Input Area */
               <div className={styles.urlInputContainer}>
@@ -753,6 +782,7 @@ export default function ListingForm() {
                   onClick={() => {
                     setImageMode('upload');
                     setUrlError('');
+                    setUploadError('');
                   }}
                 >
                   <Upload size={13} /> Or upload local image files
