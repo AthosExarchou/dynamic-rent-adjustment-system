@@ -60,4 +60,40 @@ if ! getent group docker | grep -q "\bjenkins\b"; then
     systemctl restart jenkins
 fi
 
+# Preconfigure required pipeline credentials in Jenkins with default values
+mkdir -p /var/lib/jenkins/init.groovy.d
+cat << 'EOF' > /var/lib/jenkins/init.groovy.d/add-credentials.groovy
+import jenkins.model.Jenkins
+import hudson.ExtensionList
+import com.cloudbees.plugins.credentials.CredentialsScope
+import com.cloudbees.plugins.credentials.SystemCredentialsProvider
+import com.cloudbees.plugins.credentials.domains.Domain
+import org.jenkinsci.plugins.plaincredentials.impl.StringCredentialsImpl
+import hudson.util.Secret
+
+def domain = Domain.global()
+def store = ExtensionList.lookupSingleton(SystemCredentialsProvider.class).getStore()
+
+def creds = [
+    [id: 'dras-database-password', secret: 'postgrespassword', desc: 'DRAS DB Password'],
+    [id: 'dras-mail-username', secret: 'dev@dras.local', desc: 'DRAS Mail Username'],
+    [id: 'dras-mail-password', secret: 'dummy_password', desc: 'DRAS Mail Password']
+]
+
+creds.each { c ->
+    def existing = store.getCredentials(domain).find { it.id == c.id }
+    if (!existing) {
+        def stringCred = new StringCredentialsImpl(
+            CredentialsScope.GLOBAL,
+            c.id,
+            c.desc,
+            Secret.fromString(c.secret)
+        )
+        store.addCredentials(domain, stringCred)
+        println("Added credential: ${c.id}")
+    }
+}
+EOF
+chown -R jenkins:jenkins /var/lib/jenkins/init.groovy.d
+
 echo "Provisioning complete!"
