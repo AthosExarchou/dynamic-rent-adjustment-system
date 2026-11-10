@@ -64,15 +64,21 @@
 }
 
 .error {
-  background-color: #fdf2f2;
-  color: var(--color-danger);
+  background-color: var(--alert-danger-bg, #fdf2f2);
+  color: var(--alert-danger-color, var(--color-danger));
   padding: 0.8rem;
   border-radius: var(--radius-md);
   margin-bottom: 1.25rem;
-  border: 1px solid #fbd5d5;
+  border: 1px solid var(--alert-danger-border, #fca5a5);
   font-size: 0.9rem;
   word-break: break-word;
   overflow-wrap: break-word;
+}
+
+[data-theme='dark'] .error {
+  background-color: var(--alert-danger-bg, rgba(239, 68, 68, 0.15));
+  color: var(--alert-danger-color, #fca5a5);
+  border-color: var(--alert-danger-border, rgba(239, 68, 68, 0.55));
 }
 
 .formGroup {

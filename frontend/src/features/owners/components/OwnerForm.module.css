@@ -67,9 +67,15 @@
 }
 
 .alertDanger {
-  background-color: #fdf2f2;
-  color: #ef4444;
-  border: 1px solid #fecaca;
+  background-color: var(--alert-danger-bg, #fdf2f2);
+  color: var(--alert-danger-color, #dc2626);
+  border: 1px solid var(--alert-danger-border, #fca5a5);
+}
+
+[data-theme='dark'] .alertDanger {
+  background-color: var(--alert-danger-bg, rgba(239, 68, 68, 0.15));
+  color: var(--alert-danger-color, #fca5a5);
+  border-color: var(--alert-danger-border, rgba(239, 68, 68, 0.55));
 }
 
 .sectionNotice {

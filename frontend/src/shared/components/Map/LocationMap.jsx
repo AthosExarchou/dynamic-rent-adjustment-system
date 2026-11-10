@@ -267,7 +267,7 @@ export default function LocationMap({
       {(!mapVisible || loading) && (
         <div className={styles.loadingOverlay}>
           <div className={styles.spinner} />
-          <span>Locating on map…</span>
+          <span>Locating on map...</span>
         </div>
       )}
 

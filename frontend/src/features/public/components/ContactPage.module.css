@@ -408,12 +408,12 @@
   display: flex;
   align-items: flex-start;
   gap: 0.85rem;
-  background-color: rgba(16, 185, 129, 0.1);
-  color: var(--text-primary);
+  background-color: var(--alert-success-bg, #f0fdf4);
+  color: var(--alert-success-color, #16a34a);
   padding: 1rem 1.25rem;
   border-radius: var(--radius-lg);
   margin-bottom: 1.75rem;
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  border: 1px solid var(--alert-success-border, #86efac);
   font-size: 0.95rem;
   transition: transform 0.2s ease;
 }
@@ -424,7 +424,7 @@
 
 .alertSuccess strong {
   display: block;
-  color: #10b981;
+  color: var(--alert-success-color, #16a34a);
   margin-bottom: 0.25rem;
 }
 
@@ -437,12 +437,12 @@
   display: flex;
   align-items: flex-start;
   gap: 0.85rem;
-  background-color: rgba(239, 68, 68, 0.1);
-  color: var(--text-primary);
+  background-color: var(--alert-danger-bg, #fdf2f2);
+  color: var(--alert-danger-color, #dc2626);
   padding: 1rem 1.25rem;
   border-radius: var(--radius-lg);
   margin-bottom: 1.75rem;
-  border: 1px solid rgba(239, 68, 68, 0.25);
+  border: 1px solid var(--alert-danger-border, #fca5a5);
   font-size: 0.95rem;
   transition: transform 0.2s ease;
   word-break: break-word;
@@ -460,7 +460,7 @@
 
 .alertError strong {
   display: block;
-  color: #ef4444;
+  color: var(--alert-danger-color, #dc2626);
   margin-bottom: 0.25rem;
 }
 
@@ -477,11 +477,33 @@
 }
 
 .alertSuccess .alertIcon {
-  color: #10b981;
+  color: var(--alert-success-color, #16a34a);
 }
 
 .alertError .alertIcon {
-  color: #ef4444;
+  color: var(--alert-danger-color, #dc2626);
+}
+
+[data-theme="dark"] .alertSuccess {
+  background-color: var(--alert-success-bg, rgba(16, 185, 129, 0.15));
+  border-color: var(--alert-success-border, rgba(16, 185, 129, 0.55));
+  color: var(--alert-success-color, #86efac);
+}
+
+[data-theme="dark"] .alertSuccess strong,
+[data-theme="dark"] .alertSuccess .alertIcon {
+  color: var(--alert-success-color, #86efac);
+}
+
+[data-theme="dark"] .alertError {
+  background-color: var(--alert-danger-bg, rgba(239, 68, 68, 0.15));
+  border-color: var(--alert-danger-border, rgba(239, 68, 68, 0.55));
+  color: var(--alert-danger-color, #fca5a5);
+}
+
+[data-theme="dark"] .alertError strong,
+[data-theme="dark"] .alertError .alertIcon {
+  color: var(--alert-danger-color, #fca5a5);
 }
 
 /* Map Section */

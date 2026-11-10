@@ -29,14 +29,20 @@
 }
 
 .error {
-  background-color: #fdf2f2;
-  color: var(--color-danger);
+  background-color: var(--alert-danger-bg, #fdf2f2);
+  color: var(--alert-danger-color, var(--color-danger));
   padding: var(--spacing-4);
   border-radius: var(--radius-md);
   margin-bottom: var(--spacing-4);
-  border: 1px solid #fbd5d5;
+  border: 1px solid var(--alert-danger-border, #fca5a5);
   word-break: break-word;
   overflow-wrap: break-word;
+}
+
+[data-theme='dark'] .error {
+  background-color: var(--alert-danger-bg, rgba(239, 68, 68, 0.15));
+  color: var(--alert-danger-color, #fca5a5);
+  border-color: var(--alert-danger-border, rgba(239, 68, 68, 0.55));
 }
 
 .formGroup {
@@ -237,14 +243,20 @@
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
-  background-color: #fef2f2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
+  background-color: var(--alert-danger-bg, #fef2f2);
+  color: var(--alert-danger-color, #dc2626);
+  border: 1px solid var(--alert-danger-border, #fca5a5);
   border-radius: var(--radius-md);
   padding: 1rem 1.25rem;
   margin-bottom: 1.5rem;
   font-size: 0.95rem;
   line-height: 1.5;
+}
+
+[data-theme='dark'] .rejectionBanner {
+  background-color: var(--alert-danger-bg, rgba(239, 68, 68, 0.15));
+  color: var(--alert-danger-color, #fca5a5);
+  border-color: var(--alert-danger-border, rgba(239, 68, 68, 0.55));
 }
 
 .rejectionIcon {

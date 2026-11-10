@@ -203,16 +203,22 @@
 .badgeOther { background-color: #e2e3e5; color: #41464b; }
 
 .rejectionNotice {
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
+  background-color: var(--alert-danger-bg, #fef2f2);
+  border: 1px solid var(--alert-danger-border, #fca5a5);
   border-radius: 6px;
   padding: 0.65rem 0.85rem;
   margin-bottom: 1rem;
   font-size: 0.85rem;
-  color: #991b1b;
+  color: var(--alert-danger-color, #dc2626);
   display: flex;
   gap: 0.5rem;
   align-items: flex-start;
+}
+
+[data-theme='dark'] .rejectionNotice {
+  background-color: var(--alert-danger-bg, rgba(239, 68, 68, 0.15));
+  border-color: var(--alert-danger-border, rgba(239, 68, 68, 0.55));
+  color: var(--alert-danger-color, #fca5a5);
 }
 
 .rejectionIcon {
