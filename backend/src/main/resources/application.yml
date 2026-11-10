@@ -89,6 +89,7 @@ spring:
     password: ${MAIL_PASSWORD}
     protocol: smtp
     default-encoding: UTF-8
+    test-connection: true
     properties:
       mail:
         smtp:
