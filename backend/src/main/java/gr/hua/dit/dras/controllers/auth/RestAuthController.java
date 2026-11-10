@@ -3,7 +3,9 @@ package gr.hua.dit.dras.controllers.auth;
 /* imports */
 import gr.hua.dit.dras.dto.ContactForm;
 import gr.hua.dit.dras.dto.UserDTO;
+import gr.hua.dit.dras.entities.PasswordResetToken;
 import gr.hua.dit.dras.entities.User;
+import gr.hua.dit.dras.repositories.PasswordResetTokenRepository;
 import gr.hua.dit.dras.repositories.UserRepository;
 import gr.hua.dit.dras.services.infrastructure.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,12 +16,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -35,7 +39,13 @@ public class RestAuthController {
     private UserRepository userRepository;
 
     @Autowired
+    private PasswordResetTokenRepository passwordResetTokenRepository;
+
+    @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> credentials, HttpServletRequest request) {
@@ -112,23 +122,87 @@ public class RestAuthController {
 
         User user = userOpt.get();
 
-        ContactForm form = new ContactForm();
-        form.setName(user.getUsername());
-        form.setEmail(user.getEmail());
-        form.setSubject("Password Reset Request");
-        form.setMessage("Password reset requested for active DRAS user account with username: "
-                + user.getUsername() + ", email: " + user.getEmail()
-                + ". Please verify identity and assist user with access recovery.");
+        SecureRandom random = new SecureRandom();
+        int codeNum = 100000 + random.nextInt(900000);
+        String resetCode = String.valueOf(codeNum);
+
+        Optional<PasswordResetToken> existingToken = passwordResetTokenRepository.findByUser(user);
+        PasswordResetToken resetToken;
+        if (existingToken.isPresent()) {
+            resetToken = existingToken.get();
+            resetToken.setToken(resetCode);
+            resetToken.setExpiryDate(LocalDateTime.now().plusMinutes(15));
+        } else {
+            resetToken = new PasswordResetToken(resetCode, user, LocalDateTime.now().plusMinutes(15));
+        }
+        passwordResetTokenRepository.save(resetToken);
 
         try {
-            emailService.sendContactUsEmail(form);
+            emailService.sendPasswordResetCodeEmail(user.getEmail(), user, resetCode);
             return ResponseEntity.ok(Map.of(
-                    "message", "Password reset request submitted successfully.",
+                    "message", "A 6-digit confirmation code has been sent to your email address.",
                     "email", user.getEmail()
             ));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Failed to submit recovery request. Please try again later."));
+                    .body(Map.of("error", "Failed to send confirmation code. Please try again later."));
         }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> payload) {
+        String email = payload.get("email");
+        String code = payload.get("code");
+        String newPassword = payload.get("newPassword");
+        String confirmPassword = payload.get("confirmPassword");
+
+        if (email == null || email.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Email is required."));
+        }
+        if (code == null || code.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Confirmation code is required."));
+        }
+        if (newPassword == null || newPassword.isEmpty() || confirmPassword == null || confirmPassword.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "New password and confirmation are required."));
+        }
+
+        String cleanEmail = email.trim();
+        Optional<User> userOpt = userRepository.findByEmail(cleanEmail);
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "No active account found with this email address."));
+        }
+
+        User user = userOpt.get();
+        String cleanCode = code.trim();
+
+        Optional<PasswordResetToken> tokenOpt = passwordResetTokenRepository.findByUser(user);
+        if (tokenOpt.isEmpty() || !tokenOpt.get().getToken().equals(cleanCode)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid confirmation code."));
+        }
+
+        PasswordResetToken resetToken = tokenOpt.get();
+        if (resetToken.isExpired()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Confirmation code has expired. Please request a new one."));
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            return ResponseEntity.badRequest().body(Map.of("error", "New password and confirmation do not match."));
+        }
+
+        if (!newPassword.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).{8,}$")) {
+            return ResponseEntity.badRequest().body(Map.of("error",
+                    "Password must contain 8+ characters, including uppercase, lowercase, a number, and a special character."));
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setPasswordChangedAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        passwordResetTokenRepository.delete(resetToken);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Your password has been reset successfully. You can now sign in with your new password."
+        ));
     }
 }

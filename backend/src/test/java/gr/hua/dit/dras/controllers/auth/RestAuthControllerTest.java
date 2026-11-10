@@ -3,7 +3,9 @@ package gr.hua.dit.dras.controllers.auth;
 /* imports */
 import gr.hua.dit.dras.config.LoginSuccessHandler;
 import gr.hua.dit.dras.config.SecurityConfig;
+import gr.hua.dit.dras.entities.PasswordResetToken;
 import gr.hua.dit.dras.entities.User;
+import gr.hua.dit.dras.repositories.PasswordResetTokenRepository;
 import gr.hua.dit.dras.repositories.UserRepository;
 import gr.hua.dit.dras.services.infrastructure.EmailService;
 import org.junit.jupiter.api.DisplayName;
@@ -17,13 +19,20 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -45,10 +54,16 @@ class RestAuthControllerTest {
     private UserRepository userRepository;
 
     @MockitoBean
+    private PasswordResetTokenRepository passwordResetTokenRepository;
+
+    @MockitoBean
     private LoginSuccessHandler loginSuccessHandler;
 
     @MockitoBean
     private EmailService emailService;
+
+    @MockitoBean
+    private BCryptPasswordEncoder passwordEncoder;
 
     @Test
     @DisplayName("Login with valid credentials returns 200 OK and UserDTO")
@@ -134,14 +149,14 @@ class RestAuthControllerTest {
     }
 
     @Test
-    @DisplayName("Forgot password with active account returns 200 OK and dispatches recovery request")
-    void forgotPassword_ActiveAccount_ReturnsOkAndSendsEmail() throws Exception {
+    @DisplayName("Forgot password with active account generates 6-digit code and dispatches email")
+    void forgotPassword_ActiveAccount_GeneratesCodeAndSendsEmail() throws Exception {
         User user = new User();
         user.setUsername("active_user");
         user.setEmail("active@example.com");
 
         when(userRepository.findByEmail("active@example.com")).thenReturn(Optional.of(user));
-        when(emailService.sendContactUsEmail(any())).thenReturn(true);
+        when(passwordResetTokenRepository.findByUser(user)).thenReturn(Optional.empty());
 
         String payload = """
                 {
@@ -154,9 +169,10 @@ class RestAuthControllerTest {
                         .content(payload))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("active@example.com"))
-                .andExpect(jsonPath("$.message").value("Password reset request submitted successfully."));
+                .andExpect(jsonPath("$.message").value("A 6-digit confirmation code has been sent to your email address."));
 
-        verify(emailService).sendContactUsEmail(any());
+        verify(passwordResetTokenRepository).save(any(PasswordResetToken.class));
+        verify(emailService).sendPasswordResetCodeEmail(eq("active@example.com"), eq(user), anyString());
     }
 
     @Test
@@ -191,5 +207,181 @@ class RestAuthControllerTest {
                         .content(payload))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Email is required."));
+    }
+
+    @Test
+    @DisplayName("Reset password with valid code and matching new password updates password successfully")
+    void resetPassword_ValidCodeAndNewPassword_Success() throws Exception {
+        User user = new User();
+        user.setUsername("reset_user");
+        user.setEmail("user@example.com");
+        user.setPassword("OldHashedPassword123!");
+
+        PasswordResetToken token = new PasswordResetToken("123456", user, LocalDateTime.now().plusMinutes(10));
+
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
+        when(passwordResetTokenRepository.findByUser(user)).thenReturn(Optional.of(token));
+        when(passwordEncoder.matches("NewStrongPass1!", "OldHashedPassword123!")).thenReturn(false);
+        when(passwordEncoder.encode("NewStrongPass1!")).thenReturn("EncodedNewPassword456!");
+
+        String payload = """
+                {
+                    "email": "user@example.com",
+                    "code": "123456",
+                    "newPassword": "NewStrongPass1!",
+                    "confirmPassword": "NewStrongPass1!"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Your password has been reset successfully. You can now sign in with your new password."));
+
+        assertEquals("EncodedNewPassword456!", user.getPassword());
+        assertNotNull(user.getPasswordChangedAt());
+        verify(userRepository).save(user);
+        verify(passwordResetTokenRepository).delete(token);
+    }
+
+    @Test
+    @DisplayName("Reset password with invalid code returns 400 Bad Request")
+    void resetPassword_InvalidCode_ReturnsBadRequest() throws Exception {
+        User user = new User();
+        user.setEmail("user@example.com");
+
+        PasswordResetToken token = new PasswordResetToken("123456", user, LocalDateTime.now().plusMinutes(10));
+
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
+        when(passwordResetTokenRepository.findByUser(user)).thenReturn(Optional.of(token));
+
+        String payload = """
+                {
+                    "email": "user@example.com",
+                    "code": "999999",
+                    "newPassword": "NewStrongPass1!",
+                    "confirmPassword": "NewStrongPass1!"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Invalid confirmation code."));
+    }
+
+    @Test
+    @DisplayName("Reset password with expired code returns 400 Bad Request")
+    void resetPassword_ExpiredCode_ReturnsBadRequest() throws Exception {
+        User user = new User();
+        user.setEmail("user@example.com");
+
+        PasswordResetToken token = new PasswordResetToken("123456", user, LocalDateTime.now().minusMinutes(1)); // expired
+
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
+        when(passwordResetTokenRepository.findByUser(user)).thenReturn(Optional.of(token));
+
+        String payload = """
+                {
+                    "email": "user@example.com",
+                    "code": "123456",
+                    "newPassword": "NewStrongPass1!",
+                    "confirmPassword": "NewStrongPass1!"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Confirmation code has expired. Please request a new one."));
+    }
+
+    @Test
+    @DisplayName("Reset password with mismatched passwords returns 400 Bad Request")
+    void resetPassword_MismatchedPasswords_ReturnsBadRequest() throws Exception {
+        User user = new User();
+        user.setEmail("user@example.com");
+
+        PasswordResetToken token = new PasswordResetToken("123456", user, LocalDateTime.now().plusMinutes(10));
+
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
+        when(passwordResetTokenRepository.findByUser(user)).thenReturn(Optional.of(token));
+
+        String payload = """
+                {
+                    "email": "user@example.com",
+                    "code": "123456",
+                    "newPassword": "NewStrongPass1!",
+                    "confirmPassword": "DifferentPassword2@"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("New password and confirmation do not match."));
+    }
+
+    @Test
+    @DisplayName("Reset password with weak password returns 400 Bad Request")
+    void resetPassword_WeakPassword_ReturnsBadRequest() throws Exception {
+        User user = new User();
+        user.setEmail("user@example.com");
+
+        PasswordResetToken token = new PasswordResetToken("123456", user, LocalDateTime.now().plusMinutes(10));
+
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
+        when(passwordResetTokenRepository.findByUser(user)).thenReturn(Optional.of(token));
+
+        String payload = """
+                {
+                    "email": "user@example.com",
+                    "code": "123456",
+                    "newPassword": "weak",
+                    "confirmPassword": "weak"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Password must contain 8+ characters, including uppercase, lowercase, a number, and a special character."));
+    }
+
+    @Test
+    @DisplayName("Reset password allows restoring same password during recovery and succeeds with 200 OK")
+    void resetPassword_SameAsOldPassword_SucceedsDuringRecovery() throws Exception {
+        User user = new User();
+        user.setEmail("user@example.com");
+        user.setPassword("OldHashedPassword123!");
+
+        PasswordResetToken token = new PasswordResetToken("123456", user, LocalDateTime.now().plusMinutes(10));
+
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.of(user));
+        when(passwordResetTokenRepository.findByUser(user)).thenReturn(Optional.of(token));
+        when(passwordEncoder.encode("OldHashedPassword123!")).thenReturn("NewHashedPassword123!");
+
+        String payload = """
+                {
+                    "email": "user@example.com",
+                    "code": "123456",
+                    "newPassword": "OldHashedPassword123!",
+                    "confirmPassword": "OldHashedPassword123!"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Your password has been reset successfully. You can now sign in with your new password."));
+
+        verify(userRepository).save(user);
+        verify(passwordResetTokenRepository).delete(token);
     }
 }

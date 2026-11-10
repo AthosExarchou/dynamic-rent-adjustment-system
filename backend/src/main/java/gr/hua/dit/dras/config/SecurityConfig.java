@@ -46,7 +46,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         List<String> origins = new java.util.ArrayList<>(List.of(
-                "http://localhost:5173", "http://localhost:3000", "http://localhost:8080", "http://localhost",
+                "http://localhost:5173", "http://localhost:3000", "http://localhost:8080", "http://localhost:8082", "http://localhost",
                 "http://89.168.95.36", "http://dras.abrdns.com", "https://dras.abrdns.com"
         ));
         if (appPublicUrl != null && !appPublicUrl.isBlank() && !origins.contains(appPublicUrl)) {
@@ -107,7 +107,7 @@ public class SecurityConfig {
                         tokenRepository.setCookieName("XSRF-TOKEN-DRAS");
                         csrf.csrfTokenRepository(tokenRepository)
                             .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                            .ignoringRequestMatchers("/auth/login", "/auth/logout", "/auth/forgot-password", "/notifications/**", "/favourites/**", "/saveUser");
+                            .ignoringRequestMatchers("/auth/login", "/auth/logout", "/auth/forgot-password", "/auth/reset-password", "/notifications/**", "/favourites/**", "/saveUser");
                 })
                 .addFilterAfter(new OncePerRequestFilter() {
                     @Override

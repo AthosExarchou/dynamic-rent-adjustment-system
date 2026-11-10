@@ -90,6 +90,7 @@ public class EmailService {
                 else if (emailType.equals("listingRentedToSomeoneElse")) notifMessage = "A listing you applied for has been rented to someone else.";
                 else if (emailType.equals("userDetailsChanged")) notifMessage = "Your account details have been updated successfully.";
                 else if (emailType.equals("accountDeleted")) notifMessage = "Your account has been deleted. We hope to see you again.";
+                else if (emailType.equals("passwordResetCode")) notifMessage = "A 6-digit confirmation code was requested to reset your password.";
                 else if (emailType.equals("listingResubmittedAdmin")) notifMessage = "A previously rejected listing has been updated and re-submitted for approval.";
                 else notifMessage = subject;
 
@@ -123,6 +124,21 @@ public class EmailService {
                 "email/new-user-welcome.html",
                 context,
                 "welcome"
+        );
+    }
+
+    public void sendPasswordResetCodeEmail(String recipientEmail, User user, String resetCode) {
+
+        Context context = new Context();
+        context.setVariable("username", user.getUsername());
+        context.setVariable("resetCode", resetCode);
+
+        sendHtmlEmail(
+                recipientEmail,
+                "Your DRAS Password Reset Code",
+                "email/password-reset-code.html",
+                context,
+                "passwordResetCode"
         );
     }
 
