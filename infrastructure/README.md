@@ -125,14 +125,27 @@ Nginx acts as a reverse proxy, routing traffic to the frontend and backend conta
   > The following actions permanently delete all database data:
   >
   > - `docker compose down -v` removes all named volumes (both the database and frontend build, so the next `docker compose up -d` will take longer).
-  > - To wipe only the database and preserve the frontend volume:
+  > - **Local Docker Environment:**
   >   ```bash
   >   docker compose down
   >   docker volume rm dynamic-rent-adjustment-system_db_data
   >   docker compose up -d
   >   ```
-
-  > **Note:** For **Vagrant**, the database volume is `dras_db_data` (Jenkins sets `COMPOSE_PROJECT_NAME=dras`). For a VM, the production volume is `dras_db_data_prod` (defined in `docker-compose.prod.yml`). In both cases, stop the relevant containers first via `vagrant ssh` or SSH into your server before removing the volume, then trigger a Jenkins build to redeploy.
+  > - **Vagrant Environment:**
+  >   Inside the VM, Jenkins deploys containers under the project name `dras`. To stop the containers and remove the volume, specify `-p dras`:
+  >   ```bash
+  >   cd /var/lib/jenkins/workspace/dras-dev
+  >   sudo docker compose -p dras down
+  >   sudo docker volume rm dras_db_data
+  >   sudo docker compose -p dras up -d
+  >   ```
+  > - **Production Environment (OCI VM):**
+  >   ```bash
+  >   cd /opt/dras/repository
+  >   sudo docker compose -f docker-compose.prod.yml down
+  >   sudo docker volume rm dras_db_data_prod
+  >   sudo docker compose -f docker-compose.prod.yml up -d
+  >   ```
 - **Stop everything:** Run `docker compose down`.
 - **Watch logs:** Run `docker compose logs -f` to see everything, or `docker compose logs -f backend` for just the backend.
 - **Access the app:** Navigate to `http://localhost` (the app is served via the Nginx reverse proxy on port 80).
@@ -173,6 +186,14 @@ Docker Compose, and Jenkins inside an Ubuntu 24.04 VM.
 From `infrastructure/vagrant`:
 - **See what's running inside Vagrant:** `vagrant ssh -c "docker ps"`
 - **Watch live backend logs:** `vagrant ssh -c "docker logs -f dras-backend-1"`
+- **Reset database (wipe data & re-initialize):**
+  ```bash
+  vagrant ssh -c "cd /var/lib/jenkins/workspace/dras-dev && sudo docker compose -p dras down && sudo docker volume rm dras_db_data && sudo docker compose -p dras up -d"
+  ```
+- **View initial admin password from logs:**
+  ```bash
+  vagrant ssh -c "sudo docker logs dras-backend-1 2>&1 | grep -A 1 'ADMIN INITIAL PASSWORD'"
+  ```
 - **SSH into VM:** `vagrant ssh`
 - **Stop VM:** `vagrant halt`
 - **Destroy VM:** `vagrant destroy`
