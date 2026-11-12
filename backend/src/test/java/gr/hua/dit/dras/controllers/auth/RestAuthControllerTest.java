@@ -3,7 +3,9 @@ package gr.hua.dit.dras.controllers.auth;
 /* imports */
 import gr.hua.dit.dras.config.LoginSuccessHandler;
 import gr.hua.dit.dras.config.SecurityConfig;
+import gr.hua.dit.dras.entities.Owner;
 import gr.hua.dit.dras.entities.PasswordResetToken;
+import gr.hua.dit.dras.entities.Role;
 import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.repositories.PasswordResetTokenRepository;
 import gr.hua.dit.dras.repositories.UserRepository;
@@ -29,7 +31,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -237,7 +238,8 @@ class RestAuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Your password has been reset successfully. You can now sign in with your new password."));
+                .andExpect(jsonPath("$.message").value(
+                        "Your password has been reset successfully. You can now sign in with your new password."));
 
         assertEquals("EncodedNewPassword456!", user.getPassword());
         assertNotNull(user.getPasswordChangedAt());
@@ -296,7 +298,8 @@ class RestAuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Confirmation code has expired. Please request a new one."));
+                .andExpect(jsonPath("$.error").value(
+                        "Confirmation code has expired. Please request a new one."));
     }
 
     @Test
@@ -350,7 +353,8 @@ class RestAuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Password must contain 8+ characters, including uppercase, lowercase, a number, and a special character."));
+                .andExpect(jsonPath("$.error").value(
+                        "Password must contain 8+ characters, including uppercase, lowercase, a number, and a special character."));
     }
 
     @Test
@@ -379,9 +383,114 @@ class RestAuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(payload))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Your password has been reset successfully. You can now sign in with your new password."));
+                .andExpect(jsonPath("$.message").value(
+                        "Your password has been reset successfully. You can now sign in with your new password."));
 
         verify(userRepository).save(user);
         verify(passwordResetTokenRepository).delete(token);
+    }
+
+    @Test
+    @DisplayName("Forgot password for ADMIN account returns 403 Forbidden")
+    void forgotPassword_AdminAccount_ReturnsForbidden() throws Exception {
+        User adminUser = new User();
+        adminUser.setUsername("admin");
+        adminUser.setEmail("admin@gmail.com");
+        adminUser.getRoles().add(new Role("ADMIN"));
+
+        when(userRepository.findByEmail("admin@gmail.com")).thenReturn(Optional.of(adminUser));
+
+        String payload = """
+                {
+                    "email": "admin@gmail.com"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error").value(
+                        "Password recovery is disabled for administrator accounts. Please use server console access."));
+    }
+
+    @Test
+    @DisplayName("Forgot password for system external user returns 404 Not Found")
+    void forgotPassword_SystemAccount_ReturnsNotFound() throws Exception {
+        User systemUser = new User();
+        systemUser.setUsername("external-system");
+        systemUser.setEmail("system@external.local");
+        Owner owner = new Owner();
+        owner.setSystemOwner(true);
+        systemUser.setOwner(owner);
+
+        when(userRepository.findByEmail("system@external.local")).thenReturn(Optional.of(systemUser));
+
+        String payload = """
+                {
+                    "email": "system@external.local"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("No active account found with this email address."));
+    }
+
+    @Test
+    @DisplayName("Reset password for ADMIN account returns 403 Forbidden")
+    void resetPassword_AdminAccount_ReturnsForbidden() throws Exception {
+        User adminUser = new User();
+        adminUser.setUsername("admin");
+        adminUser.setEmail("admin@gmail.com");
+        adminUser.getRoles().add(new Role("ADMIN"));
+
+        when(userRepository.findByEmail("admin@gmail.com")).thenReturn(Optional.of(adminUser));
+
+        String payload = """
+                {
+                    "email": "admin@gmail.com",
+                    "code": "123456",
+                    "newPassword": "NewStrongPass1!",
+                    "confirmPassword": "NewStrongPass1!"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error").value(
+                        "Password recovery is disabled for administrator accounts. Please use server console access."));
+    }
+
+    @Test
+    @DisplayName("Reset password for system external user returns 404 Not Found")
+    void resetPassword_SystemAccount_ReturnsNotFound() throws Exception {
+        User systemUser = new User();
+        systemUser.setUsername("external-system");
+        systemUser.setEmail("system@external.local");
+        Owner owner = new Owner();
+        owner.setSystemOwner(true);
+        systemUser.setOwner(owner);
+
+        when(userRepository.findByEmail("system@external.local")).thenReturn(Optional.of(systemUser));
+
+        String payload = """
+                {
+                    "email": "system@external.local",
+                    "code": "123456",
+                    "newPassword": "NewStrongPass1!",
+                    "confirmPassword": "NewStrongPass1!"
+                }
+                """;
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(payload))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("No active account found with this email address."));
     }
 }

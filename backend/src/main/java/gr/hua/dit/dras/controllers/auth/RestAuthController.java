@@ -122,6 +122,19 @@ public class RestAuthController {
 
         User user = userOpt.get();
 
+        boolean isSystem = user.getOwner() != null && user.getOwner().isSystemOwner();
+        if (isSystem) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "No active account found with this email address."));
+        }
+
+        boolean isAdmin = user.getRoles() != null && user.getRoles().stream()
+                .anyMatch(r -> "ADMIN".equals(r.getName()));
+        if (isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Password recovery is disabled for administrator accounts. Please use server console access."));
+        }
+
         SecureRandom random = new SecureRandom();
         int codeNum = 100000 + random.nextInt(900000);
         String resetCode = String.valueOf(codeNum);
@@ -174,6 +187,20 @@ public class RestAuthController {
         }
 
         User user = userOpt.get();
+
+        boolean isSystem = user.getOwner() != null && user.getOwner().isSystemOwner();
+        if (isSystem) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "No active account found with this email address."));
+        }
+
+        boolean isAdmin = user.getRoles() != null && user.getRoles().stream()
+                .anyMatch(r -> "ADMIN".equals(r.getName()));
+        if (isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Password recovery is disabled for administrator accounts. Please use server console access."));
+        }
+
         String cleanCode = code.trim();
 
         Optional<PasswordResetToken> tokenOpt = passwordResetTokenRepository.findByUser(user);
