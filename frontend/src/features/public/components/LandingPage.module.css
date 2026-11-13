@@ -368,7 +368,7 @@
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  color: transparent;
+  color: #1d4ed8;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md, 0.5rem);
   font-weight: 600;
@@ -382,22 +382,22 @@
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background-color: rgba(59, 130, 246, 0.06);
+  background-color: rgba(29, 78, 216, 0.06);
   opacity: 0;
   transition: opacity 0.2s ease;
   z-index: -1;
 }
 
 .viewBtn svg {
-  stroke: #3b82f6;
+  stroke: #1d4ed8;
   flex-shrink: 0;
   transition: stroke 0.2s ease;
 }
 
 .viewBtn:hover {
   transform: translateY(-2px);
-  border-color: rgba(168, 85, 247, 0.5);
-  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.15);
+  border-color: rgba(109, 40, 217, 0.5);
+  box-shadow: 0 4px 12px rgba(109, 40, 217, 0.18);
 }
 
 .viewBtn:hover::before {
@@ -405,11 +405,34 @@
 }
 
 .viewBtn:hover svg {
-  stroke: #a855f7;
+  stroke: #6d28d9;
 }
 
 .viewBtn:active {
   transform: translateY(0);
+}
+
+[data-theme="dark"] .viewBtn {
+  background-image: linear-gradient(90deg, #60a5fa, #c084fc);
+  color: #60a5fa;
+  border-color: #3b4252;
+}
+
+[data-theme="dark"] .viewBtn::before {
+  background-color: rgba(96, 165, 250, 0.1);
+}
+
+[data-theme="dark"] .viewBtn svg {
+  stroke: #60a5fa;
+}
+
+[data-theme="dark"] .viewBtn:hover {
+  border-color: rgba(192, 132, 252, 0.5);
+  box-shadow: 0 4px 12px rgba(192, 132, 252, 0.2);
+}
+
+[data-theme="dark"] .viewBtn:hover svg {
+  stroke: #c084fc;
 }
 
 /* CTA Section */
@@ -552,8 +575,13 @@
 
 .faqAnswer {
   padding: 0 1.5rem 1.5rem 1.5rem;
-  color: var(--text-secondary);
+  color: var(--color-neutral-800, #1e293b);
   line-height: 1.6;
+}
+
+.faqAnswer strong {
+  color: var(--text-primary, #0f172a);
+  font-weight: 700;
 }
 
 .faqAnswer ul, .faqAnswer ol {
@@ -564,4 +592,12 @@
 
 .faqAnswer li {
   margin-bottom: 0.25rem;
+}
+
+[data-theme="dark"] .faqAnswer {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .faqAnswer strong {
+  color: #f8fafc;
 }

@@ -34,7 +34,7 @@ const FAQ_ITEMS = [
           <li>Visit the DRAS website.</li>
           <li>Go to the Listings page.</li>
           <li>Refine your search further by using the available filters (price range, area size, property type, etc.).</li>
-          <li>Click &quot;Search&quot; to display listings that match your criteria.</li>
+          <li>Click &quot;Apply Filters&quot; to display listings that match your criteria.</li>
           <li>Browse the listings you are interested in, and click &quot;Apply&quot; to submit your rental application.</li>
         </ol>
       </>
@@ -50,7 +50,7 @@ const FAQ_ITEMS = [
           <li>Navigate to the Listings page. If you are not yet an owner, click &quot;Become an Owner to List&quot; to register your Owner Profile.</li>
           <li>Once registered as an owner, the button changes to &quot;Create Listing&quot; - click it to open the listing form.</li>
           <li>Complete all the required fields with your property details (and optionally apply our real-time Market Price Suggestion).</li>
-          <li>Submit your listing. Once reviewed and approved by administrators, it becomes available to prospective tenants.</li>
+          <li>Submit your listing. Once reviewed and approved by an administrator, it becomes available to prospective tenants.</li>
         </ol>
       </>
     )
