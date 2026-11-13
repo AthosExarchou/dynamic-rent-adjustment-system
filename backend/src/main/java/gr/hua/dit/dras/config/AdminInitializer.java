@@ -42,9 +42,27 @@ public class AdminInitializer {
     @Order(2)
     public void createDefaultAdminUser() {
         Optional<User> defaultAdmin = userRepository.findByUsername("admin");
+        boolean usingConfigured = configuredAdminPassword != null && !configuredAdminPassword.isBlank();
 
         if (defaultAdmin.isPresent()) {
-            log.debug("Default admin already exists. Skipping initialization.");
+            if (usingConfigured) {
+                User admin = defaultAdmin.get();
+                admin.setPassword(passwordEncoder.encode(configuredAdminPassword));
+                Role adminRole = roleRepository.findByName("ADMIN")
+                        .orElseThrow(() -> new IllegalStateException("ADMIN role not found"));
+                Role userRole = roleRepository.findByName("USER")
+                        .orElseThrow(() -> new IllegalStateException("USER role not found"));
+                if (!admin.getRoles().contains(adminRole)) {
+                    admin.getRoles().add(adminRole);
+                }
+                if (!admin.getRoles().contains(userRole)) {
+                    admin.getRoles().add(userRole);
+                }
+                userRepository.save(admin);
+                log.info("Default admin user password synchronized with configured ADMIN_INITIAL_PASSWORD.");
+            } else {
+                log.debug("Default admin already exists. Skipping initialization.");
+            }
             return;
         }
 
@@ -52,7 +70,6 @@ public class AdminInitializer {
         log.warn("Default admin user not found. Creating default admin user.");
 
         String generatedPassword;
-        boolean usingConfigured = configuredAdminPassword != null && !configuredAdminPassword.isBlank();
         if (usingConfigured) {
             generatedPassword = configuredAdminPassword;
             log.warn("========================================================");

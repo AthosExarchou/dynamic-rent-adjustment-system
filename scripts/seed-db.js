@@ -11,6 +11,7 @@
 
 const BASE_URL = process.env.APP_URL || process.argv[2] || 'http://localhost';
 const API_URL = `${BASE_URL.replace(/\/+$/, '')}/api`;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'adminPassword1!';
 
 async function createClient(email, password) {
   const cookies = {};
@@ -66,7 +67,7 @@ async function seed() {
   console.log(`Seeding database at ${API_URL}...`);
 
   // Authenticate core accounts
-  const admin = await createClient('admin@gmail.com', 'adminPassword1!');
+  const admin = await createClient('admin@gmail.com', ADMIN_PASSWORD);
   const owner = await createClient('owner@gmail.com', 'ownerPassword1!');
   const tenant = await createClient('tenant@gmail.com', 'tenantPassword1!');
   const user = await createClient('user@gmail.com', 'userPassword1!');
@@ -129,24 +130,31 @@ async function seed() {
   // Admin approves listing if pending
   await admin.req(`/listings/approve/${listingId}`, { method: 'POST' });
 
-  // Tenant applies & Owner approves lease
-  await tenant.req(`/tenant/rent/${listingId}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({})
-  });
+  // Tenant applies & Owner approves lease (only if not already leased)
+  const isAlreadyLeased = myListings[0]?.rentalStatus === 'RENTED' || myListings[0]?.status === 'RENTED';
+  if (!isAlreadyLeased) {
+    await tenant.req(`/tenant/rent/${listingId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
 
-  const appsRes = await owner.req(`/listings/${listingId}/applications`);
-  const appsData = await appsRes.json().catch(() => ({}));
-  const applicant = appsData.applicants?.[0];
-  if (applicant) {
-    await owner.req(`/owner/listings/${listingId}/approveApplicant/${applicant.id}`, { method: 'POST' });
-    console.log(`Leased listing #${listingId} to tenant@gmail.com`);
+    const appsRes = await owner.req(`/listings/${listingId}/applications`);
+    const appsData = await appsRes.json().catch(() => ({}));
+    const applicant = appsData.applicants?.[0];
+    if (applicant) {
+      await owner.req(`/owner/listings/${listingId}/approveApplicant/${applicant.id}`, { method: 'POST' });
+      console.log(`Leased listing #${listingId} to tenant@gmail.com`);
+    }
   }
 
-  // User favourites the listing
-  await user.req(`/favourites/${listingId}`, { method: 'POST' });
-  console.log(`User favourited listing #${listingId}`);
+  // User favourites the listing (only if not already favourited)
+  const favIdsRes = await user.req('/favourites/ids');
+  const favIds = await favIdsRes.json().catch(() => []);
+  if (Array.isArray(favIds) && !favIds.includes(listingId)) {
+    await user.req(`/favourites/${listingId}`, { method: 'POST' });
+    console.log(`User favourited listing #${listingId}`);
+  }
 
   console.log('Database seeded successfully.');
 }
