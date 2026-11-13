@@ -9,13 +9,19 @@ import { InfoTooltip } from '../../../shared/components/InfoTooltip';
 import styles from './OwnerForm.module.css';
 
 export default function OwnerForm() {
-  const { user, refreshUser } = useAuth();
+  const { user, roles, refreshUser } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
   const [formData, setFormData] = useState({ firstName: '', lastName: '', phoneNumber: '' });
   const [error, setError] = useState('');
   const [errorDetails, setErrorDetails] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    if (roles?.includes('OWNER')) {
+      navigate('/listings/new', { replace: true });
+    }
+  }, [roles, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,7 +37,7 @@ export default function OwnerForm() {
       });
       await refreshUser();
       toast.success('Owner profile created successfully!');
-      navigate('/profile');
+      navigate('/listings/new', { replace: true });
     } catch (err) {
       const errorMsg = err.message || 'Failed to create owner profile. Please check your details or you might already have one.';
       setError(errorMsg);
