@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Home, Building2, Key, CheckSquare, Users, Info, MessageSquare, X, Search, Heart, TrendingUp } from 'lucide-react';
+import { Home, Building2, Key, CheckSquare, Users, Info, MessageSquare, X, Search, Heart, TrendingUp, Activity } from 'lucide-react';
 import { useAuth } from '../../features/auth';
 import { useFavourites } from '../../features/favourites';
 import styles from './Sidebar.module.css';
@@ -138,6 +138,12 @@ export default function Sidebar({ isOpen, onClose }) {
                   isActive ? `${styles.sidebarLink} ${styles.active}` : styles.sidebarLink} onClick={onClose}>
                 <TrendingUp size={20} />
                 Market Intelligence
+              </NavLink>
+
+              <NavLink to="/admin/system" className={({ isActive }) =>
+                  isActive ? `${styles.sidebarLink} ${styles.active}` : styles.sidebarLink} onClick={onClose}>
+                <Activity size={20} />
+                System Status
               </NavLink>
             </>
           )}

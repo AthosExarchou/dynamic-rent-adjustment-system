@@ -30,6 +30,7 @@ const DeleteAccountConfirm = lazy(() => import('../../features/users/components/
 
 const UserManagement = lazy(() => import('../../features/admin/components/UserManagement'));
 const PendingApprovals = lazy(() => import('../../features/admin/components/PendingApprovals'));
+const SystemStatus = lazy(() => import('../../features/admin/components/SystemStatus'));
 const MacroTrendsDashboard = lazy(() => import('../../features/analytics/components/MacroTrendsDashboard'));
 
 const TenantForm = lazy(() => import('../../features/tenants/components/TenantForm'));
@@ -118,6 +119,7 @@ export const router = createBrowserRouter([
       // Admin Routes
       { path: 'admin/users', element: <ProtectedRoute requiredRole="ADMIN">{withSuspense(UserManagement)}</ProtectedRoute> },
       { path: 'admin/approvals', element: <ProtectedRoute requiredRole="ADMIN">{withSuspense(PendingApprovals)}</ProtectedRoute> },
+      { path: 'admin/system', element: <ProtectedRoute requiredRole="ADMIN">{withSuspense(SystemStatus)}</ProtectedRoute> },
 
       // Catch-all (404 Not Found)
       { path: '*', element: withSuspense(NotFoundPage) }

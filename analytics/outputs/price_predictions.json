@@ -1,0 +1,188 @@
+{
+  "version": "1.0",
+  "generatedAt": "2026-10-20T19:46:08.030703",
+  "dataSource": "Spitogatos.gr scraped residential listings with Auto-ARIMA time series",
+  "arimaForecast": {
+    "city": "Athens",
+    "modelStatus": "ARIMA",
+    "confidenceLevel": 0.95,
+    "intervalType": "ARIMA_PREDICTION_INTERVAL",
+    "intervalDescription": "Auto-ARIMA 95% prediction interval for future weekly observations",
+    "lastHistoricalDate": "2026-10-04",
+    "lastHistoricalPricePerM2": 14.75,
+    "predictedPricePerM2": 14.62,
+    "lowerBoundPerM2": 14.24,
+    "upperBoundPerM2": 15.0,
+    "trend": "STABLE",
+    "trendPercentage": -0.88,
+    "horizonWeeks": 5,
+    "modelOrder": "(1, 0, 0)",
+    "weeklyForecast": [
+      {
+        "date": "2026-10-11",
+        "predictedPricePerM2": 14.7,
+        "lowerBound": 14.43,
+        "upperBound": 14.98
+      },
+      {
+        "date": "2026-10-18",
+        "predictedPricePerM2": 14.67,
+        "lowerBound": 14.34,
+        "upperBound": 15.01
+      },
+      {
+        "date": "2026-10-25",
+        "predictedPricePerM2": 14.65,
+        "lowerBound": 14.29,
+        "upperBound": 15.01
+      },
+      {
+        "date": "2026-11-01",
+        "predictedPricePerM2": 14.63,
+        "lowerBound": 14.26,
+        "upperBound": 15.01
+      },
+      {
+        "date": "2026-11-08",
+        "predictedPricePerM2": 14.62,
+        "lowerBound": 14.24,
+        "upperBound": 15.0
+      }
+    ]
+  },
+  "scrapedMarketBenchmarks": {
+    "overallBenchmarkStatus": "MEASURED",
+    "benchmarkStatus": "MEASURED",
+    "totalScrapedListings": 927,
+    "overallAvgPricePerM2": 14.68,
+    "overallMedianPricePerM2": 12.82,
+    "overallP25PricePerM2": 10.06,
+    "overallP75PricePerM2": 17.02,
+    "detailedListingsCount": 927,
+    "detailedListingsOverallAvgPerM2": 14.68,
+    "byPropertyType": {
+      "APARTMENT": {
+        "avgPricePerM2": 14.25,
+        "medianPricePerM2": 12.5,
+        "count": 823,
+        "sampleCount": 823,
+        "status": "MEASURED",
+        "isMeasured": true
+      },
+      "STUDIO": {
+        "avgPricePerM2": 16.42,
+        "medianPricePerM2": 16.0,
+        "count": 69,
+        "sampleCount": 69,
+        "status": "MEASURED",
+        "isMeasured": true
+      },
+      "HOUSE": {
+        "avgPricePerM2": 20.63,
+        "medianPricePerM2": 18.62,
+        "count": 10,
+        "sampleCount": 10,
+        "status": "MEASURED",
+        "isMeasured": true
+      },
+      "MAISONETTE": {
+        "avgPricePerM2": 18.99,
+        "medianPricePerM2": 14.67,
+        "count": 21,
+        "sampleCount": 21,
+        "status": "MEASURED",
+        "isMeasured": true
+      },
+      "LOFT": {
+        "avgPricePerM2": 16.44,
+        "medianPricePerM2": 14.36,
+        "count": 4,
+        "sampleCount": 4,
+        "status": "ESTIMATED_PRIOR",
+        "isMeasured": false
+      },
+      "VILLA": {
+        "avgPricePerM2": 21.29,
+        "medianPricePerM2": 18.59,
+        "count": 0,
+        "sampleCount": 0,
+        "status": "ESTIMATED_PRIOR",
+        "isMeasured": false
+      },
+      "OTHER": {
+        "avgPricePerM2": 14.68,
+        "medianPricePerM2": 12.82,
+        "count": 0,
+        "sampleCount": 0,
+        "status": "ESTIMATED_PRIOR",
+        "isMeasured": false
+      }
+    },
+    "byArea": {
+      "kolonaki": {
+        "avgPricePerM2": 20.42,
+        "medianPricePerM2": 19.58,
+        "count": 155,
+        "sampleCount": 155,
+        "status": "MEASURED",
+        "isMeasured": true,
+        "ratioToDetailedOverall": 1.391
+      },
+      "kypseli": {
+        "avgPricePerM2": 9.93,
+        "medianPricePerM2": 9.94,
+        "count": 58,
+        "sampleCount": 58,
+        "status": "MEASURED",
+        "isMeasured": true,
+        "ratioToDetailedOverall": 0.676
+      },
+      "pagkrati": {
+        "avgPricePerM2": 14.04,
+        "medianPricePerM2": 14.0,
+        "count": 85,
+        "sampleCount": 85,
+        "status": "MEASURED",
+        "isMeasured": true,
+        "ratioToDetailedOverall": 0.956
+      },
+      "ampelokipoi": {
+        "avgPricePerM2": 13.55,
+        "medianPricePerM2": 13.28,
+        "count": 27,
+        "sampleCount": 27,
+        "status": "MEASURED",
+        "isMeasured": true,
+        "ratioToDetailedOverall": 0.923
+      },
+      "exarcheia": {
+        "avgPricePerM2": 12.85,
+        "medianPricePerM2": 13.24,
+        "count": 48,
+        "sampleCount": 48,
+        "status": "MEASURED",
+        "isMeasured": true,
+        "ratioToDetailedOverall": 0.875
+      },
+      "koukaki": {
+        "avgPricePerM2": 16.82,
+        "medianPricePerM2": 15.0,
+        "count": 45,
+        "sampleCount": 45,
+        "status": "MEASURED",
+        "isMeasured": true,
+        "ratioToDetailedOverall": 1.146
+      },
+      "neos_kosmos": {
+        "avgPricePerM2": 11.52,
+        "medianPricePerM2": 11.84,
+        "count": 9,
+        "sampleCount": 9,
+        "status": "MEASURED",
+        "isMeasured": true,
+        "ratioToDetailedOverall": 0.785
+      }
+    },
+    "sizeTiers": {}
+  }
+}

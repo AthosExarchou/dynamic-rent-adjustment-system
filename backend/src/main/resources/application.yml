@@ -16,6 +16,8 @@ server:
 
 app:
   public-url: ${APP_PUBLIC_URL:http://localhost:5173}
+  admin:
+    initial-password: ${ADMIN_INITIAL_PASSWORD:}
 
 management:
   endpoints:

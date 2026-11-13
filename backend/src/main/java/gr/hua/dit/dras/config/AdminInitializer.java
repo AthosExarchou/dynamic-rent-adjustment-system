@@ -13,12 +13,16 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 import java.security.SecureRandom;
 import java.util.Optional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 
 @Component
 public class AdminInitializer {
 
     private static final Logger log = LoggerFactory.getLogger(AdminInitializer.class);
+
+    @Value("${app.admin.initial-password:}")
+    private String configuredAdminPassword;
 
     private final BCryptPasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
@@ -47,11 +51,21 @@ public class AdminInitializer {
         /* Create default admin user if not exists */
         log.warn("Default admin user not found. Creating default admin user.");
 
-        String generatedPassword = generateSecurePassword(16);
-        log.warn("========================================================");
-        log.warn("  ADMIN INITIAL PASSWORD: {}", generatedPassword);
-        log.warn("  Change this password immediately after first login!");
-        log.warn("========================================================");
+        String generatedPassword;
+        boolean usingConfigured = configuredAdminPassword != null && !configuredAdminPassword.isBlank();
+        if (usingConfigured) {
+            generatedPassword = configuredAdminPassword;
+            log.warn("========================================================");
+            log.warn("  Using configured ADMIN_INITIAL_PASSWORD for admin user.");
+            log.warn("  Change this password after first login!");
+            log.warn("========================================================");
+        } else {
+            generatedPassword = generateSecurePassword(16);
+            log.warn("========================================================");
+            log.warn("  ADMIN INITIAL PASSWORD: {}", generatedPassword);
+            log.warn("  Change this password immediately after first login!");
+            log.warn("========================================================");
+        }
 
         User admin = new User(
                 "admin",

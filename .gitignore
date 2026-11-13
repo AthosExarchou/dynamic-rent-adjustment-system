@@ -61,7 +61,10 @@ out/
 # Runtime Data / Generated Artifacts
 # =========================================================
 analytics/data/
-analytics/outputs/
+# Analytics outputs - ignore everything except committed baseline files
+analytics/outputs/*
+!analytics/outputs/macro_predictions.json
+!analytics/outputs/price_predictions.json
 analytics/failed_payloads/
 uploads/
 backend/uploads/

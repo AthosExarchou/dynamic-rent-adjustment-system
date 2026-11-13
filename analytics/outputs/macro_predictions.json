@@ -1,0 +1,240 @@
+{
+  "version": "1.0",
+  "generatedAt": "2026-11-08T11:47:45.821129",
+  "dataSource": "Bank of Greece Open Data (Dataset 5: Index of Apartment Prices by Geographical Area)",
+  "sourceDatasetUrl": "https://opendata.bankofgreece.gr/en/dataset/5",
+  "region": "Athens",
+  "macroForecast": {
+    "modelStatus": "SARIMA",
+    "modelOrder": "(0, 2, 1)",
+    "seasonalOrder": "(0, 0, 1, 4)",
+    "predictionIntervalLevel": 0.95,
+    "aic": 242.065,
+    "bic": 249.211,
+    "aicc": 242.373,
+    "logLikelihood": -118.033,
+    "inSampleRmse": 1.0671,
+    "inSampleMape": 0.98,
+    "numObservations": 82,
+    "latestHistoricalQuarter": "2026-Q2",
+    "latestHistoricalDate": "2026-04-01",
+    "latestHistoricalIndex": 118.3,
+    "projectedEndIndex": 128.56,
+    "projectedTotalGrowthPercentage": 8.67,
+    "projectedAnnualGrowthRate": 4.25,
+    "macroTrend": "UPWARD",
+    "horizonQuarters": 8,
+    "recentHistoricalSeries": [
+      {
+        "quarter": "2022-Q3",
+        "date": "2022-07-01",
+        "priceIndex": 88.11,
+        "qoqGrowthPercentage": 4.73,
+        "yoyGrowthPercentage": 14.56,
+        "status": "Final"
+      },
+      {
+        "quarter": "2022-Q4",
+        "date": "2022-10-01",
+        "priceIndex": 91.29,
+        "qoqGrowthPercentage": 3.61,
+        "yoyGrowthPercentage": 16.79,
+        "status": "Final"
+      },
+      {
+        "quarter": "2023-Q1",
+        "date": "2023-01-01",
+        "priceIndex": 94.99,
+        "qoqGrowthPercentage": 4.06,
+        "yoyGrowthPercentage": 17.39,
+        "status": "Final"
+      },
+      {
+        "quarter": "2023-Q2",
+        "date": "2023-04-01",
+        "priceIndex": 96.68,
+        "qoqGrowthPercentage": 1.78,
+        "yoyGrowthPercentage": 14.92,
+        "status": "Final"
+      },
+      {
+        "quarter": "2023-Q3",
+        "date": "2023-07-01",
+        "priceIndex": 99.14,
+        "qoqGrowthPercentage": 2.55,
+        "yoyGrowthPercentage": 12.52,
+        "status": "Final"
+      },
+      {
+        "quarter": "2023-Q4",
+        "date": "2023-10-01",
+        "priceIndex": 101.4,
+        "qoqGrowthPercentage": 2.28,
+        "yoyGrowthPercentage": 11.08,
+        "status": "Final"
+      },
+      {
+        "quarter": "2024-Q1",
+        "date": "2024-01-01",
+        "priceIndex": 104.57,
+        "qoqGrowthPercentage": 3.12,
+        "yoyGrowthPercentage": 10.08,
+        "status": "Final"
+      },
+      {
+        "quarter": "2024-Q2",
+        "date": "2024-04-01",
+        "priceIndex": 106.02,
+        "qoqGrowthPercentage": 1.38,
+        "yoyGrowthPercentage": 9.66,
+        "status": "Final"
+      },
+      {
+        "quarter": "2024-Q3",
+        "date": "2024-07-01",
+        "priceIndex": 107.0,
+        "qoqGrowthPercentage": 0.93,
+        "yoyGrowthPercentage": 7.93,
+        "status": "Final"
+      },
+      {
+        "quarter": "2024-Q4",
+        "date": "2024-10-01",
+        "priceIndex": 108.32,
+        "qoqGrowthPercentage": 1.23,
+        "yoyGrowthPercentage": 6.82,
+        "status": "Final"
+      },
+      {
+        "quarter": "2025-Q1",
+        "date": "2025-01-01",
+        "priceIndex": 110.68,
+        "qoqGrowthPercentage": 2.18,
+        "yoyGrowthPercentage": 5.85,
+        "status": "Final"
+      },
+      {
+        "quarter": "2025-Q2",
+        "date": "2025-04-01",
+        "priceIndex": 112.71,
+        "qoqGrowthPercentage": 1.83,
+        "yoyGrowthPercentage": 6.32,
+        "status": "Final"
+      },
+      {
+        "quarter": "2025-Q3",
+        "date": "2025-07-01",
+        "priceIndex": 114.93,
+        "qoqGrowthPercentage": 1.97,
+        "yoyGrowthPercentage": 7.41,
+        "status": "Provisional"
+      },
+      {
+        "quarter": "2025-Q4",
+        "date": "2025-10-01",
+        "priceIndex": 115.58,
+        "qoqGrowthPercentage": 0.56,
+        "yoyGrowthPercentage": 6.7,
+        "status": "Provisional"
+      },
+      {
+        "quarter": "2026-Q1",
+        "date": "2026-01-01",
+        "priceIndex": 117.22,
+        "qoqGrowthPercentage": 1.42,
+        "yoyGrowthPercentage": 5.91,
+        "status": "Provisional"
+      },
+      {
+        "quarter": "2026-Q2",
+        "date": "2026-04-01",
+        "priceIndex": 118.3,
+        "qoqGrowthPercentage": 0.92,
+        "yoyGrowthPercentage": 4.96,
+        "status": "Provisional"
+      }
+    ],
+    "quarterlyForecast": [
+      {
+        "quarter": "2026-Q3",
+        "date": "2026-07-01",
+        "predictedPriceIndex": 119.89,
+        "lowerBoundIndex": 117.82,
+        "upperBoundIndex": 121.95,
+        "qoqGrowthPercentage": 1.34,
+        "yoyGrowthPercentage": 4.31
+      },
+      {
+        "quarter": "2026-Q4",
+        "date": "2026-10-01",
+        "predictedPriceIndex": 120.99,
+        "lowerBoundIndex": 117.53,
+        "upperBoundIndex": 124.45,
+        "qoqGrowthPercentage": 0.92,
+        "yoyGrowthPercentage": 4.68
+      },
+      {
+        "quarter": "2027-Q1",
+        "date": "2027-01-01",
+        "predictedPriceIndex": 122.31,
+        "lowerBoundIndex": 117.39,
+        "upperBoundIndex": 127.22,
+        "qoqGrowthPercentage": 1.09,
+        "yoyGrowthPercentage": 4.34
+      },
+      {
+        "quarter": "2027-Q2",
+        "date": "2027-04-01",
+        "predictedPriceIndex": 123.46,
+        "lowerBoundIndex": 116.99,
+        "upperBoundIndex": 129.93,
+        "qoqGrowthPercentage": 0.94,
+        "yoyGrowthPercentage": 4.36
+      },
+      {
+        "quarter": "2027-Q3",
+        "date": "2027-07-01",
+        "predictedPriceIndex": 124.74,
+        "lowerBoundIndex": 116.23,
+        "upperBoundIndex": 133.24,
+        "qoqGrowthPercentage": 1.04,
+        "yoyGrowthPercentage": 4.05
+      },
+      {
+        "quarter": "2027-Q4",
+        "date": "2027-10-01",
+        "predictedPriceIndex": 126.01,
+        "lowerBoundIndex": 115.34,
+        "upperBoundIndex": 136.68,
+        "qoqGrowthPercentage": 1.02,
+        "yoyGrowthPercentage": 4.15
+      },
+      {
+        "quarter": "2028-Q1",
+        "date": "2028-01-01",
+        "predictedPriceIndex": 127.28,
+        "lowerBoundIndex": 114.32,
+        "upperBoundIndex": 140.25,
+        "qoqGrowthPercentage": 1.01,
+        "yoyGrowthPercentage": 4.07
+      },
+      {
+        "quarter": "2028-Q2",
+        "date": "2028-04-01",
+        "predictedPriceIndex": 128.56,
+        "lowerBoundIndex": 113.17,
+        "upperBoundIndex": 143.94,
+        "qoqGrowthPercentage": 1.01,
+        "yoyGrowthPercentage": 4.13
+      }
+    ]
+  },
+  "syncMetadata": {
+    "status": "skipped_by_flag",
+    "activeFile": "bank_of_greece_apartment_index.csv",
+    "latestAvailableQuarter": "LOCAL",
+    "datasetPublicationDate": "LOCAL",
+    "lastCheckedAt": null,
+    "checkIntervalDays": 14
+  }
+}
