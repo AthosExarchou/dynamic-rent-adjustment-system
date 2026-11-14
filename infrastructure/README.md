@@ -208,6 +208,13 @@ Follow the step-by-step instructions in [Section 4: Steps to Run Vagrant Environ
 ### Production Setup (OCI)
 In production (Oracle Cloud), Jenkins runs as a native system service on the Ubuntu host (not inside Vagrant or Docker). The setup steps are similar, but you access Jenkins via the server's designated port and retrieve the initial password directly from `/var/lib/jenkins/secrets/initialAdminPassword` on the host.
 
+### Analytics Model Retraining Pipeline
+
+In addition to the core CI/CD pipeline, the repository includes `Jenkinsfile.analytics` to automate retraining of the macroeconomic and neighborhood ARIMA models:
+- **Execution:** Runs inside an isolated Docker container on the Jenkins host.
+- **Triggers:** Automatically runs weekly on Sunday End-of-Day (`H 23 * * 0`) aligned with the weekly Sunday scraping schedule, or manually via **Build Now**.
+- **Live Sync:** Automatically syncs fresh `macro_predictions.json` and `price_predictions.json` artifacts into the active deployment workspace (`dras-dev` or `dras-prod`), where the running backend container hot-reloads them.
+
 ## 6. Production Management (Oracle Cloud VM)
 
 The production configuration (`docker-compose.prod.yml`) includes restart policies, health checks, named volumes, and log rotation, with Nginx being the only publicly exposed service. Before deploying, you must copy `.env.example` to `.env` and edit it with your credentials.
@@ -228,8 +235,6 @@ The Oracle Cloud VM host runs the following automated scheduled tasks (`crontab 
 # 2. Daily automated database backup (Daily at 03:00)
 0 3 * * * /opt/dras/repository/infrastructure/scripts/backup-db.sh >> /opt/dras/backups/backup.log 2>&1
 
-# 3. Weekly ARIMA model retraining & predictions export (Sundays at 22:00)
-0 22 * * 0 cd /var/lib/jenkins/workspace/dras-prod/analytics && ./venv/bin/python models/arima_micro.py >> /var/log/dras_arima.log 2>&1
 ```
 
 - **Manual Backups:** To execute an immediate database backup, run `/opt/dras/repository/infrastructure/scripts/backup-db.sh`. Backups are saved to `/opt/dras/backups/`.

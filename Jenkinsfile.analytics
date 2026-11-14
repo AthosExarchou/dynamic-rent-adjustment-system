@@ -1,0 +1,81 @@
+pipeline {
+    agent any
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '15'))
+        disableConcurrentBuilds()
+    }
+
+    triggers {
+        // Runs weekly on Sunday End-of-Day (23:00) after weekly scraping completes
+        cron('H 23 * * 0')
+    }
+
+    environment {
+        DEPLOY_DEV_DIR  = '/var/lib/jenkins/workspace/dras-dev'
+        DEPLOY_PROD_DIR = '/var/lib/jenkins/workspace/dras-prod'
+    }
+
+    stages {
+
+        stage('Execute Forecasting Models') {
+            steps {
+                echo "Running statistical models inside isolated Python 3.12 container..."
+                sh '''
+                    docker run --rm \
+                        -v "$(pwd)/analytics":/app/analytics \
+                        -v jenkins_pip_cache:/root/.cache/pip \
+                        -w /app \
+                        python:3.12-slim \
+                        sh -c "pip install -q --no-cache-dir -r analytics/requirements.txt && \
+                                 python analytics/models/arima_macro.py && \
+                                 python analytics/models/arima_micro.py"
+                '''
+            }
+        }
+
+        stage('Verify Prediction Artifacts') {
+            steps {
+                sh '''
+                    test -s analytics/outputs/macro_predictions.json || { echo "ERROR: macro_predictions.json missing or empty"; exit 1; }
+                    test -s analytics/outputs/price_predictions.json || { echo "ERROR: price_predictions.json missing or empty"; exit 1; }
+                    echo "Forecast outputs verified successfully:"
+                    ls -lh analytics/outputs/
+                '''
+            }
+        }
+
+        stage('Sync to Live Deployment Volume') {
+            steps {
+                sh '''
+                    # Synchronize fresh predictions into the active deployment workspace
+                    # whose ./analytics/outputs volume is mounted into the running backend.
+                    TARGET_DIR=""
+                    if [ -d "${DEPLOY_PROD_DIR}/analytics/outputs" ] && [ "$(pwd)" != "${DEPLOY_PROD_DIR}" ]; then
+                        TARGET_DIR="${DEPLOY_PROD_DIR}"
+                    elif [ -d "${DEPLOY_DEV_DIR}/analytics/outputs" ] && [ "$(pwd)" != "${DEPLOY_DEV_DIR}" ]; then
+                        TARGET_DIR="${DEPLOY_DEV_DIR}"
+                    fi
+
+                    if [ -n "$TARGET_DIR" ]; then
+                        echo "Synchronizing updated prediction files to ${TARGET_DIR}/analytics/outputs/..."
+                        cp -u analytics/outputs/*.json "${TARGET_DIR}/analytics/outputs/"
+                        cp -u analytics/outputs/*.png "${TARGET_DIR}/analytics/outputs/" 2>/dev/null || true
+                        echo "Sync complete. Spring Boot will dynamically hot-reload model data on next request."
+                    else
+                        echo "Operating in local workspace; outputs are already in ./analytics/outputs/."
+                    fi
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Analytics models retrained successfully. All artifacts are up to date."
+        }
+        failure {
+            echo "ERROR: Statistical model retraining failed! Please check the console log for details."
+        }
+    }
+}
