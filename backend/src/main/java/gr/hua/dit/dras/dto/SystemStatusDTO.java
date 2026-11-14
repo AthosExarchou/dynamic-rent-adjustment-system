@@ -12,10 +12,21 @@ public class SystemStatusDTO {
     private String pricePredictionsAge;
     private boolean pricePredictionsLoaded;
 
+    // Platform user stats
     private long totalUsers;
+    private long totalOwners;
+    private long totalTenants;
+
+    // Platform listing stats
     private long totalListings;
-    private long pendingListings;
+    private long localListings;
+    private long externalListings;
+
+    // Listing status stats
     private long activeListings;
+    private long pendingListings;
+    private long rentedListings;
+    private long rejectedListings;
 
     public SystemStatusDTO() {
     }
@@ -30,9 +41,15 @@ public class SystemStatusDTO {
             String pricePredictionsAge,
             boolean pricePredictionsLoaded,
             long totalUsers,
+            long totalOwners,
+            long totalTenants,
             long totalListings,
+            long localListings,
+            long externalListings,
+            long activeListings,
             long pendingListings,
-            long activeListings
+            long rentedListings,
+            long rejectedListings
     ) {
         this.macroPredictionsFile = macroPredictionsFile;
         this.macroPredictionsLastModified = macroPredictionsLastModified;
@@ -43,9 +60,15 @@ public class SystemStatusDTO {
         this.pricePredictionsAge = pricePredictionsAge;
         this.pricePredictionsLoaded = pricePredictionsLoaded;
         this.totalUsers = totalUsers;
+        this.totalOwners = totalOwners;
+        this.totalTenants = totalTenants;
         this.totalListings = totalListings;
-        this.pendingListings = pendingListings;
+        this.localListings = localListings;
+        this.externalListings = externalListings;
         this.activeListings = activeListings;
+        this.pendingListings = pendingListings;
+        this.rentedListings = rentedListings;
+        this.rejectedListings = rejectedListings;
     }
 
     public String getMacroPredictionsFile() {
@@ -120,12 +143,52 @@ public class SystemStatusDTO {
         this.totalUsers = totalUsers;
     }
 
+    public long getTotalOwners() {
+        return totalOwners;
+    }
+
+    public void setTotalOwners(long totalOwners) {
+        this.totalOwners = totalOwners;
+    }
+
+    public long getTotalTenants() {
+        return totalTenants;
+    }
+
+    public void setTotalTenants(long totalTenants) {
+        this.totalTenants = totalTenants;
+    }
+
     public long getTotalListings() {
         return totalListings;
     }
 
     public void setTotalListings(long totalListings) {
         this.totalListings = totalListings;
+    }
+
+    public long getLocalListings() {
+        return localListings;
+    }
+
+    public void setLocalListings(long localListings) {
+        this.localListings = localListings;
+    }
+
+    public long getExternalListings() {
+        return externalListings;
+    }
+
+    public void setExternalListings(long externalListings) {
+        this.externalListings = externalListings;
+    }
+
+    public long getActiveListings() {
+        return activeListings;
+    }
+
+    public void setActiveListings(long activeListings) {
+        this.activeListings = activeListings;
     }
 
     public long getPendingListings() {
@@ -136,11 +199,19 @@ public class SystemStatusDTO {
         this.pendingListings = pendingListings;
     }
 
-    public long getActiveListings() {
-        return activeListings;
+    public long getRentedListings() {
+        return rentedListings;
     }
 
-    public void setActiveListings(long activeListings) {
-        this.activeListings = activeListings;
+    public void setRentedListings(long rentedListings) {
+        this.rentedListings = rentedListings;
+    }
+
+    public long getRejectedListings() {
+        return rejectedListings;
+    }
+
+    public void setRejectedListings(long rejectedListings) {
+        this.rejectedListings = rejectedListings;
     }
 }

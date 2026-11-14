@@ -22,6 +22,9 @@ public interface ListingRepository extends JpaRepository<Listing, Integer>, JpaS
     List<Listing> findByExternalFalse();
     List<Listing> findByExternalTrue();
     List<Listing> findByStatus(ListingStatus status);
+    long countByExternalTrue();
+    long countByExternalFalse();
+    long countByStatus(ListingStatus status);
     void deleteByExternalTrueAndDateScrapedBefore(Instant cutoff);
 
     @Modifying

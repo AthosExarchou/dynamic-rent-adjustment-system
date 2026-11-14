@@ -4,6 +4,8 @@ package gr.hua.dit.dras.services.domain;
 import gr.hua.dit.dras.dto.SystemStatusDTO;
 import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.repositories.ListingRepository;
+import gr.hua.dit.dras.repositories.OwnerRepository;
+import gr.hua.dit.dras.repositories.TenantRepository;
 import gr.hua.dit.dras.repositories.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,17 +27,23 @@ public class AdminSystemService {
     private final MacroAnalyticsService macroAnalyticsService;
     private final PriceSuggestionService priceSuggestionService;
     private final UserRepository userRepository;
+    private final OwnerRepository ownerRepository;
+    private final TenantRepository tenantRepository;
     private final ListingRepository listingRepository;
 
     public AdminSystemService(
             MacroAnalyticsService macroAnalyticsService,
             PriceSuggestionService priceSuggestionService,
             UserRepository userRepository,
+            OwnerRepository ownerRepository,
+            TenantRepository tenantRepository,
             ListingRepository listingRepository
     ) {
         this.macroAnalyticsService = macroAnalyticsService;
         this.priceSuggestionService = priceSuggestionService;
         this.userRepository = userRepository;
+        this.ownerRepository = ownerRepository;
+        this.tenantRepository = tenantRepository;
         this.listingRepository = listingRepository;
     }
 
@@ -74,9 +82,17 @@ public class AdminSystemService {
         }
 
         long totalUsers = userRepository.count();
+        long totalOwners = ownerRepository.count();
+        long totalTenants = tenantRepository.count();
+
         long totalListings = listingRepository.count();
-        long pendingListings = listingRepository.findByStatus(ListingStatus.PENDING).size();
-        long activeListings = listingRepository.findByStatus(ListingStatus.APPROVED).size();
+        long localListings = listingRepository.countByExternalFalse();
+        long externalListings = listingRepository.countByExternalTrue();
+
+        long activeListings = listingRepository.countByStatus(ListingStatus.APPROVED);
+        long pendingListings = listingRepository.countByStatus(ListingStatus.PENDING);
+        long rentedListings = listingRepository.countByStatus(ListingStatus.RENTED);
+        long rejectedListings = listingRepository.countByStatus(ListingStatus.REJECTED);
 
         return new SystemStatusDTO(
                 macroFilePath,
@@ -88,9 +104,15 @@ public class AdminSystemService {
                 priceAge,
                 priceLoaded,
                 totalUsers,
+                totalOwners,
+                totalTenants,
                 totalListings,
+                localListings,
+                externalListings,
+                activeListings,
                 pendingListings,
-                activeListings
+                rentedListings,
+                rejectedListings
         );
     }
 
