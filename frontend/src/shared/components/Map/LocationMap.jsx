@@ -1,15 +1,64 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { RotateCcw, ExternalLink, AlertCircle } from 'lucide-react';
 import styles from './LocationMap.module.css';
+import { geocodeAddress } from './geocode';
 
 /**
  * Location map component powered by Leaflet and OpenStreetMap.
  *
- * Supports approximate radius circle for listings, point marker for contacts,
- * theme-adaptive CSS filters, and viewport-based lazy loading.
+ * The map is created imperatively by Leaflet exactly once per mount; prop
+ * changes are applied with `setView`/`setLatLng` instead of rebuilding the map,
+ * so tiles already in the browser cache are reused.
+ *
+ * Tiles load only after a pan/zoom gesture settles (`updateWhenZooming: false`)
+ * and the filter is applied to the tile pane rather than to each tile image.
  */
+
+const OSM_TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+const OSM_ATTRIBUTION =
+  '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors';
+const APPROXIMATE_RADIUS_M = 220;
+
+function normalizeCoordinates(value) {
+  const lat = Number(value?.lat);
+  const lon = Number(value?.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  return { lat, lon };
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function buildPopupHtml({ title, subtitle, approximate }) {
+  return `
+    <div class="${styles.popupContent}">
+      <strong class="${styles.popupTitle}">${escapeHtml(title)}</strong>
+      ${subtitle ? `<span class="${styles.popupSubtitle}">${escapeHtml(subtitle)}</span>` : ''}
+      ${approximate ? `<span class="${styles.popupNotice}">Approximate location</span>` : ''}
+    </div>
+  `;
+}
+
+const MARKER_HTML = `
+  <div class="${styles.markerPinWrapper}">
+    <div class="${styles.markerPulse}"></div>
+    <div class="${styles.markerBadge}">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+      </svg>
+    </div>
+  </div>
+`;
+
 export default function LocationMap({
   address,
   coordinates,
@@ -19,19 +68,41 @@ export default function LocationMap({
   height = 380,
   zoom = 15,
 }) {
+  const wrapperRef = useRef(null);
   const containerRef = useRef(null);
-  const mapInstanceRef = useRef(null);
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+  const circleRef = useRef(null);
+  const appliedCoordsRef = useRef(null);
+  const coordsRef = useRef(null);
+  const geocodedAddressRef = useRef(null);
+  const hintTimerRef = useRef(null);
+  const showHintRef = useRef(false);
+
   const [mapVisible, setMapVisible] = useState(false);
-  const [coords, setCoords] = useState(coordinates || null);
-  const [loading, setLoading] = useState(!coordinates && !!address);
+  const [coords, setCoords] = useState(() => normalizeCoordinates(coordinates));
+  const [loading, setLoading] = useState(() => !normalizeCoordinates(coordinates) && Boolean(address));
   const [error, setError] = useState(false);
   const [showHint, setShowHint] = useState(false);
 
-  const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.userAgent || navigator.platform);
+  const isMac =
+    typeof navigator !== 'undefined' &&
+    /Mac|iPhone|iPad/i.test(navigator.userAgent || navigator.platform);
 
-  // Lazy-loading: only initialize map when the section comes into view
-  const setLazyRef = useCallback((node) => {
-    if (!node) return;
+  coordsRef.current = coords;
+  const hasCoords = Boolean(coords);
+
+  // Lazy-loading: only initialize the map when the section comes into view
+  useEffect(() => {
+    if (mapVisible) return undefined;
+    const node = wrapperRef.current;
+    if (!node) return undefined;
+
+    if (typeof IntersectionObserver === 'undefined') {
+      setMapVisible(true);
+      return undefined;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -42,192 +113,207 @@ export default function LocationMap({
       { rootMargin: '200px' }
     );
     observer.observe(node);
-  }, []);
+    return () => observer.disconnect();
+  }, [mapVisible]);
 
-  // Update coords if props change directly
+  // Sync externally supplied coordinates
+  const propLat = coordinates?.lat;
+  const propLon = coordinates?.lon;
   useEffect(() => {
-    if (coordinates?.lat && coordinates?.lon) {
-      setCoords({ lat: coordinates.lat, lon: coordinates.lon });
-      setLoading(false);
-      setError(false);
-    }
-  }, [coordinates]);
+    const normalized = normalizeCoordinates({ lat: propLat, lon: propLon });
+    if (!normalized) return;
+    setCoords((prev) =>
+      prev && prev.lat === normalized.lat && prev.lon === normalized.lon ? prev : normalized
+    );
+    setLoading(false);
+    setError(false);
+  }, [propLat, propLon]);
 
-  // Geocode address via Nominatim if coordinates not pre-supplied
+  // Geocode the address when no coordinates were supplied
   useEffect(() => {
-    if (!mapVisible || coords || !address) return;
+    const hasPropCoordinates = Boolean(normalizeCoordinates({ lat: propLat, lon: propLon }));
+    if (!mapVisible || !address || hasPropCoordinates) return undefined;
+    if (coords && geocodedAddressRef.current === address) return undefined;
 
     let cancelled = false;
     setLoading(true);
     setError(false);
 
-    const query = address.trim();
-
-    async function geocode() {
-      try {
-        let res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&accept-language=en`
-        );
-        let data = await res.json();
-
-        // If exact address fails and contains commas, try broader part
-        if ((!data || data.length === 0) && query.includes(',')) {
-          const broader = query.split(',').slice(1).join(',').trim();
-          if (broader) {
-            res = await fetch(
-              `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(broader)}&format=json&limit=1&accept-language=en`
-            );
-            data = await res.json();
-          }
-        }
-
+    geocodeAddress(address)
+      .then((result) => {
         if (cancelled) return;
-
-        if (data && data.length > 0) {
-          setCoords({
-            lat: parseFloat(data[0].lat),
-            lon: parseFloat(data[0].lon),
-          });
+        geocodedAddressRef.current = address;
+        if (result) {
+          setCoords(result);
         } else {
           setError(true);
         }
-      } catch (err) {
-        if (!cancelled) setError(true);
-      } finally {
+      })
+      .finally(() => {
         if (!cancelled) setLoading(false);
-      }
-    }
-
-    geocode();
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [mapVisible, address, coords]);
+  }, [mapVisible, address, coords, propLat, propLon]);
 
-  // Initialize and mount Leaflet map
+  // Initialize the map exactly once, when it is visible and has a location
   useEffect(() => {
-    if (!mapVisible || !coords || !containerRef.current) return;
+    if (!mapVisible || !coordsRef.current || mapRef.current) return undefined;
+    const container = containerRef.current;
+    if (!container) return undefined;
 
-    // Clean up any existing map instance on re-render
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.remove();
-      mapInstanceRef.current = null;
-    }
+    const start = coordsRef.current;
 
-    const map = L.map(containerRef.current, {
-      center: [coords.lat, coords.lon],
-      zoom: zoom,
+    const map = L.map(container, {
+      center: [start.lat, start.lon],
+      zoom,
       scrollWheelZoom: true,
       zoomControl: false,
       attributionControl: true,
+      // Coalesce wheel input so one gesture does not traverse many zoom levels
+      wheelDebounceTime: 100,
+      wheelPxPerZoomLevel: 120,
     });
+    mapRef.current = map;
+    appliedCoordsRef.current = start;
 
-    mapInstanceRef.current = map;
-
-    // Base Tile Layer: Official OpenStreetMap
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    L.tileLayer(OSM_TILE_URL, {
       maxZoom: 19,
-      className: styles.mapTileLayer,
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors',
+      attribution: OSM_ATTRIBUTION,
+      // Fetch tiles once the gesture settles instead of during every animation
+      updateWhenZooming: false,
+      updateWhenIdle: true,
+      keepBuffer: 1,
     }).addTo(map);
 
-    // Zoom Controls
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // Approximate area radius circle
-    if (approximate) {
-      L.circle([coords.lat, coords.lon], {
-        radius: 220,
-        color: '#3b82f6',
-        fillColor: '#3b82f6',
-        fillOpacity: 0.12,
-        weight: 1.5,
-        dashArray: '5, 5',
-      }).addTo(map);
-    }
-
-    // Modern SVG Pin Marker
-    const iconHtml = `
-      <div class="${styles.markerPinWrapper}">
-        <div class="${styles.markerPulse}"></div>
-        <div class="${styles.markerBadge}">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-            <polyline points="9 22 9 12 15 12 15 22"></polyline>
-          </svg>
-        </div>
-      </div>
-    `;
-
-    const customMarker = L.divIcon({
-      className: styles.markerContainer,
-      html: iconHtml,
-      iconSize: [44, 44],
-      iconAnchor: [22, 22],
-      popupAnchor: [0, -20],
-    });
-
-    const marker = L.marker([coords.lat, coords.lon], { icon: customMarker }).addTo(map);
-
-    const popupContent = `
-      <div class="${styles.popupContent}">
-        <strong class="${styles.popupTitle}">${title}</strong>
-        ${subtitle ? `<span class="${styles.popupSubtitle}">${subtitle}</span>` : ''}
-        ${approximate ? `<span class="${styles.popupNotice}">Approximate location</span>` : ''}
-      </div>
-    `;
-
-    marker.bindPopup(popupContent, {
-      closeButton: false,
-      offset: [0, -12],
-    });
-
-    // Invalidate size once rendered to ensure tiles fill container
-    setTimeout(() => {
+    const invalidateTimer = setTimeout(() => {
       map.invalidateSize();
     }, 150);
 
-    // Ctrl+Scroll Handling: regular scroll does not zoom the map, but Ctrl+Scroll does
-    const container = containerRef.current;
-    let hintTimer = null;
+    return () => {
+      clearTimeout(invalidateTimer);
+      map.remove();
+      mapRef.current = null;
+      markerRef.current = null;
+      circleRef.current = null;
+      appliedCoordsRef.current = null;
+    };
+  }, [mapVisible, hasCoords]);
 
-    const handleWheel = (e) => {
-      if (e.ctrlKey || e.metaKey) {
-        // Zooming authorized: prevent default full-page browser scaling
-        e.preventDefault();
-        setShowHint(false);
-        if (hintTimer) clearTimeout(hintTimer);
+  // Marker, approximate circle, popup and recentering
+  useEffect(() => {
+    const map = mapRef.current;
+    const point = normalizeCoordinates(coords);
+    if (!map || !point) return;
+
+    const latlng = [point.lat, point.lon];
+    const popupHtml = buildPopupHtml({ title, subtitle, approximate });
+
+    if (!markerRef.current) {
+      const icon = L.divIcon({
+        className: styles.markerContainer,
+        html: MARKER_HTML,
+        iconSize: [44, 44],
+        iconAnchor: [22, 22],
+        popupAnchor: [0, -20],
+      });
+      markerRef.current = L.marker(latlng, { icon }).addTo(map);
+      markerRef.current.bindPopup(popupHtml, { closeButton: false, offset: [0, -12] });
+    } else {
+      markerRef.current.setLatLng(latlng);
+      markerRef.current.setPopupContent(popupHtml);
+    }
+
+    if (approximate) {
+      if (circleRef.current) {
+        circleRef.current.setLatLng(latlng);
       } else {
-        // Regular scroll: stop Leaflet wheel handler to let the page scroll naturally
-        e.stopImmediatePropagation();
-        setShowHint(true);
-        if (hintTimer) clearTimeout(hintTimer);
-        hintTimer = setTimeout(() => {
-          setShowHint(false);
-        }, 1200);
+        circleRef.current = L.circle(latlng, {
+          radius: APPROXIMATE_RADIUS_M,
+          color: '#3b82f6',
+          fillColor: '#3b82f6',
+          fillOpacity: 0.12,
+          weight: 1.5,
+          dashArray: '5, 5',
+        }).addTo(map);
+      }
+    } else if (circleRef.current) {
+      map.removeLayer(circleRef.current);
+      circleRef.current = null;
+    }
+
+    const previous = appliedCoordsRef.current;
+    if (previous && (previous.lat !== point.lat || previous.lon !== point.lon)) {
+      map.flyTo(latlng, map.getZoom(), { duration: 0.6 });
+    }
+    appliedCoordsRef.current = point;
+  }, [mapVisible, coords, approximate, title, subtitle]);
+
+  // Keep the view in sync when the requested zoom level changes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || map.getZoom() === zoom) return;
+    map.setZoom(zoom);
+  }, [zoom]);
+
+  // Listening on the wrapper in the capture phase runs before Leaflet's own
+  // handler on the map container.
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return undefined;
+
+    const hideHint = () => {
+      if (hintTimerRef.current) {
+        clearTimeout(hintTimerRef.current);
+        hintTimerRef.current = null;
+      }
+      if (showHintRef.current) {
+        showHintRef.current = false;
+        setShowHint(false);
       }
     };
 
-    container.addEventListener('wheel', handleWheel, { capture: true, passive: false });
+    const handleWheel = (event) => {
+      if (event.ctrlKey || event.metaKey) {
+        // Pinch-zoom / Ctrl+wheel: let Leaflet handle it, block browser zoom
+        event.preventDefault();
+        hideHint();
+        return;
+      }
+
+      // Plain wheel: stop the event before it reaches Leaflet so the page scrolls
+      event.stopPropagation();
+      if (!showHintRef.current) {
+        showHintRef.current = true;
+        setShowHint(true);
+      }
+      if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
+      hintTimerRef.current = setTimeout(hideHint, 1200);
+    };
+
+    wrapper.addEventListener('wheel', handleWheel, { capture: true, passive: false });
 
     return () => {
-      if (hintTimer) clearTimeout(hintTimer);
-      container.removeEventListener('wheel', handleWheel, { capture: true });
-      map.remove();
-      mapInstanceRef.current = null;
+      wrapper.removeEventListener('wheel', handleWheel, { capture: true });
+      if (hintTimerRef.current) {
+        clearTimeout(hintTimerRef.current);
+        hintTimerRef.current = null;
+      }
     };
-  }, [mapVisible, coords, approximate, zoom, title, subtitle]);
+  }, []);
 
   const handleResetCenter = () => {
-    if (mapInstanceRef.current && coords) {
-      mapInstanceRef.current.flyTo([coords.lat, coords.lon], zoom, { duration: 0.8 });
-    }
+    const map = mapRef.current;
+    if (!map || !coords) return;
+    map.flyTo([coords.lat, coords.lon], zoom, { duration: 0.8 });
   };
 
   return (
-    <div className={styles.mapWrapper} ref={setLazyRef} style={{ height }}>
+    <div className={styles.mapWrapper} ref={wrapperRef} style={{ height }}>
       {/* Interactive Leaflet Map Canvas */}
       <div ref={containerRef} className={styles.mapCanvas} />
 

@@ -14,13 +14,16 @@
   z-index: 1;
 }
 
-/* Modern styling for Official OpenStreetMap tiles */
-.mapTileLayer {
-  filter: saturate(0.88) contrast(1.02);
-  transition: filter 0.3s ease;
+/*
+ * Tile styling.
+ *
+ * The filter is applied once to the whole tile pane instead of to every tile <img>.
+ */
+.mapWrapper :global(.leaflet-tile-pane) {
+  filter: saturate(0.92) contrast(1.02);
 }
 
-[data-theme='dark'] .mapTileLayer {
+[data-theme='dark'] .mapWrapper :global(.leaflet-tile-pane) {
   filter: brightness(0.65) invert(1) contrast(2) hue-rotate(185deg) saturate(0.35) brightness(0.88);
 }
 
