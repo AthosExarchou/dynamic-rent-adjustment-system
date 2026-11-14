@@ -12,6 +12,10 @@ public class SystemStatusDTO {
     private String pricePredictionsAge;
     private boolean pricePredictionsLoaded;
 
+    // In-memory cache reload tracking
+    private String lastReloadedTimestamp;
+    private String lastReloadedAge;
+
     // Platform user stats
     private long totalUsers;
     private long totalOwners;
@@ -40,6 +44,8 @@ public class SystemStatusDTO {
             String pricePredictionsLastModified,
             String pricePredictionsAge,
             boolean pricePredictionsLoaded,
+            String lastReloadedTimestamp,
+            String lastReloadedAge,
             long totalUsers,
             long totalOwners,
             long totalTenants,
@@ -59,6 +65,8 @@ public class SystemStatusDTO {
         this.pricePredictionsLastModified = pricePredictionsLastModified;
         this.pricePredictionsAge = pricePredictionsAge;
         this.pricePredictionsLoaded = pricePredictionsLoaded;
+        this.lastReloadedTimestamp = lastReloadedTimestamp;
+        this.lastReloadedAge = lastReloadedAge;
         this.totalUsers = totalUsers;
         this.totalOwners = totalOwners;
         this.totalTenants = totalTenants;
@@ -133,6 +141,22 @@ public class SystemStatusDTO {
 
     public void setPricePredictionsLoaded(boolean pricePredictionsLoaded) {
         this.pricePredictionsLoaded = pricePredictionsLoaded;
+    }
+
+    public String getLastReloadedTimestamp() {
+        return lastReloadedTimestamp;
+    }
+
+    public void setLastReloadedTimestamp(String lastReloadedTimestamp) {
+        this.lastReloadedTimestamp = lastReloadedTimestamp;
+    }
+
+    public String getLastReloadedAge() {
+        return lastReloadedAge;
+    }
+
+    public void setLastReloadedAge(String lastReloadedAge) {
+        this.lastReloadedAge = lastReloadedAge;
     }
 
     public long getTotalUsers() {

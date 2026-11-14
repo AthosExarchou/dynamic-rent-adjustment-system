@@ -115,14 +115,20 @@ export default function SystemStatus() {
             <Database size={22} className={styles.sectionIcon} />
             Analytics & Forecasting Engine
           </h2>
-          <button
-            onClick={handleReloadForecast}
-            disabled={reloading}
-            className={styles.reloadBtn}
-          >
-            <RefreshCw size={16} className={reloading ? styles.spinning : ''} />
-            {reloading ? 'Reloading...' : 'Force Reload Forecast Data'}
-          </button>
+          <div className={styles.reloadActions}>
+            <span className={styles.lastSyncedText}>
+              In-Memory Sync: <strong>{status?.lastReloadedAge || 'just now'}</strong>
+            </span>
+            <button
+              onClick={handleReloadForecast}
+              disabled={reloading}
+              className={styles.reloadBtn}
+              title="Re-read JSON prediction files from disk into active server memory"
+            >
+              <RefreshCw size={16} className={reloading ? styles.spinning : ''} />
+              {reloading ? 'Reloading...' : 'Force Reload Forecast Data'}
+            </button>
+          </div>
         </div>
 
         <div className={styles.analyticsGrid}>
@@ -151,15 +157,21 @@ export default function SystemStatus() {
                 </span>
               </div>
               <div className={styles.dataRow}>
-                <span className={styles.dataLabel}>Last Modified:</span>
+                <span className={styles.dataLabel}>File on Disk:</span>
                 <span className={styles.dataValue}>
                   {status?.macroPredictionsLastModified || 'Not found'}
                 </span>
               </div>
               <div className={styles.dataRow}>
-                <span className={styles.dataLabel}>Freshness:</span>
+                <span className={styles.dataLabel}>Disk File Age:</span>
                 <span className={styles.dataValue}>
                   {status?.macroPredictionsAge || 'N/A'}
+                </span>
+              </div>
+              <div className={styles.dataRow}>
+                <span className={styles.dataLabel}>In-Memory Sync:</span>
+                <span className={styles.dataValueSynced}>
+                  {status?.lastReloadedAge || 'just now'}
                 </span>
               </div>
             </div>
@@ -190,15 +202,21 @@ export default function SystemStatus() {
                 </span>
               </div>
               <div className={styles.dataRow}>
-                <span className={styles.dataLabel}>Last Modified:</span>
+                <span className={styles.dataLabel}>File on Disk:</span>
                 <span className={styles.dataValue}>
                   {status?.pricePredictionsLastModified || 'Not found'}
                 </span>
               </div>
               <div className={styles.dataRow}>
-                <span className={styles.dataLabel}>Freshness:</span>
+                <span className={styles.dataLabel}>Disk File Age:</span>
                 <span className={styles.dataValue}>
                   {status?.pricePredictionsAge || 'N/A'}
+                </span>
+              </div>
+              <div className={styles.dataRow}>
+                <span className={styles.dataLabel}>In-Memory Sync:</span>
+                <span className={styles.dataValueSynced}>
+                  {status?.lastReloadedAge || 'just now'}
                 </span>
               </div>
             </div>

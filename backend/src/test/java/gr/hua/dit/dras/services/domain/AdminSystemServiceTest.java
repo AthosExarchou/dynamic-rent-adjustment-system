@@ -73,6 +73,7 @@ class AdminSystemServiceTest {
         assertThat(status.getPendingListings()).isEqualTo(2L);
         assertThat(status.getRentedListings()).isEqualTo(1L);
         assertThat(status.getRejectedListings()).isEqualTo(1L);
+        assertThat(status.getLastReloadedAge()).isEqualTo("just now");
         assertThat(status.isMacroPredictionsLoaded()).isTrue();
     }
 

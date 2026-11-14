@@ -1,6 +1,5 @@
 package gr.hua.dit.dras.services.domain;
 
-/* imports */
 import gr.hua.dit.dras.dto.SystemStatusDTO;
 import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.repositories.ListingRepository;
@@ -30,6 +29,8 @@ public class AdminSystemService {
     private final OwnerRepository ownerRepository;
     private final TenantRepository tenantRepository;
     private final ListingRepository listingRepository;
+
+    private volatile Instant lastReloadedAt = Instant.now();
 
     public AdminSystemService(
             MacroAnalyticsService macroAnalyticsService,
@@ -81,6 +82,9 @@ public class AdminSystemService {
             priceLoaded = priceFile.canRead();
         }
 
+        String lastReloadedTimestamp = DateTimeFormatter.ISO_INSTANT.format(lastReloadedAt);
+        String lastReloadedAge = formatAge(lastReloadedAt);
+
         long totalUsers = userRepository.count();
         long totalOwners = ownerRepository.count();
         long totalTenants = tenantRepository.count();
@@ -103,6 +107,8 @@ public class AdminSystemService {
                 priceLastModified,
                 priceAge,
                 priceLoaded,
+                lastReloadedTimestamp,
+                lastReloadedAge,
                 totalUsers,
                 totalOwners,
                 totalTenants,
@@ -120,6 +126,7 @@ public class AdminSystemService {
         log.info("Reloading macro and price forecast model data upon admin request.");
         macroAnalyticsService.loadModelData();
         priceSuggestionService.loadModelData();
+        this.lastReloadedAt = Instant.now();
     }
 
     private File findExistingFile(String filename) {

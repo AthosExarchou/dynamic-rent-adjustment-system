@@ -58,6 +58,22 @@
   color: var(--text-secondary);
 }
 
+.reloadActions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.lastSyncedText {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+}
+
+.lastSyncedText strong {
+  color: #10b981;
+}
+
 .reloadBtn {
   display: inline-flex;
   align-items: center;
@@ -214,6 +230,16 @@
   white-space: nowrap;
   max-width: 280px;
   cursor: help;
+}
+
+.dataValueSynced {
+  color: #10b981;
+  font-weight: 600;
+  text-align: right;
+  background-color: rgba(16, 185, 129, 0.1);
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
 }
 
 /* Origin Comparison Card */
