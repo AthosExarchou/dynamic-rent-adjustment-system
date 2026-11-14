@@ -310,7 +310,7 @@ export default function FavouritesPage() {
                   <FavouriteButton listing={listing} variant="card" />
                   <Link to={`/listings/${listing.id}`} className={styles.imageLink} aria-label={`View details for ${listing.title}`}>
                     <img
-                      src={cardImageUrl}
+                      src={cardImageUrl} referrerPolicy="no-referrer"
                       alt={hasImages ? listing.title : 'Generic demo preview'}
                       className={styles.image}
                       loading="lazy"

@@ -342,7 +342,7 @@ export default function LandingPage() {
                       {apt.isMock ? (
                         <div className={styles.imageLink} aria-label={`Sample preview for ${apt.title}`}>
                           <img
-                            src={cardImageUrl}
+                            src={cardImageUrl} referrerPolicy="no-referrer"
                             alt={hasImages ? apt.title : 'Generic demo preview'}
                             className={styles.image}
                             loading="lazy"
@@ -359,7 +359,7 @@ export default function LandingPage() {
                       ) : (
                         <Link to={`/listings/${apt.id}`} className={styles.imageLink} aria-label={`View details for ${apt.title}`}>
                           <img
-                            src={cardImageUrl}
+                            src={cardImageUrl} referrerPolicy="no-referrer"
                             alt={hasImages ? apt.title : 'Generic demo preview'}
                             className={styles.image}
                             loading="lazy"
@@ -464,7 +464,7 @@ export default function LandingPage() {
                       {apt.isMock ? (
                         <div className={styles.imageLink} aria-label={`Sample preview for ${apt.title}`}>
                           <img
-                            src={cardImageUrl}
+                            src={cardImageUrl} referrerPolicy="no-referrer"
                             alt={hasImages ? apt.title : 'Generic demo preview'}
                             className={styles.image}
                             loading="lazy"
@@ -481,7 +481,7 @@ export default function LandingPage() {
                       ) : (
                         <Link to={`/listings/${apt.id}`} className={styles.imageLink} aria-label={`View details for ${apt.title}`}>
                           <img
-                            src={cardImageUrl}
+                            src={cardImageUrl} referrerPolicy="no-referrer"
                             alt={hasImages ? apt.title : 'Generic demo preview'}
                             className={styles.image}
                             loading="lazy"

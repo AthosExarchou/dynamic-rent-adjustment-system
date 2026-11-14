@@ -139,6 +139,8 @@ cp .env.example .env
 ```
 Fill in `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `APP_PUBLIC_URL`, and `MAIL_*` credentials. Set `APP_PUBLIC_URL` according to your deployment target.
 
+Set `SCRAPER_API_KEY` to a strong random value and export the same value when running the analytics scrapers; it authenticates machine-to-machine pushes to `/api/external-import/listings`.
+
 ### Backend (`backend/src/main/resources/application.yml`)
 The backend is configured to use environment variables by default. You can adjust application profiles (`dev`, `prod`) here.
 

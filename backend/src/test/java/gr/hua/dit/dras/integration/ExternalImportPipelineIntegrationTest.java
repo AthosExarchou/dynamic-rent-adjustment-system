@@ -3,6 +3,7 @@ package gr.hua.dit.dras.integration;
 /* imports */
 import gr.hua.dit.dras.entities.Listing;
 import gr.hua.dit.dras.entities.Owner;
+import gr.hua.dit.dras.config.ScraperApiKeyFilter;
 import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.model.enums.PropertyType;
 import gr.hua.dit.dras.model.enums.RentalDuration;
@@ -24,10 +25,10 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
+@SpringBootTest(properties = "app.scraper.api-key=test-scraper-key")
 @AutoConfigureMockMvc
 @Transactional
 class ExternalImportPipelineIntegrationTest {
@@ -87,7 +88,9 @@ class ExternalImportPipelineIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(batchJson))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Successfully imported/updated 2 external listings."));
+                .andExpect(jsonPath("$.received").value(2))
+                .andExpect(jsonPath("$.imported").value(2))
+                .andExpect(jsonPath("$.skipped").value(0));
 
         // Verify database records
         Optional<Owner> systemOwnerOpt = ownerRepository.findBySystemOwnerTrue();
@@ -147,7 +150,9 @@ class ExternalImportPipelineIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updateBatchJson))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Successfully imported/updated 1 external listings."));
+                .andExpect(jsonPath("$.received").value(1))
+                .andExpect(jsonPath("$.imported").value(1))
+                .andExpect(jsonPath("$.skipped").value(0));
 
         Listing updatedListing1 = listingRepository.findBySourceUrl(sourceUrl1).orElseThrow();
         assertThat(updatedListing1.getId()).isEqualTo(listing1.getId()); // Same entity
@@ -260,8 +265,49 @@ class ExternalImportPipelineIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(batchJson))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Successfully imported/updated 1 external listings."));
+                .andExpect(jsonPath("$.received").value(2))
+                .andExpect(jsonPath("$.imported").value(1))
+                .andExpect(jsonPath("$.skipped").value(1));
 
         assertThat(listingRepository.findBySourceUrl(validUrl)).isPresent();
+    }
+
+    @Test
+    @DisplayName("Scraper API key authenticates requests without a session or CSRF token")
+    void importPipeline_AcceptsScraperApiKey() throws Exception {
+        String url = "https://spitogatos.gr/listing/" + System.currentTimeMillis() + "_api_key";
+
+        String json = String.format("""
+                [
+                    {
+                        "title": "Scraper Authorized Listing",
+                        "description": "Imported through the service API key.",
+                        "price": 700,
+                        "address": "Kypseli 10",
+                        "sizeM2": 55,
+                        "sourceUrl": "%s"
+                    }
+                ]
+                """, url);
+
+        mockMvc.perform(post("/external-import/listings")
+                        .header(ScraperApiKeyFilter.HEADER_NAME, "test-scraper-key")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.received").value(1))
+                .andExpect(jsonPath("$.imported").value(1));
+
+        assertThat(listingRepository.findBySourceUrl(url)).isPresent();
+    }
+
+    @Test
+    @DisplayName("Invalid scraper API key is rejected with 401")
+    void importPipeline_RejectsInvalidScraperApiKey() throws Exception {
+        mockMvc.perform(post("/external-import/listings")
+                        .header(ScraperApiKeyFilter.HEADER_NAME, "wrong-key")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("[]"))
+                .andExpect(status().isUnauthorized());
     }
 }

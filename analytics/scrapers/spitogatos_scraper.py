@@ -65,6 +65,12 @@ Usage:
     python spitogatos_scraper.py --max-pages 3 --display-mode virtual
         -> Runs in fast mode using a virtual display and scrapes up to 3 pages.
 
+    python spitogatos_scraper.py --push-backend
+        -> Pushes validated listings to the backend using SCRAPER_API_KEY.
+
+    python spitogatos_scraper.py --replay-failed
+        -> Resends chunks stored in failed_payloads/ without re-scraping.
+
 Dependencies:
     playwright
     beautifulsoup4
@@ -85,7 +91,7 @@ from playwright_stealth import Stealth
 from bs4 import BeautifulSoup
 from pathlib import Path
 from urllib.parse import urlparse, unquote, urljoin
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from logging.handlers import RotatingFileHandler
 import textwrap
@@ -170,6 +176,8 @@ class ScraperConfig:
 
     push_backend: bool
     backend_url: str
+    api_key: str
+    replay_failed: bool
 
     headless: bool
     debug: bool
@@ -984,102 +992,299 @@ def cleanup_failed_payloads(directory: Path, max_age_days: int = 7, max_files: i
 
 
 # Backend data export
-def push_to_backend(df: pd.DataFrame, api_url: str):
+
+DEFAULT_BACKEND_URL = os.getenv(
+    "BACKEND_IMPORT_URL",
+    "http://localhost:8080/api/external-import/listings"
+)
+
+
+def clean_str(value: Any, max_len: int, default: Optional[str] = "") -> Optional[str]:
+    """
+    Converts pandas values into trimmed strings without leaking pandas artifacts.
+
+    NaN/NaT/None become ``default`` instead of the strings "nan" or "None".
+    """
+    if value is None or pd.isna(value):
+        return default
+
+    text = str(value).strip()
+    if not text or text.lower() in {"nan", "none", "null", "<na>"}:
+        return default
+
+    return text[:max_len]
+
+
+def save_failed_chunk(chunk: List[Dict[str, Any]], offset: int) -> Path:
+    """Persists a rejected chunk so it can be replayed later."""
+    timestamp = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+    fname = FAILED_DIR / f"failed_chunk_{timestamp}_offset{offset}.json"
+
+    with open(fname, "w", encoding="utf-8") as f:
+        json.dump(chunk, f, ensure_ascii=False, indent=2)
+
+    return fname
+
+
+def send_chunks_to_backend(
+        payload: List[Dict[str, Any]],
+        api_url: str,
+        api_key: str,
+        save_failed: bool = True
+) -> tuple[int, int]:
+    """
+    Sends DTO dictionaries to the backend in chunks.
+
+    Returns
+    -------
+    tuple[int, int]
+        ``(imported_count, failed_count)`` where ``imported_count`` is based on
+        the backend's JSON summary when available.
+
+    Client errors (4xx) and redirects (3xx) are not retried because they will
+    never succeed unchanged; server errors (5xx) and network failures are retried.
+    Redirects are surfaced instead of being followed so an auth redirect cannot
+    masquerade as a successful import.
+    """
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+    if api_key:
+        headers["X-Scraper-Key"] = api_key
+    else:
+        logger.warning(
+            "Backend upload: SCRAPER_API_KEY is not set; the backend will reject the request"
+        )
+
+    imported_count = 0
+    failed_count = 0
+    connection_hint_shown = False
+
+    for offset in range(0, len(payload), CHUNK_SIZE):
+        chunk = payload[offset:offset + CHUNK_SIZE]
+
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                response = requests.post(
+                    api_url,
+                    json=chunk,
+                    headers=headers,
+                    timeout=15,
+                    allow_redirects=False
+                )
+            except requests.ConnectionError as exc:
+                logger.error(
+                    "Chunk connection error | url=%s | offset=%d | attempt=%d | %s",
+                    api_url, offset, attempt, exc
+                )
+                if not connection_hint_shown:
+                    connection_hint_shown = True
+                    logger.error(
+                        "Hint: no backend is listening at that URL. Check that the backend is running "
+                        "and that the port matches your deployment. This Docker stack exposes the API "
+                        "through nginx on port 80 (http://localhost/api/external-import/listings) and "
+                        "maps the backend container to port 8081; port 8080 is only valid when the "
+                        "backend runs directly on the host."
+                    )
+            except requests.RequestException:
+                logger.exception("Chunk request error | offset=%d | attempt=%d", offset, attempt)
+            else:
+                if 200 <= response.status_code < 300:
+                    chunk_imported = len(chunk)
+
+                    try:
+                        body = response.json()
+                        chunk_imported = int(body.get("imported", len(chunk)))
+                        skipped = int(body.get("skipped", len(chunk) - chunk_imported))
+                    except (ValueError, TypeError, AttributeError):
+                        skipped = 0
+
+                    imported_count += chunk_imported
+
+                    if chunk_imported < len(chunk):
+                        logger.warning(
+                            "Chunk partially imported | offset=%d | imported=%d | skipped=%d",
+                            offset, chunk_imported, skipped
+                        )
+                    else:
+                        logger.info(
+                            "Chunk sent | offset=%d | imported=%d", offset, chunk_imported
+                        )
+                    break
+
+                if 300 <= response.status_code < 500:
+                    logger.error(
+                        "Chunk rejected (not retried) | status=%d | offset=%d | body=%s",
+                        response.status_code, offset, response.text[:500]
+                    )
+                    failed_count += len(chunk)
+
+                    if save_failed:
+                        fname = save_failed_chunk(chunk, offset)
+                        logger.error("Chunk saved for replay | path=%s", fname)
+                    break
+
+                logger.warning(
+                    "Chunk failed | status=%d | offset=%d | body=%s",
+                    response.status_code, offset, response.text[:300]
+                )
+
+            if attempt < MAX_RETRIES:
+                sleep_time = RETRY_DELAY * attempt
+                logger.info(
+                    "Retrying chunk | delay=%ds | attempt=%d/%d",
+                    sleep_time, attempt, MAX_RETRIES
+                )
+                time.sleep(sleep_time)
+            else:
+                failed_count += len(chunk)
+
+                if save_failed:
+                    fname = save_failed_chunk(chunk, offset)
+                    logger.error(
+                        "Chunk permanently failed | offset=%d | size=%d | saved_to=%s",
+                        offset, len(chunk), fname
+                    )
+
+    return imported_count, failed_count
+
+
+def push_to_backend(df: pd.DataFrame, api_url: Optional[str] = None, api_key: Optional[str] = None):
     """
     Transforms the scraped DataFrame and pushes it to the Spring Boot REST API.
     The Java backend handles mapping the raw Greek strings to Enums.
     """
-    logger.info("Backend upload: preparing payload")
+    resolved_url = api_url or DEFAULT_BACKEND_URL
+    resolved_key = api_key if api_key is not None else os.getenv("SCRAPER_API_KEY", "")
+
+    logger.info("Backend upload: preparing payload | url=%s", resolved_url)
 
     payload = []
-    success_count = 0
-    fail_count = 0
+    skipped_rows = 0
 
     for _, row in df.iterrows():
+        price = safe_int(row.get("price"))
+        size_m2 = safe_int(row.get("Μέγεθος"))
 
-        images = [img for img in ensure_list(row.get("images")) if is_valid_image_url(img)]
+        # Enforces the same bounds used by validation and the backend DTO
+        if price is None or size_m2 is None:
+            skipped_rows += 1
+            continue
+
+        if not (VALIDATION_RULES["price"]["min"] <= price <= VALIDATION_RULES["price"]["max"]):
+            skipped_rows += 1
+            continue
+
+        if not (VALIDATION_RULES["size"]["min"] <= size_m2 <= VALIDATION_RULES["size"]["max"]):
+            skipped_rows += 1
+            continue
+
+        source_url = clean_str(row.get("url"), 500, default=None)
+        if not source_url:
+            skipped_rows += 1
+            continue
+
+        price_per_m2_raw = safe_float(row.get("price_per_m2"))
+        price_per_m2 = int(round(price_per_m2_raw)) if price_per_m2_raw is not None else None
+
+        images = [
+            img for img in ensure_list(row.get("images")) if is_valid_image_url(img)
+        ]
 
         dto = {
-            "sourceUrl": row.get("url"),
-            "title": str(row.get("title"))[:150],
-            "subtitle": str(row.get("subtitle"))[:250] if pd.notna(row.get("subtitle")) else None,
-            "description": str(row.get("description"))[:5000] if pd.notna(row.get("description")) else "",
+            "sourceUrl": source_url,
+            "title": clean_str(row.get("title"), 150, default="Ακίνητο"),
+            "subtitle": clean_str(row.get("subtitle"), 250, default=None),
+            "description": clean_str(row.get("description"), 5000, default=""),
 
-            "price": safe_int(row.get("price")),
-            "pricePerM2": safe_float(row.get("price_per_m2")),
-            "sizeM2": safe_int(row.get("Μέγεθος")),
+            "price": price,
+            "pricePerM2": price_per_m2,
+            "sizeM2": size_m2,
 
             "floor": safe_int(row.get("floor")),
             "yearBuilt": safe_int(row.get("yearBuilt")),
             "bedrooms": safe_int(row.get("bedrooms")),
             "bathrooms": safe_int(row.get("bathrooms")),
 
-            "address": str(row.get("address", ""))[:255],
-            "propertyType": str(row.get("Τύπος_ακινήτου", "Ακίνητο")),
-            "rentalDuration": str(row.get("rental_duration", "LONG_TERM")),
+            "address": clean_str(row.get("address"), 255, default="Αθήνα"),
+            "propertyType": clean_str(row.get("Τύπος_ακινήτου"), 100, default="Ακίνητο"),
+            "rentalDuration": clean_str(row.get("rental_duration"), 50, default="LONG_TERM"),
 
             "images": images,
         }
 
-        if dto["price"] is None or dto["sizeM2"] is None:
-            continue
-
         payload.append(dto)
+
+    if skipped_rows:
+        logger.info("Backend upload: skipped %d rows outside export bounds", skipped_rows)
 
     if not payload:
         logger.warning("Backend upload: no valid listings to send")
         return
 
-    logger.info("Backend upload: sending %d listings in chunks of %d",
-                len(payload), CHUNK_SIZE)
+    logger.info(
+        "Backend upload: sending %d listings in chunks of %d",
+        len(payload), CHUNK_SIZE
+    )
 
-    # Chunking
-    for i in range(0, len(payload), CHUNK_SIZE):
-        chunk = payload[i:i + CHUNK_SIZE]
+    imported, failed = send_chunks_to_backend(payload, resolved_url, resolved_key)
 
-        # Retry logic
-        for attempt in range(1, MAX_RETRIES + 1):
-            try:
-                response = requests.post(
-                    api_url,
-                    json=chunk,
-                    headers={"Content-Type": "application/json"},
-                    timeout=15
-                )
-
-                if response.status_code in [200, 201]:
-                    success_count += len(chunk)
-                    logger.info("Chunk sent | offset=%d | size=%d", i, len(chunk))
-                    break
-                else:
-                    logger.warning("Chunk failed | status=%d | offset=%d | size=%d",
-                                   response.status_code, i, len(chunk))
-
-            except Exception as e:
-                logger.exception("Chunk request error | offset=%d", i)
-
-            # Backoff before retry
-            if attempt < MAX_RETRIES:
-                sleep_time = RETRY_DELAY * attempt
-                logger.info("Retrying chunk | delay=%ds | attempt=%d/%d",
-                            sleep_time, attempt, MAX_RETRIES)
-                time.sleep(sleep_time)
-            else:
-                fail_count += len(chunk)
-
-                timestamp = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
-                fname = FAILED_DIR / f"failed_chunk_{timestamp}.json"
-
-                with open(fname, "w", encoding="utf-8") as f:
-                    json.dump(chunk, f, ensure_ascii=False, indent=2)
-
-                logger.error("Chunk permanently failed | offset=%d | size=%d | saved_to=%s",
-                             i, len(chunk), fname)
-
-    logger.info("Backend upload complete | success=%d | failed=%d", success_count, fail_count)
+    logger.info("Backend upload complete | imported=%d | failed=%d", imported, failed)
 
     # Cleanup old failed payloads
     cleanup_failed_payloads(FAILED_DIR, max_age_days=7, max_files=50)
+
+
+def replay_failed_payloads(api_url: Optional[str] = None, api_key: Optional[str] = None):
+    """
+    Replays JSON chunks previously saved in ``failed_payloads/``.
+
+    Files are deleted only after every chunk inside them is accepted by the
+    backend, keeping unprocessed data available for another attempt.
+    """
+    resolved_url = api_url or DEFAULT_BACKEND_URL
+    resolved_key = api_key if api_key is not None else os.getenv("SCRAPER_API_KEY", "")
+
+    files = sorted(FAILED_DIR.glob("failed_chunk_*.json"))
+    if not files:
+        logger.info("Replay: no failed payloads found in %s", FAILED_DIR)
+        return
+
+    logger.info("Replay: sending %d failed payload file(s) to %s", len(files), resolved_url)
+
+    removed = 0
+
+    for fpath in files:
+        try:
+            with open(fpath, "r", encoding="utf-8") as f:
+                chunk = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            logger.exception("Replay: could not read %s", fpath.name)
+            continue
+
+        if not isinstance(chunk, list) or not chunk:
+            logger.warning("Replay: skipping malformed payload %s", fpath.name)
+            continue
+
+        imported, failed = send_chunks_to_backend(
+            chunk, resolved_url, resolved_key, save_failed=False
+        )
+
+        if failed == 0:
+            fpath.unlink(missing_ok=True)
+            removed += 1
+            logger.info("Replay: %s imported=%d and removed", fpath.name, imported)
+        else:
+            logger.error(
+                "Replay: %s kept for another attempt | imported=%d | failed=%d",
+                fpath.name, imported, failed
+            )
+
+    logger.info(
+        "Replay complete | files_removed=%d | files_kept=%d",
+        removed, len(files) - removed
+    )
 
 
 # Main Scraper Pipeline
@@ -1690,7 +1895,8 @@ def run_scraper(config: ScraperConfig):
         if config.push_backend:
             push_to_backend(
                 df_validated,
-                api_url=config.backend_url
+                api_url=config.backend_url,
+                api_key=config.api_key
             )
         else:
             logger.info("Backend upload skipped (--push-backend not set)")
@@ -1750,13 +1956,17 @@ def build_parser() -> argparse.ArgumentParser:
                 1. python spitogatos_scraper.py --mode normal --max-pages 3 --push-backend
                 2. python spitogatos_scraper.py --full --headful --display-mode virtual
                 3. python spitogatos_scraper.py --max-pages 5 --push-backend --headful
+                4. python spitogatos_scraper.py --replay-failed
 
             Notes:
                 - The scraper runs in headless mode by default
                 - Use '--headful' to launch a visible browser for debugging
                 - '--display-mode' requires '--headful' to be active
                 - '--full' enables image downloading
-                - default backend url: http://localhost/api/external-import/listings
+                - Backend URL defaults to $BACKEND_IMPORT_URL or
+                  http://localhost:8080/api/external-import/listings
+                - Backend API key defaults to $SCRAPER_API_KEY
+                - '--replay-failed' resends saved chunks without re-scraping
             """
         )
     )
@@ -1814,9 +2024,19 @@ def build_parser() -> argparse.ArgumentParser:
         help="Push scraped listings to backend API"
     )
     output_group.add_argument(
+        "--replay-failed",
+        action="store_true",
+        help="Replay chunks saved in failed_payloads/ without running the scraper"
+    )
+    output_group.add_argument(
         "--backend-url",
-        default="http://localhost/api/external-import/listings",
-        help="Backend endpoint URL"
+        default=DEFAULT_BACKEND_URL,
+        help="Backend endpoint URL (default: %(default)s)"
+    )
+    output_group.add_argument(
+        "--api-key",
+        default=os.getenv("SCRAPER_API_KEY", ""),
+        help="Shared secret sent as X-Scraper-Key (default: $SCRAPER_API_KEY)"
     )
     output_group.add_argument(
         "--debug",
@@ -1842,6 +2062,8 @@ def parse_args() -> ScraperConfig:
         display_mode=args.display_mode,
         push_backend=args.push_backend,
         backend_url=args.backend_url,
+        api_key=args.api_key,
+        replay_failed=args.replay_failed,
         headless=not args.headful,
         debug=args.debug,
     )
@@ -1855,15 +2077,20 @@ def main():
         setup_logging(debug=config.debug)
 
         logger.info(
-            "DRAS start | mode=%s | pages=%d | display=%s | images=%s | push_backend=%s | headless=%s | debug=%s",
+            "DRAS start | mode=%s | pages=%d | display=%s | images=%s | push_backend=%s | api_key=%s | headless=%s | debug=%s",
             config.mode,
             config.max_pages,
             config.display_mode,
             "ON" if config.full else "OFF",
             "ON" if config.push_backend else "OFF",
+            "SET" if config.api_key else "UNSET",
             "ON" if config.headless else "OFF",
             "ON" if config.debug else "OFF",
         )
+
+        if config.replay_failed:
+            replay_failed_payloads(api_url=config.backend_url, api_key=config.api_key)
+            return
 
         run_scraper(config)
     finally:

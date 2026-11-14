@@ -17,6 +17,8 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.web.cors.CorsConfiguration;
@@ -68,9 +70,14 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           LoginSuccessHandler successHandler) throws Exception {
+                                           LoginSuccessHandler successHandler,
+                                           @Value("${app.scraper.api-key:}") String scraperApiKey) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                /* Service-to-service authentication for the analytics scraper */
+                .addFilterBefore(new ScraperApiKeyFilter(scraperApiKey),
+                        UsernamePasswordAuthenticationFilter.class)
 
                 .authorizeHttpRequests((requests) -> requests
                         /* Static Resources */
@@ -105,9 +112,19 @@ public class SecurityConfig {
                         CookieCsrfTokenRepository tokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
                         tokenRepository.setCookiePath("/");
                         tokenRepository.setCookieName("XSRF-TOKEN-DRAS");
+
+                        /* CSRF is only waived for scraper requests that present the API key header.
+                           Browser sessions keep standard CSRF protection. */
+                        RequestMatcher scraperCsrfExempt = request -> {
+                            String path = request.getRequestURI().substring(request.getContextPath().length());
+                            String key = request.getHeader(ScraperApiKeyFilter.HEADER_NAME);
+                            return path.startsWith("/external-import/") && key != null && !key.isBlank();
+                        };
+
                         csrf.csrfTokenRepository(tokenRepository)
                             .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                            .ignoringRequestMatchers("/auth/login", "/auth/logout", "/auth/forgot-password", "/auth/reset-password", "/notifications/**", "/favourites/**", "/saveUser", "/admin/system/**", "/api/admin/system/**");
+                            .ignoringRequestMatchers("/auth/login", "/auth/logout", "/auth/forgot-password", "/auth/reset-password", "/notifications/**", "/favourites/**", "/saveUser", "/admin/system/**", "/api/admin/system/**")
+                            .ignoringRequestMatchers(scraperCsrfExempt);
                 })
                 .addFilterAfter(new OncePerRequestFilter() {
                     @Override

@@ -18,6 +18,8 @@ app:
   public-url: ${APP_PUBLIC_URL:http://localhost:5173}
   admin:
     initial-password: ${ADMIN_INITIAL_PASSWORD:}
+  scraper:
+    api-key: ${SCRAPER_API_KEY:}
 
 management:
   endpoints:

@@ -27,6 +27,7 @@ services:
       - MAIL_USERNAME=${MAIL_USERNAME:-}
       - MAIL_PASSWORD=${MAIL_PASSWORD:-}
       - APP_PUBLIC_URL=${APP_PUBLIC_URL:-http://localhost}
+      - SCRAPER_API_KEY=${SCRAPER_API_KEY:-}
     ports:
       - "8081:8080"
     volumes:

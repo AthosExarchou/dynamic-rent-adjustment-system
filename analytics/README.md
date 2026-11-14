@@ -63,8 +63,23 @@ python3 analytics/scrapers/spitogatos_scraper.py
 ```
 
 **Push scraped listings to backend (from project root):**
+
+The backend requires the shared secret configured as `SCRAPER_API_KEY` (see `.env.example`):
 ```bash
+export SCRAPER_API_KEY="<shared-secret>"
 python3 analytics/scrapers/spitogatos_scraper.py --push-backend
+```
+
+The endpoint defaults to `http://localhost:8080/api/external-import/listings`. Override it when the
+backend runs behind the Docker/Nginx stack (port 80) or is reached through the Docker host mapping (8081):
+```bash
+python3 analytics/scrapers/spitogatos_scraper.py --push-backend \
+  --backend-url http://localhost/api/external-import/listings
+```
+
+**Replay chunks saved in `failed_payloads/` without re-scraping:**
+```bash
+python3 analytics/scrapers/spitogatos_scraper.py --replay-failed
 ```
 
 *(Or from inside `analytics/`: `python scrapers/spitogatos_scraper.py`)*

@@ -68,7 +68,7 @@ It outlines the access control rules enforced at the controller layer via Spring
 
 | Endpoint | Method | Security |
 |----------|--------|----------|
-| /external-import/listings | POST | `hasAuthority("ADMIN")` (SecurityConfig) |
+| /external-import/listings | POST | `hasAuthority("ADMIN")` via admin session or `X-Scraper-Key` (SecurityConfig) |
 
 ### NotificationController.java
 

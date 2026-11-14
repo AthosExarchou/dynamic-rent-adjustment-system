@@ -715,7 +715,7 @@ export default function ListingList() {
                   <FavouriteButton listing={l} variant="card" />
                   <Link to={`/listings/${l.id}`} className={styles.imageLink} aria-label={`View details for ${l.title}`}>
                     <img
-                      src={cardImageUrl}
+                      src={cardImageUrl} referrerPolicy="no-referrer"
                       alt={hasImages ? l.title : 'Generic demo preview'}
                       className={styles.image}
                       loading="lazy"

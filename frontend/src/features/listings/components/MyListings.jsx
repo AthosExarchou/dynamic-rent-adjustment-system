@@ -135,7 +135,7 @@ export default function MyListings() {
               <div className={styles.imageWrapper}>
                 <Link to={`/listings/${l.id}`} state={{ from: '/my-listings' }} className={styles.imageLink} aria-label={`View ${l.title}`}>
                   <img
-                    src={cardImageUrl}
+                    src={cardImageUrl} referrerPolicy="no-referrer"
                     alt={hasImages ? l.title : 'Generic demo preview'}
                     className={styles.image}
                     loading="lazy"

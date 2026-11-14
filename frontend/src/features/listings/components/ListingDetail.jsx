@@ -248,7 +248,7 @@ export default function ListingDetail() {
           <div className={styles.galleryContainer}>
             <div className={styles.heroWrapper}>
               <img
-                src={currentImageSrc}
+                src={currentImageSrc} referrerPolicy="no-referrer"
                 alt={hasImages ? (listing.title ? `${listing.title} view ${activeImageIndex + 1}` : 'Property view') : 'Generic demonstration image (No photos uploaded)'}
                 className={styles.heroImage}
                 decoding="async"
@@ -325,7 +325,7 @@ export default function ListingDetail() {
                       aria-label={`Select photo ${idx + 1}`}
                     >
                       <img
-                        src={resolvedUrl}
+                        src={resolvedUrl} referrerPolicy="no-referrer"
                         alt={`Thumbnail ${idx + 1}`}
                         className={styles.thumbnailImg}
                         loading="lazy"
@@ -505,7 +505,7 @@ export default function ListingDetail() {
 
             <div className={styles.lightboxMedia}>
               <img
-                src={currentImageSrc}
+                src={currentImageSrc} referrerPolicy="no-referrer"
                 alt={listing.title ? `${listing.title} full view` : 'Property view'}
                 className={styles.lightboxImage}
                 decoding="async"
