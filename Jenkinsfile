@@ -19,12 +19,14 @@ pipeline {
         stage('Backend Tests') {
             steps {
                 sh '''
+                    USER_ID=$(id -u)
+                    GROUP_ID=$(id -g)
                     docker run --rm \
                         -v "$(pwd)/backend":/app \
                         -v jenkins_maven_cache:/root/.m2 \
                         -w /app \
                         maven:3.9.6-eclipse-temurin-21 \
-                        mvn -B test
+                        sh -c "mvn -B test; STATUS=\$?; chown -R ${USER_ID}:${GROUP_ID} /app/target 2>/dev/null || true; exit \$STATUS"
                 '''
             }
         }
@@ -33,12 +35,14 @@ pipeline {
         stage('Frontend Lint') {
             steps {
                 sh '''
+                    USER_ID=$(id -u)
+                    GROUP_ID=$(id -g)
                     docker run --rm \
                         -v "$(pwd)/frontend":/app \
                         -v jenkins_npm_cache:/root/.npm \
                         -w /app \
                         node:20-alpine \
-                        sh -c "npm ci && npm run lint"
+                        sh -c "npm ci && npm run lint; STATUS=\$?; chown -R ${USER_ID}:${GROUP_ID} /app/node_modules 2>/dev/null || true; exit \$STATUS"
                 '''
             }
         }
@@ -46,7 +50,7 @@ pipeline {
         // Build production Docker images
         stage('Docker Image Build') {
             steps {
-                sh "${DOCKER_COMPOSE_CMD} build"
+                sh "${env.DOCKER_COMPOSE_CMD} build"
             }
         }
 
@@ -56,14 +60,11 @@ pipeline {
         // deployment so that Docker re-initializes it from the newly built
         // frontend artifact image. Without this step, the existing volume
         // persists and nginx would continue serving the old React build.
-        //
-        // Note: 'docker compose down' removes containers and networks but does
-        // NOT remove named volumes (no -v flag), so the database is safe.
         stage('Deploy') {
             steps {
-                sh "${DOCKER_COMPOSE_CMD} down --remove-orphans"
-                sh "docker volume rm ${COMPOSE_PROJECT_NAME}_frontend_dist || true"
-                sh "${DOCKER_COMPOSE_CMD} up -d"
+                sh "${env.DOCKER_COMPOSE_CMD} down --remove-orphans"
+                sh "docker volume rm ${env.COMPOSE_PROJECT_NAME}_frontend_dist || true"
+                sh "${env.DOCKER_COMPOSE_CMD} up -d"
             }
         }
 
@@ -77,7 +78,7 @@ pipeline {
         // Archive deployment logs for troubleshooting
         stage('Archive Logs') {
             steps {
-                sh "${DOCKER_COMPOSE_CMD} logs > docker_deployment.log"
+                sh "${env.DOCKER_COMPOSE_CMD} logs > docker_deployment.log"
                 archiveArtifacts artifacts: 'docker_deployment.log', allowEmptyArchive: true
             }
         }
@@ -91,7 +92,7 @@ pipeline {
         failure {
             // Actively stop the stack if a deployment fails midway to avoid zombie containers
             echo 'Pipeline failed. Tearing down broken deployment stack...'
-            sh "${DOCKER_COMPOSE_CMD} down --remove-orphans || true"
+            sh "${env.DOCKER_COMPOSE_CMD ?: 'docker compose'} down --remove-orphans || true"
         }
         success {
             echo 'Deployment successful.'
