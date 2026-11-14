@@ -296,11 +296,20 @@ export default function MainLayout() {
                   <div className={styles.dropdown} ref={notifRef}>
                     <button
                       className={styles.iconBtn}
-                      aria-label="Notifications"
+                      aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
+                      title={unreadCount > 0 ? `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}` : 'Notifications'}
                       onClick={() => setIsNotifOpen(!isNotifOpen)}
                     >
                       <Bell size={20} />
-                      {unreadCount > 0 && <span className={styles.notificationDot}></span>}
+                      {unreadCount > 0 && (
+                        <span
+                          className={`${styles.notificationBadge} ${unreadCount < 10 ? styles.singleDigit : ''}`}
+                        >
+                          <span className={styles.badgeText}>
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </span>
+                        </span>
+                      )}
                     </button>
 
                     {isNotifOpen && (
