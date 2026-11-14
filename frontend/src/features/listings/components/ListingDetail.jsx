@@ -33,6 +33,8 @@ import { LocationMap } from '../../../shared/components/Map';
 import styles from './ListingDetail.module.css';
 import PriceDropIndicator, { computeAvgPricePerM2 } from './PriceDropIndicator';
 
+const MOCK_SHOWCASE_IDS = [101, 102, 103, 201, 202, 203];
+
 export default function ListingDetail() {
   const { id } = useParams();
   const location = useLocation();
@@ -85,13 +87,21 @@ export default function ListingDetail() {
           }
         } else {
           setListing(null);
-          setError("Listing not found.");
+          setError(
+            MOCK_SHOWCASE_IDS.includes(Number(id))
+              ? "This is a sample showcase property and is not currently published on the platform."
+              : "Listing not found."
+          );
         }
       } catch (err) {
         if (err.name === 'AbortError') return;
         console.error("Failed to load listing detail:", err);
         setListing(null);
-        setError("Failed to load listing details.");
+        setError(
+          MOCK_SHOWCASE_IDS.includes(Number(id))
+            ? "This is a sample showcase property and is not currently published on the platform."
+            : "Failed to load listing details."
+        );
       } finally {
         setLoading(false);
       }

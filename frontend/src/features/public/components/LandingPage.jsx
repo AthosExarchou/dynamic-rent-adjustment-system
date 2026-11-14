@@ -18,7 +18,8 @@ import {
   UserCircle,
   TrendingUp,
   FileText,
-  Camera
+  Camera,
+  Info
 } from 'lucide-react';
 import { useAuth } from '../../auth';
 import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
@@ -194,6 +195,7 @@ export default function LandingPage() {
   const getFeaturedFallbackMocks = () => [
     {
       id: 101,
+      isMock: true,
       title: "Luxury Downtown Loft",
       subtitle: "Spacious loft in prime city center",
       address: "123 Main St, Metropolis",
@@ -205,6 +207,7 @@ export default function LandingPage() {
     },
     {
       id: 102,
+      isMock: true,
       title: "Modern Minimalist Penthouse",
       subtitle: "Panoramic skyline views and private terrace",
       address: "77 Acropolis View, Athens",
@@ -216,6 +219,7 @@ export default function LandingPage() {
     },
     {
       id: 103,
+      isMock: true,
       title: "Urban Executive Residence",
       subtitle: "High-end finishes in a vibrant district",
       address: "12 Queen Sofia Ave, Athens",
@@ -230,6 +234,7 @@ export default function LandingPage() {
   const getTopValueFallbackMocks = () => [
     {
       id: 201,
+      isMock: true,
       title: "Spacious Family Maisonette",
       subtitle: "Exceptional value per square meter in quiet suburb",
       address: "45 Elm St, Marousi",
@@ -241,6 +246,7 @@ export default function LandingPage() {
     },
     {
       id: 202,
+      isMock: true,
       title: "Sunlit Suburban Apartment",
       subtitle: "Generous layout with large balcony and garden",
       address: "18 Pine St, Kifisia",
@@ -252,6 +258,7 @@ export default function LandingPage() {
     },
     {
       id: 203,
+      isMock: true,
       title: "Renovated Garden Studio",
       subtitle: "Affordable and efficient modern space",
       address: "9 Green Park, Chalandri",
@@ -331,29 +338,52 @@ export default function LandingPage() {
                 return (
                   <div key={apt.id} className={styles.apartmentCard}>
                     <div className={styles.imageWrapper}>
-                      <FavouriteButton listing={apt} variant="card" />
-                      <Link to={`/listings/${apt.id}`} className={styles.imageLink} aria-label={`View details for ${apt.title}`}>
-                        <img
-                          src={cardImageUrl}
-                          alt={hasImages ? apt.title : 'Generic demo preview'}
-                          className={styles.image}
-                          loading="lazy"
-                          decoding="async"
-                          onError={(e) => {
-                            if (e.target.src.includes('demo/image1.jpg')) {
-                              e.target.src = REMOTE_FALLBACK_IMAGE;
-                            } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
-                              e.target.src = DEFAULT_LISTING_IMAGE;
-                            }
-                          }}
-                        />
-                      </Link>
+                      {!apt.isMock && <FavouriteButton listing={apt} variant="card" />}
+                      {apt.isMock ? (
+                        <div className={styles.imageLink} aria-label={`Sample preview for ${apt.title}`}>
+                          <img
+                            src={cardImageUrl}
+                            alt={hasImages ? apt.title : 'Generic demo preview'}
+                            className={styles.image}
+                            loading="lazy"
+                            decoding="async"
+                            onError={(e) => {
+                              if (e.target.src.includes('demo/image1.jpg')) {
+                                e.target.src = REMOTE_FALLBACK_IMAGE;
+                              } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
+                                e.target.src = DEFAULT_LISTING_IMAGE;
+                              }
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <Link to={`/listings/${apt.id}`} className={styles.imageLink} aria-label={`View details for ${apt.title}`}>
+                          <img
+                            src={cardImageUrl}
+                            alt={hasImages ? apt.title : 'Generic demo preview'}
+                            className={styles.image}
+                            loading="lazy"
+                            decoding="async"
+                            onError={(e) => {
+                              if (e.target.src.includes('demo/image1.jpg')) {
+                                e.target.src = REMOTE_FALLBACK_IMAGE;
+                              } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
+                                e.target.src = DEFAULT_LISTING_IMAGE;
+                              }
+                            }}
+                          />
+                        </Link>
+                      )}
                       {hasImages ? (
                         apt.images.length > 1 && (
                           <span className={styles.imageCountBadge} title={`${apt.images.length} photos available`}>
                             <Camera size={13} /> {apt.images.length}
                           </span>
                         )
+                      ) : apt.isMock ? (
+                        <span className={styles.sampleBadgeTop} title="Sample showcase property">
+                          Sample Property
+                        </span>
                       ) : (
                         <span className={styles.demoBadge} title="Demo image - no photos uploaded">
                           <Camera size={12} /> Demo Preview
@@ -371,6 +401,11 @@ export default function LandingPage() {
                       <span className={`${styles.badge} ${styles.badgePremium}`}>
                         Featured
                       </span>
+                      {apt.isMock && (
+                        <span className={`${styles.badge} ${styles.badgeSecondary}`}>
+                          Sample
+                        </span>
+                      )}
                       <span className={`${styles.badge} ${styles.badgePrimary}`}>
                         <Bed size={14} /> {apt.bedrooms} Beds
                       </span>
@@ -388,9 +423,15 @@ export default function LandingPage() {
                     <p className={styles.apartmentPrice}>{apt.price} € / month</p>
 
                     <div className={styles.apartmentFooter}>
-                      <Link to={`/listings/${apt.id}`} className={styles.viewBtn}>
-                        <Search size={16} /> View Details
-                      </Link>
+                      {apt.isMock ? (
+                        <span className={styles.sampleBtn} title="Sample showcase property for demonstration">
+                          <Info size={16} /> Showcase Property
+                        </span>
+                      ) : (
+                        <Link to={`/listings/${apt.id}`} className={styles.viewBtn}>
+                          <Search size={16} /> View Details
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -419,29 +460,52 @@ export default function LandingPage() {
                 return (
                   <div key={apt.id} className={styles.apartmentCard}>
                     <div className={styles.imageWrapper}>
-                      <FavouriteButton listing={apt} variant="card" />
-                      <Link to={`/listings/${apt.id}`} className={styles.imageLink} aria-label={`View details for ${apt.title}`}>
-                        <img
-                          src={cardImageUrl}
-                          alt={hasImages ? apt.title : 'Generic demo preview'}
-                          className={styles.image}
-                          loading="lazy"
-                          decoding="async"
-                          onError={(e) => {
-                            if (e.target.src.includes('demo/image1.jpg')) {
-                              e.target.src = REMOTE_FALLBACK_IMAGE;
-                            } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
-                              e.target.src = DEFAULT_LISTING_IMAGE;
-                            }
-                          }}
-                        />
-                      </Link>
+                      {!apt.isMock && <FavouriteButton listing={apt} variant="card" />}
+                      {apt.isMock ? (
+                        <div className={styles.imageLink} aria-label={`Sample preview for ${apt.title}`}>
+                          <img
+                            src={cardImageUrl}
+                            alt={hasImages ? apt.title : 'Generic demo preview'}
+                            className={styles.image}
+                            loading="lazy"
+                            decoding="async"
+                            onError={(e) => {
+                              if (e.target.src.includes('demo/image1.jpg')) {
+                                e.target.src = REMOTE_FALLBACK_IMAGE;
+                              } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
+                                e.target.src = DEFAULT_LISTING_IMAGE;
+                              }
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <Link to={`/listings/${apt.id}`} className={styles.imageLink} aria-label={`View details for ${apt.title}`}>
+                          <img
+                            src={cardImageUrl}
+                            alt={hasImages ? apt.title : 'Generic demo preview'}
+                            className={styles.image}
+                            loading="lazy"
+                            decoding="async"
+                            onError={(e) => {
+                              if (e.target.src.includes('demo/image1.jpg')) {
+                                e.target.src = REMOTE_FALLBACK_IMAGE;
+                              } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
+                                e.target.src = DEFAULT_LISTING_IMAGE;
+                              }
+                            }}
+                          />
+                        </Link>
+                      )}
                       {hasImages ? (
                         apt.images.length > 1 && (
                           <span className={styles.imageCountBadge} title={`${apt.images.length} photos available`}>
                             <Camera size={13} /> {apt.images.length}
                           </span>
                         )
+                      ) : apt.isMock ? (
+                        <span className={styles.sampleBadgeTop} title="Sample showcase property">
+                          Sample Property
+                        </span>
                       ) : (
                         <span className={styles.demoBadge} title="Demo image - no photos uploaded">
                           <Camera size={12} /> Demo Preview
@@ -459,6 +523,11 @@ export default function LandingPage() {
                       <span className={`${styles.badge} ${styles.badgePremium}`}>
                         <TrendingUp size={12} /> Best Value
                       </span>
+                      {apt.isMock && (
+                        <span className={`${styles.badge} ${styles.badgeSecondary}`}>
+                          Sample
+                        </span>
+                      )}
                       <span className={`${styles.badge} ${styles.badgePrimary}`}>
                         <Bed size={14} /> {apt.bedrooms} Beds
                       </span>
@@ -483,9 +552,15 @@ export default function LandingPage() {
                     </p>
 
                     <div className={styles.apartmentFooter}>
-                      <Link to={`/listings/${apt.id}`} className={styles.viewBtn}>
-                        <Search size={16} /> View Details
-                      </Link>
+                      {apt.isMock ? (
+                        <span className={styles.sampleBtn} title="Sample showcase property for demonstration">
+                          <Info size={16} /> Showcase Property
+                        </span>
+                      ) : (
+                        <Link to={`/listings/${apt.id}`} className={styles.viewBtn}>
+                          <Search size={16} /> View Details
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </div>

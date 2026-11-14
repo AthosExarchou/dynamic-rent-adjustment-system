@@ -268,6 +268,45 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
 }
 
+.sampleBadgeTop {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  background-color: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  color: #f8fafc;
+  font-size: 0.72rem;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.sampleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.25rem;
+  background-color: var(--background-muted);
+  color: var(--text-secondary);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md, 0.5rem);
+  font-weight: 600;
+  font-size: 0.9rem;
+  user-select: none;
+  cursor: default;
+}
+
+.sampleBtn svg {
+  stroke: var(--text-secondary);
+  flex-shrink: 0;
+}
+
 .apartmentBody {
   padding: 1.5rem;
   display: flex;
