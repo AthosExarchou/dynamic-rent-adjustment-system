@@ -22,14 +22,27 @@ pipeline {
             steps {
                 echo "Running statistical models inside isolated Python 3.12 container..."
                 sh '''
+                    # Ingest latest scraped datasets from the active deployment directory if running in an isolated pipeline workspace
+                    mkdir -p analytics/data
+                    if [ -d "${DEPLOY_PROD_DIR}/analytics/data" ] && [ "$(pwd)" != "${DEPLOY_PROD_DIR}" ]; then
+                        echo "Syncing scraped listing datasets from ${DEPLOY_PROD_DIR}..."
+                        cp -u "${DEPLOY_PROD_DIR}/analytics/data"/spitogatos_*.csv analytics/data/ 2>/dev/null || true
+                    elif [ -d "${DEPLOY_DEV_DIR}/analytics/data" ] && [ "$(pwd)" != "${DEPLOY_DEV_DIR}" ]; then
+                        echo "Syncing scraped listing datasets from ${DEPLOY_DEV_DIR}..."
+                        cp -u "${DEPLOY_DEV_DIR}/analytics/data"/spitogatos_*.csv analytics/data/ 2>/dev/null || true
+                    fi
+
+                    USER_ID=$(id -u)
+                    GROUP_ID=$(id -g)
                     docker run --rm \
                         -v "$(pwd)/analytics":/app/analytics \
                         -v jenkins_pip_cache:/root/.cache/pip \
                         -w /app \
                         python:3.12-slim \
-                        sh -c "pip install -q --no-cache-dir -r analytics/requirements.txt && \
+                        sh -c "pip install -q -r analytics/requirements.txt && \
                                  python analytics/models/arima_macro.py && \
-                                 python analytics/models/arima_micro.py"
+                                 python analytics/models/arima_micro.py; \
+                                 STATUS=\$?; chown -R ${USER_ID}:${GROUP_ID} /app/analytics 2>/dev/null || true; exit \$STATUS"
                 '''
             }
         }

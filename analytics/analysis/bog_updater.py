@@ -248,6 +248,7 @@ def check_and_update_bog_dataset(
         dict: Sync report containing status, active_file, latest_quarter, and metadata.
     """
     data_dir = target_dir or DATA_DIR
+    data_dir.mkdir(parents=True, exist_ok=True)
     meta_path = data_dir / "bog_dataset_metadata.json"
     active_csv = data_dir / "bank_of_greece_apartment_index.csv"
 
