@@ -49,9 +49,8 @@ function buildPopupHtml({ title, subtitle, approximate }) {
 
 const MARKER_HTML = `
   <div class="${styles.markerPinWrapper}">
-    <div class="${styles.markerPulse}"></div>
     <div class="${styles.markerBadge}">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
         <polyline points="9 22 9 12 15 12 15 22"></polyline>
       </svg>
@@ -75,6 +74,7 @@ export default function LocationMap({
   const circleRef = useRef(null);
   const appliedCoordsRef = useRef(null);
   const coordsRef = useRef(null);
+  const zoomRef = useRef(zoom);
   const geocodedAddressRef = useRef(null);
   const hintTimerRef = useRef(null);
   const showHintRef = useRef(false);
@@ -90,6 +90,7 @@ export default function LocationMap({
     /Mac|iPhone|iPad/i.test(navigator.userAgent || navigator.platform);
 
   coordsRef.current = coords;
+  zoomRef.current = zoom;
   const hasCoords = Boolean(coords);
 
   // Lazy-loading: only initialize the map when the section comes into view
@@ -168,7 +169,7 @@ export default function LocationMap({
 
     const map = L.map(container, {
       center: [start.lat, start.lon],
-      zoom,
+      zoom: zoomRef.current,
       scrollWheelZoom: true,
       zoomControl: false,
       attributionControl: true,
@@ -217,12 +218,12 @@ export default function LocationMap({
       const icon = L.divIcon({
         className: styles.markerContainer,
         html: MARKER_HTML,
-        iconSize: [44, 44],
-        iconAnchor: [22, 22],
-        popupAnchor: [0, -20],
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -14],
       });
       markerRef.current = L.marker(latlng, { icon }).addTo(map);
-      markerRef.current.bindPopup(popupHtml, { closeButton: false, offset: [0, -12] });
+      markerRef.current.bindPopup(popupHtml, { closeButton: false, offset: [0, -8] });
     } else {
       markerRef.current.setLatLng(latlng);
       markerRef.current.setPopupContent(popupHtml);
