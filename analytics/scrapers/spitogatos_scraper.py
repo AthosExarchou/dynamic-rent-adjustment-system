@@ -144,6 +144,8 @@ DEBUG_DIR = DATA_DIR / "debug"
 
 VALID_EXTS = {".jpg", ".jpeg", ".webp", ".png"}
 
+SPITOGATOS_IMAGE_SIZE = "1600x1200"
+
 # Logic Params
 WAIT_SECONDS = 15
 MAX_IMAGES = 5  # max number of images downloaded per listing
@@ -604,8 +606,12 @@ def parse_property_page(html_content: str) -> Dict[str, Any]:
                 # Cleans URL of query parameters to check extension
                 src_clean = src.split("?")[0].lower()
                 if any(ext in src_clean for ext in VALID_EXTS):
-                    # Forces Spitogatos CDN to deliver 1200x900 high-res
-                    high_res = re.sub(r'_\d+x\d+\.', '_1200x900.', src)
+                    # Forces Spitogatos CDN to deliver a supported high-res size
+                    high_res = re.sub(
+                        r'_\d+x\d+\.',
+                        f'_{SPITOGATOS_IMAGE_SIZE}.',
+                        src
+                    )
                     imgs.append(high_res)
 
         # Deduplicates while preserving order
