@@ -1,10 +1,25 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { User, Mail, Phone, Users, CheckCircle, XCircle, ArrowLeft, Home, UserMinus } from 'lucide-react';
+import { User, Mail, Phone, Users, CheckCircle, XCircle, ArrowLeft, Home, UserMinus, Calendar, FileText } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { useToast } from '../../../shared/components/Toast';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
 import styles from './ListingApplications.module.css';
+
+const formatAppliedDate = (dateString) => {
+  if (!dateString) return null;
+  try {
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  } catch {
+    return null;
+  }
+};
 
 export default function ListingApplications() {
   const { listingId } = useParams();
@@ -174,10 +189,17 @@ export default function ListingApplications() {
               {applicants.map(a => (
                 <div key={a.id} className={`${styles.card} ${styles.cardHover}`}>
                   <div className={styles.cardHeader}>
-                    <h3 className={styles.applicantName}>
-                      <User size={18} className={styles.iconPrimary} />
-                      <span>{a.firstName} {a.lastName}</span>
-                    </h3>
+                    <div className={styles.applicantHeaderRow}>
+                      <h3 className={styles.applicantName}>
+                        <User size={18} className={styles.iconPrimary} />
+                        <span>{a.firstName} {a.lastName}</span>
+                      </h3>
+                      {a.appliedAt && (
+                        <span className={styles.appliedDateBadge} title={`Applied on ${new Date(a.appliedAt).toLocaleString()}`}>
+                          <Calendar size={13} /> {formatAppliedDate(a.appliedAt)}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className={styles.cardBody}>
                     <p className={styles.contactInfo}>
@@ -188,6 +210,21 @@ export default function ListingApplications() {
                       <Phone size={16} className={styles.iconSecondary} />
                       <span>{a.phoneNumber}</span>
                     </p>
+
+                    {a.notes ? (
+                      <div className={styles.notesBox}>
+                        <div className={styles.notesHeader}>
+                          <FileText size={14} className={styles.notesIcon} />
+                          <span>Rental Notes</span>
+                        </div>
+                        <p className={styles.notesText}>"{a.notes}"</p>
+                      </div>
+                    ) : (
+                      <div className={styles.noNotesBox}>
+                        <FileText size={14} className={styles.noNotesIcon} />
+                        <span>No rental notes provided</span>
+                      </div>
+                    )}
 
                     {!isRented ? (
                       <div className={styles.actions}>

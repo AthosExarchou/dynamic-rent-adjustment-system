@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../auth';
-import { UserPlus, UserCheck, Phone, CheckCircle, ChevronRight, ArrowLeft, Info } from 'lucide-react';
+import { UserPlus, UserCheck, Phone, CheckCircle, ChevronRight, ArrowLeft, Info, FileText } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { useToast } from '../../../shared/components/Toast';
 import { TENANT_CONSTRAINTS } from '../models/tenant';
@@ -16,6 +16,7 @@ export default function TenantForm() {
   const toast = useToast();
   const fromListingDetail = location.state?.fromListingDetail;
   const [formData, setFormData] = useState({ firstName: '', lastName: '', phoneNumber: '' });
+  const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
   const [errorDetails, setErrorDetails] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -63,13 +64,16 @@ export default function TenantForm() {
       headers: { 'Content-Type': 'application/json' },
     };
 
+    const payload = {};
     if (!isTenant) {
-      requestOptions.body = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phoneNumber: formData.phoneNumber
-      };
+      payload.firstName = formData.firstName;
+      payload.lastName = formData.lastName;
+      payload.phoneNumber = formData.phoneNumber;
     }
+    if (notes && notes.trim()) {
+      payload.notes = notes.trim();
+    }
+    requestOptions.body = payload;
 
     setError('');
     setErrorDetails([]);
@@ -226,6 +230,30 @@ export default function TenantForm() {
                 <p>We will use your existing profile details to submit this rental application.</p>
               </div>
             )}
+
+            <div className={styles.formGroup} style={{ marginTop: '1.5rem' }}>
+              <div className={styles.notesLabelRow}>
+                <label htmlFor="notes" className={styles.label}>
+                  <FileText size={16} /> Rental Notes / Message to Owner
+                  <InfoTooltip text="Optional notes for the property owner (e.g. intended lease start date, occupancy, pet details, or a brief introduction). Maximum 500 characters." />
+                </label>
+                <span className={styles.optionalBadge}>Optional</span>
+              </div>
+              <textarea
+                id="notes"
+                rows={4}
+                maxLength={TENANT_CONSTRAINTS.NOTES_MAX}
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                className={styles.textarea}
+                placeholder="Introduce yourself, mention your preferred move-in date, or add any notes for the owner (optional)..."
+              />
+              <div className={styles.charCount}>
+                <span className={notes.length >= TENANT_CONSTRAINTS.NOTES_MAX ? styles.charCountLimit : ''}>
+                  {notes.length} / {TENANT_CONSTRAINTS.NOTES_MAX} characters
+                </span>
+              </div>
+            </div>
 
             <hr className={styles.divider} />
 
