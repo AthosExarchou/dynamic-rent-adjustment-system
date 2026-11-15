@@ -77,7 +77,9 @@ def store = ExtensionList.lookupSingleton(SystemCredentialsProvider.class).getSt
 def creds = [
     [id: 'dras-database-password', secret: 'postgrespassword', desc: 'DRAS DB Password'],
     [id: 'dras-mail-username', secret: 'dev@dras.local', desc: 'DRAS Mail Username'],
-    [id: 'dras-mail-password', secret: 'dummy_password', desc: 'DRAS Mail Password']
+    [id: 'dras-mail-password', secret: 'dummy_password', desc: 'DRAS Mail Password'],
+    // Development-only default
+    [id: 'dras-scraper-api-key', secret: 'dras-dev-scraper-key', desc: 'DRAS Scraper API Key']
 ]
 
 creds.each { c ->

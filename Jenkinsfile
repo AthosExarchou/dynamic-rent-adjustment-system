@@ -11,6 +11,8 @@ pipeline {
         DATABASE_PASSWORD = credentials('dras-database-password')
         MAIL_USERNAME     = credentials('dras-mail-username')
         MAIL_PASSWORD     = credentials('dras-mail-password')
+        // Authenticates the analytics scrapers against /api/external-import/listings
+        SCRAPER_API_KEY   = credentials('dras-scraper-api-key')
     }
 
     stages {

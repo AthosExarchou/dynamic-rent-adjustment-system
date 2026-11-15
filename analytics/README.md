@@ -77,9 +77,24 @@ python3 analytics/scrapers/spitogatos_scraper.py --push-backend \
   --backend-url http://localhost/api/external-import/listings
 ```
 
+To feed a remote environment (production or a Vagrant VM), keep running the scraper on your local
+workstation - Spitogatos blocks datacenter IPs - and point it at that environment's Nginx entry point:
+```bash
+# Production
+python3 analytics/scrapers/spitogatos_scraper.py --push-backend \
+  --api-key "<production key>" \
+  --backend-url http://dras.abrdns.com/api/external-import/listings
+
+# Vagrant (guest port 80 forwarded to host 8082)
+python3 analytics/scrapers/spitogatos_scraper.py --push-backend \
+  --api-key "dras-dev-scraper-key" \
+  --backend-url http://localhost:8082/api/external-import/listings
+```
+
 **Replay chunks saved in `failed_payloads/` without re-scraping:**
 ```bash
-python3 analytics/scrapers/spitogatos_scraper.py --replay-failed
+python3 analytics/scrapers/spitogatos_scraper.py --replay-failed \
+  --backend-url http://dras.abrdns.com/api/external-import/listings
 ```
 
 *(Or from inside `analytics/`: `python scrapers/spitogatos_scraper.py`)*

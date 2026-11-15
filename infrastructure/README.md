@@ -208,6 +208,83 @@ Follow the step-by-step instructions in [Section 4: Steps to Run Vagrant Environ
 ### Production Setup (OCI)
 In production (Oracle Cloud), Jenkins runs as a native system service on the Ubuntu host (not inside Vagrant or Docker). The setup steps are similar, but you access Jenkins via the server's designated port and retrieve the initial password directly from `/var/lib/jenkins/secrets/initialAdminPassword` on the host.
 
+### Scraper → Backend Authentication
+
+The analytics scrapers push listings to `POST /api/external-import/listings`, which requires the
+`ADMIN` authority. Scrapers authenticate machine-to-machine with a shared secret header
+(`X-Scraper-Key`) instead of an admin session:
+
+```
+.env / Jenkins credential
+ └─ docker compose (backend environment: SCRAPER_API_KEY)
+     └─ application.yml: app.scraper.api-key=${SCRAPER_API_KEY:}
+         └─ ScraperApiKeyFilter compares X-Scraper-Key
+
+scraper shell ($SCRAPER_API_KEY or --api-key) -> X-Scraper-Key header
+```
+
+The backend **fails closed**: if `SCRAPER_API_KEY` is empty inside the container, every scraper
+push returns `401 Unauthorized`. The 4th Deploy stage smoke test now verifies this automatically.
+
+**One-time setup per environment**
+
+| Environment | Where the key lives | Action required |
+| :--- | :--- | :--- |
+| Local Docker | `.env` in the repo root | `SCRAPER_API_KEY=$(openssl rand -hex 32)` |
+| Vagrant VM | Jenkins credential `dras-scraper-api-key` | created by `bootstrap.sh` (dev value `dras-dev-scraper-key`) |
+| Production | Jenkins credential `dras-scraper-api-key` | **must be created manually** - see below |
+
+**Running the scraper**
+
+> [!IMPORTANT]
+> The scraper **must run on a developer workstation**, never on the OCI VM or inside Vagrant.
+> Spitogatos' Cloudflare blocks datacenter IP ranges immediately, so scrapes from those hosts fail.
+> The workstation's residential IP is what makes the scrape work; the backend is reached over the
+> network instead.
+
+Only Nginx is exposed, so the backend is not reachable on `:8080` / `:8081`. Point the scraper at the
+Nginx entry point of whichever environment you are feeding:
+
+```bash
+# Production (public Nginx) - use the production key
+export SCRAPER_API_KEY="<production key from the Jenkins credential>"
+python3 analytics/scrapers/spitogatos_scraper.py --push-backend \
+  --backend-url http://dras.abrdns.com/api/external-import/listings
+
+# Vagrant (Nginx forwarded from guest 80 to host 8082) - use the dev key
+export SCRAPER_API_KEY="dras-dev-scraper-key"
+python3 analytics/scrapers/spitogatos_scraper.py --push-backend \
+  --backend-url http://localhost:8082/api/external-import/listings
+
+# Local Docker stack - use the key from your local .env
+python3 analytics/scrapers/spitogatos_scraper.py --push-backend \
+  --backend-url http://localhost/api/external-import/listings
+
+# Backend started directly with Maven on this machine
+python3 analytics/scrapers/spitogatos_scraper.py --push-backend \
+  --backend-url http://localhost:8080/api/external-import/listings
+```
+
+Verify the key before a scrape:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' -X POST \
+  http://dras.abrdns.com/api/external-import/listings \
+  -H 'Content-Type: application/json' \
+  -H "X-Scraper-Key: $SCRAPER_API_KEY" -d '[]'
+# 400 = key accepted (empty payload rejected)
+# 401 = key does not match the container
+# 403 = no key header sent
+```
+
+A successful push returns `{"received":N,"imported":N,"skipped":N}`. Rejected chunks are saved in
+`analytics/failed_payloads/` on the workstation and can be resent later without re-scraping:
+
+```bash
+python3 analytics/scrapers/spitogatos_scraper.py --replay-failed \
+  --backend-url http://dras.abrdns.com/api/external-import/listings
+```
+
 ### Analytics Model Retraining Pipeline
 
 In addition to the core CI/CD pipeline, the repository includes `Jenkinsfile.analytics` to automate retraining of the macroeconomic and neighborhood ARIMA models:
