@@ -59,8 +59,12 @@ log "Backend health status: UP"
 wait_for_url "${FRONTEND_URL}" "Frontend (Nginx)"
 
 # Scraper -> backend authentication
-# The backend fails closed, so an unset key means every scraper push gets 401
-if [ -n "${SCRAPER_API_KEY:-}" ]; then
+# The backend fails closed, so an empty key means every scraper push gets 401
+if [ -z "${SCRAPER_API_KEY+set}" ]; then
+    log "SCRAPER_API_KEY is not defined; skipping scraper import authentication checks."
+elif [ -z "${SCRAPER_API_KEY}" ]; then
+    fail "SCRAPER_API_KEY is defined but empty; the backend will reject every scraper push with 401."
+else
     IMPORT_URL="http://localhost:80/api/external-import/listings"
 
     STATUS=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 \
@@ -84,8 +88,6 @@ if [ -n "${SCRAPER_API_KEY:-}" ]; then
         fail "Scraper import endpoint accepted an invalid API key (expected 401, got ${STATUS})."
     fi
     log "Scraper import endpoint rejects invalid API keys."
-else
-    log "SCRAPER_API_KEY is not set; skipping scraper import authentication checks."
 fi
 
 log "All smoke tests passed."
