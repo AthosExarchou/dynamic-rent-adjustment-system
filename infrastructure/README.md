@@ -285,6 +285,19 @@ python3 analytics/scrapers/spitogatos_scraper.py --replay-failed \
   --backend-url http://dras.abrdns.com/api/external-import/listings
 ```
 
+A payload file is deleted only after the backend reports that every listing in it was imported. A
+rejected request, a skipped row, or a response without an `imported` count keeps the file for another
+attempt. Old files are not pruned automatically during a push; run `--cleanup-failed` to remove files
+older than 7 days or beyond the newest 50.
+
+To send the existing CSV instead of scraping again, use `--push-only`. It reads
+`analytics/data/spitogatos_athens_listings.csv` and leaves the data directory untouched.
+
+```bash
+python3 analytics/scrapers/spitogatos_scraper.py --push-only \
+  --backend-url http://localhost:8082/api/external-import/listings
+```
+
 ### Analytics Model Retraining Pipeline
 
 In addition to the core CI/CD pipeline, the repository includes `Jenkinsfile.analytics` to automate retraining of the macroeconomic and neighborhood ARIMA models:

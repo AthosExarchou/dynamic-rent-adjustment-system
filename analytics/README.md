@@ -97,6 +97,23 @@ python3 analytics/scrapers/spitogatos_scraper.py --replay-failed \
   --backend-url http://dras.abrdns.com/api/external-import/listings
 ```
 
+A replay file is deleted only when the backend confirms every listing in it was imported. A rejected
+request, a skipped row, or a missing `imported` count keeps the file. Files are never removed by age as
+a side effect of a push; prune them explicitly when you no longer want them:
+
+```bash
+python3 analytics/scrapers/spitogatos_scraper.py --cleanup-failed
+```
+
+**Push the existing CSV without scraping:**
+```bash
+python3 analytics/scrapers/spitogatos_scraper.py --push-only \
+  --backend-url http://localhost:8082/api/external-import/listings
+```
+
+`--push-only` reads `analytics/data/spitogatos_athens_listings.csv` and sends it as-is. It does not
+scrape and does not write to `analytics/data/`.
+
 *(Or from inside `analytics/`: `python scrapers/spitogatos_scraper.py`)*
 
 ### 2. ARIMA Price Forecasting & Owner Price Suggestion Microservice

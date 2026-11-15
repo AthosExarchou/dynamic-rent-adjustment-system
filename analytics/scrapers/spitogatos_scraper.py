@@ -178,6 +178,8 @@ class ScraperConfig:
     backend_url: str
     api_key: str
     replay_failed: bool
+    push_only: bool
+    cleanup_failed: bool
 
     headless: bool
     debug: bool
@@ -1101,6 +1103,9 @@ def send_chunks_to_backend(
                         skipped = 0
 
                     imported_count += chunk_imported
+                    # Rows the backend skipped were not imported, so they count as
+                    # not confirmed. A 2xx alone does not mean the chunk was stored.
+                    failed_count += max(0, len(chunk) - chunk_imported)
 
                     if chunk_imported < len(chunk):
                         logger.warning(
@@ -1232,8 +1237,35 @@ def push_to_backend(df: pd.DataFrame, api_url: Optional[str] = None, api_key: Op
 
     logger.info("Backend upload complete | imported=%d | failed=%d", imported, failed)
 
-    # Cleanup old failed payloads
-    cleanup_failed_payloads(FAILED_DIR, max_age_days=7, max_files=50)
+    return imported, failed
+
+
+def push_saved_listings(api_url: Optional[str] = None, api_key: Optional[str] = None):
+    """
+    Pushes the existing latest CSV snapshot to the backend without scraping.
+
+    Useful when the scrape already happened but the push failed, or when a new
+    environment has to be filled from data that is already on disk. Nothing in
+    ``data/`` is written or modified.
+    """
+    resolved_url = api_url or DEFAULT_BACKEND_URL
+
+    if not LATEST_CSV.exists():
+        logger.error("Push-only: %s does not exist", LATEST_CSV)
+        return
+
+    try:
+        df = pd.read_csv(LATEST_CSV)
+    except Exception:
+        logger.exception("Push-only: could not read %s", LATEST_CSV)
+        return
+
+    logger.info(
+        "Push-only: pushing %d row(s) from %s to %s",
+        len(df), LATEST_CSV, resolved_url
+    )
+
+    push_to_backend(df, api_url=resolved_url, api_key=api_key)
 
 
 def replay_failed_payloads(api_url: Optional[str] = None, api_key: Optional[str] = None):
@@ -1271,14 +1303,14 @@ def replay_failed_payloads(api_url: Optional[str] = None, api_key: Optional[str]
             chunk, resolved_url, resolved_key, save_failed=False
         )
 
-        if failed == 0:
+        if failed == 0 and imported == len(chunk):
             fpath.unlink(missing_ok=True)
             removed += 1
             logger.info("Replay: %s imported=%d and removed", fpath.name, imported)
         else:
             logger.error(
-                "Replay: %s kept for another attempt | imported=%d | failed=%d",
-                fpath.name, imported, failed
+                "Replay: %s kept for another attempt | imported=%d | failed=%d | total=%d",
+                fpath.name, imported, failed, len(chunk)
             )
 
     logger.info(
@@ -2029,6 +2061,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Replay chunks saved in failed_payloads/ without running the scraper"
     )
     output_group.add_argument(
+        "--push-only",
+        action="store_true",
+        help="Push the existing data/spitogatos_athens_listings.csv without scraping"
+    )
+    output_group.add_argument(
+        "--cleanup-failed",
+        action="store_true",
+        help="Delete failed_payloads/ files older than 7 days or beyond the newest 50"
+    )
+    output_group.add_argument(
         "--backend-url",
         default=DEFAULT_BACKEND_URL,
         help="Backend endpoint URL (default: %(default)s)"
@@ -2064,6 +2106,8 @@ def parse_args() -> ScraperConfig:
         backend_url=args.backend_url,
         api_key=args.api_key,
         replay_failed=args.replay_failed,
+        push_only=args.push_only,
+        cleanup_failed=args.cleanup_failed,
         headless=not args.headful,
         debug=args.debug,
     )
@@ -2088,8 +2132,17 @@ def main():
             "ON" if config.debug else "OFF",
         )
 
+        if config.cleanup_failed:
+            cleanup_failed_payloads(FAILED_DIR, max_age_days=7, max_files=50)
+            logger.info("Cleanup: failed_payloads directory pruned")
+            return
+
         if config.replay_failed:
             replay_failed_payloads(api_url=config.backend_url, api_key=config.api_key)
+            return
+
+        if config.push_only:
+            push_saved_listings(api_url=config.backend_url, api_key=config.api_key)
             return
 
         run_scraper(config)
