@@ -36,7 +36,7 @@ const FAQ_ITEMS = [
           <li>Go to the Listings page.</li>
           <li>Refine your search further by using the available filters (price range, area size, property type, etc.).</li>
           <li>Click &quot;Apply Filters&quot; to display listings that match your criteria.</li>
-          <li>Browse the listings you are interested in, and click &quot;Apply&quot; to submit your rental application.</li>
+          <li>Click on a listing to open its detail page, then click &quot;Apply&quot; to submit your rental application.</li>
         </ol>
       </>
     )
@@ -89,7 +89,7 @@ const FAQ_ITEMS = [
       <>
         <p>DRAS connects prospective tenants and property owners through a streamlined application workflow:</p>
         <ul>
-          <li><strong>For Tenants:</strong> Click &quot;Apply&quot; on any available property to submit your rental application with your contact information and rental notes. You can monitor all your pending and approved applications from your profile.</li>
+          <li><strong>For Tenants:</strong> Open a listing&apos;s detail page and click &quot;Apply&quot; to submit your rental application with your contact information and optional rental notes. You can monitor all your pending applications and your currently rented property from the <strong>My Applications</strong> page, accessible from the sidebar.</li>
           <li><strong>For Owners:</strong> Review incoming applicant profiles, contact information, and lease notes directly from your Listings &amp; Applications Dashboard to approve or reject candidates with one click.</li>
         </ul>
       </>
@@ -101,9 +101,9 @@ const FAQ_ITEMS = [
       <>
         <p>Yes! DRAS features a flexible multi-role system designed for modern renters and owners:</p>
         <ul>
-          <li>Every registered user can explore listings and apply as a tenant.</li>
+          <li>Every registered user can explore listings and apply as a tenant. Your first application will prompt you to set up a Tenant Profile with your contact details.</li>
           <li>To list a property, click &quot;Become an Owner to List&quot; on the Listings page to add an Owner profile to your existing account.</li>
-          <li>Once registered, you can use &quot;Create Listing&quot; to post properties while maintaining all your tenant applications from a single unified account.</li>
+          <li>Once registered, you can use &quot;Create Listing&quot; to post properties while tracking all your tenant applications from the <strong>My Applications</strong> page - all from a single unified account.</li>
         </ul>
       </>
     )
@@ -112,11 +112,11 @@ const FAQ_ITEMS = [
     question: 'What additional services or tools can help me?',
     answer: (
       <>
-        <p>By creating an account on DRAS, your personal dashboard allows you to:</p>
+        <p>By creating an account on DRAS, you gain access to a set of dedicated tools:</p>
         <ul>
           <li>Seamlessly manage both tenant and owner activities from a single profile.</li>
-          <li>Track all your pending, approved, and rejected rental applications.</li>
-          <li>Monitor applicant pipelines and property statuses in real time.</li>
+          <li>Track your pending applications and your currently rented property from the <strong>My Applications</strong> page.</li>
+          <li>Monitor applicant pipelines and property statuses in real time from your Listings &amp; Applications Dashboard.</li>
           <li>Access automated price suggestions and data-driven market forecasts.</li>
         </ul>
         <p>This provides complete visibility and control over your rental journey in one place.</p>
