@@ -118,7 +118,7 @@
 }
 
 .cardHeader {
-  background-color: #f8f9fa;
+  background-color: var(--background-muted);
   padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--border-color);
   min-width: 0;
@@ -433,6 +433,31 @@
 .noNotesIcon {
   flex-shrink: 0;
   opacity: 0.6;
+}
+
+[data-theme='dark'] .cardHeader {
+  background-color: var(--background-muted);
+  border-bottom-color: var(--border-color);
+}
+
+[data-theme='dark'] .rentedBadge {
+  background-color: var(--background-muted);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+[data-theme='dark'] .activeRentalSection {
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+[data-theme='dark'] .activeRentalTitle {
+  color: #34d399;
+}
+
+[data-theme='dark'] .rentedBadgeActive {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+  border-color: rgba(16, 185, 129, 0.4);
 }
 
 [data-theme='dark'] .notesBox {
