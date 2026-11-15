@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Home, Building2, Key, CheckSquare, Users, Info, MessageSquare, X, Search, Heart, TrendingUp, Activity } from 'lucide-react';
+import { Home, Building2, Key, CheckSquare, Users, Info, MessageSquare, X, Search, Heart, TrendingUp, Activity, FileText } from 'lucide-react';
 import { useAuth } from '../../features/auth';
 import { useFavourites } from '../../features/favourites';
 import styles from './Sidebar.module.css';
@@ -14,6 +14,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
   const isAdmin = roles.includes('ADMIN');
   const isOwner = roles.includes('OWNER');
+  const isTenant = roles.includes('TENANT');
 
   useEffect(() => {
     if (location.pathname === '/listings') {
@@ -102,6 +103,14 @@ export default function Sidebar({ isOpen, onClose }) {
               <span className={styles.pendingBadge}>{guestFavouritesPending}</span>
             )}
           </NavLink>
+
+          {isTenant && (
+            <NavLink to="/my-applications" className={({ isActive }) =>
+                isActive ? `${styles.sidebarLink} ${styles.active}` : styles.sidebarLink} onClick={onClose}>
+              <FileText size={20} />
+              My Applications
+            </NavLink>
+          )}
 
           {isOwner && (
             <>
