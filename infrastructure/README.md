@@ -245,6 +245,13 @@ push returns `401 Unauthorized`. The 4th Deploy stage smoke test now verifies th
 Only Nginx is exposed, so the backend is not reachable on `:8080` / `:8081`. Point the scraper at the
 Nginx entry point of whichever environment you are feeding:
 
+Every mode that talks to the backend (`--push-backend`, `--push-only`, `--replay-failed`) needs
+`SCRAPER_API_KEY` exported in the scraper shell. Load the local value from the repo-root `.env`:
+
+```bash
+export SCRAPER_API_KEY="$(grep '^SCRAPER_API_KEY=' .env | cut -d= -f2-)"
+```
+
 ```bash
 # Production (public Nginx) - use the production key
 export SCRAPER_API_KEY="<production key from the Jenkins credential>"
@@ -256,11 +263,19 @@ export SCRAPER_API_KEY="dras-dev-scraper-key"
 python3 analytics/scrapers/spitogatos_scraper.py --push-backend \
   --backend-url http://localhost:8082/api/external-import/listings
 
-# Local Docker stack - use the key from your local .env
+# Local Docker stack - use the key from the repo-root .env
+export SCRAPER_API_KEY="$(grep '^SCRAPER_API_KEY=' .env | cut -d= -f2-)"
 python3 analytics/scrapers/spitogatos_scraper.py --push-backend \
   --backend-url http://localhost/api/external-import/listings
 
-# Backend started directly with Maven on this machine
+# Same key for replaying saved chunks and for pushing the existing CSV
+python3 analytics/scrapers/spitogatos_scraper.py --replay-failed \
+  --backend-url http://localhost/api/external-import/listings
+python3 analytics/scrapers/spitogatos_scraper.py --push-only \
+  --backend-url http://localhost/api/external-import/listings
+
+# Backend started directly with Maven on this machine - use the key from the repo-root .env
+export SCRAPER_API_KEY="$(grep '^SCRAPER_API_KEY=' .env | cut -d= -f2-)"
 python3 analytics/scrapers/spitogatos_scraper.py --push-backend \
   --backend-url http://localhost:8080/api/external-import/listings
 ```
@@ -281,6 +296,7 @@ A successful push returns `{"received":N,"imported":N,"skipped":N}`. Rejected ch
 `analytics/failed_payloads/` on the workstation and can be resent later without re-scraping:
 
 ```bash
+export SCRAPER_API_KEY="<production key from the Jenkins credential>"
 python3 analytics/scrapers/spitogatos_scraper.py --replay-failed \
   --backend-url http://dras.abrdns.com/api/external-import/listings
 ```
@@ -294,6 +310,7 @@ To send the existing CSV instead of scraping again, use `--push-only`. It reads
 `analytics/data/spitogatos_athens_listings.csv` and leaves the data directory untouched.
 
 ```bash
+export SCRAPER_API_KEY="dras-dev-scraper-key"
 python3 analytics/scrapers/spitogatos_scraper.py --push-only \
   --backend-url http://localhost:8082/api/external-import/listings
 ```
