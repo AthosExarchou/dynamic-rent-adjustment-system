@@ -318,16 +318,24 @@ public class ListingController {
     @GetMapping("/{id}/applications")
     public ResponseEntity<?> viewApplications(@PathVariable Integer id) {
         Listing listing = listingApplicationService.viewApplications(id);
+        List<ListingApplication> applications = listingApplicationService.getApplicationsForListing(id);
+        if (applications == null || applications.isEmpty()) {
+            applications = new java.util.ArrayList<>(listing.getApplications());
+        }
 
-        List<Map<String, Object>> applicants = listing.getApplicants().stream()
-            .map(t -> {
+        List<Map<String, Object>> applicants = applications.stream()
+            .map(app -> {
+                Tenant t = app.getTenant();
                 Map<String, Object> map = new java.util.HashMap<>();
-                map.put("id", t.getId());
-                map.put("firstName", t.getFirstName());
-                map.put("lastName", t.getLastName());
-                map.put("phoneNumber", t.getPhoneNumber());
-                map.put("email", t.getUser() != null ? t.getUser().getEmail() : "");
-                map.put("status", t.getRentalStatus().name());
+                map.put("id", t != null ? t.getId() : null);
+                map.put("applicationId", app.getId());
+                map.put("firstName", t != null ? t.getFirstName() : "");
+                map.put("lastName", t != null ? t.getLastName() : "");
+                map.put("phoneNumber", t != null ? t.getPhoneNumber() : "");
+                map.put("email", (t != null && t.getUser() != null) ? t.getUser().getEmail() : "");
+                map.put("status", (t != null && t.getRentalStatus() != null) ? t.getRentalStatus().name() : "APPLIED");
+                map.put("notes", app.getNotes());
+                map.put("appliedAt", app.getAppliedAt() != null ? app.getAppliedAt().toString() : null);
                 return map;
             })
             .collect(Collectors.toList());

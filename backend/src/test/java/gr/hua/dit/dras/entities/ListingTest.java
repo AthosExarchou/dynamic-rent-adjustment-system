@@ -41,6 +41,16 @@ class ListingTest {
     }
 
     @Test
+    void testAddApplicantWithNotes() {
+        listing.addApplicant(tenant1, "Looking for a 2-year lease starting next month");
+
+        assertThat(listing.getApplicants()).containsExactly(tenant1);
+        ListingApplication app = listing.getApplications().iterator().next();
+        assertThat(app.getNotes()).isEqualTo("Looking for a 2-year lease starting next month");
+        assertThat(app.getAppliedAt()).isNotNull();
+    }
+
+    @Test
     void testRemoveApplicant() {
         listing.addApplicant(tenant1);
         listing.removeApplicant(tenant1);

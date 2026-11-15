@@ -75,6 +75,45 @@ public class TenantControllerTest {
     }
 
     @Test
+    void rentListing_WithNotes_Success() {
+        when(userService.getCurrentUserId()).thenReturn(currentUser.getId());
+        when(userService.getUser(currentUser.getId())).thenReturn(currentUser);
+        when(listingService.getListing(listing.getId())).thenReturn(listing);
+        when(tenantService.isUserTenant()).thenReturn(false);
+
+        Map<String, String> payload = new HashMap<>();
+        payload.put("firstName", "John");
+        payload.put("lastName", "Doe");
+        payload.put("phoneNumber", "1234567890");
+        payload.put("notes", "Looking forward to moving in soon");
+
+        ResponseEntity<?> response = tenantController.rentListing(listing.getId(), payload);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(tenantService).createTenantForCurrentUser("John", "Doe", "1234567890");
+        verify(tenantService).submitApplication(listing.getId(), "Looking forward to moving in soon");
+    }
+
+    @Test
+    void rentListing_WithNotesExceeding500Chars_ReturnsBadRequest() {
+        when(userService.getCurrentUserId()).thenReturn(currentUser.getId());
+        when(userService.getUser(currentUser.getId())).thenReturn(currentUser);
+        when(listingService.getListing(listing.getId())).thenReturn(listing);
+        when(tenantService.isUserTenant()).thenReturn(false);
+
+        Map<String, String> payload = new HashMap<>();
+        payload.put("firstName", "John");
+        payload.put("lastName", "Doe");
+        payload.put("phoneNumber", "1234567890");
+        payload.put("notes", "a".repeat(501));
+
+        ResponseEntity<?> response = tenantController.rentListing(listing.getId(), payload);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        verify(tenantService, never()).submitApplication(anyInt(), anyString());
+    }
+
+    @Test
     void rentListing_ExistingTenantWithoutApplication_SubmitsOnly() {
         Tenant existingTenant = new Tenant();
         existingTenant.setId(currentUser.getId());

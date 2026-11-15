@@ -65,9 +65,9 @@ class TenantRepositoryTest {
         Tenant tenant1 = createTenant(u1, "Alice", "Smith", "1111111111");
         Tenant tenant2 = createTenant(u2, "Bob", "Jones", "2222222222");
 
-        tenant1.getAppliedListings().add(listingA);
-        tenant1.getAppliedListings().add(listingB);
-        tenant2.getAppliedListings().add(listingA);
+        tenant1.applyToListing(listingA);
+        tenant1.applyToListing(listingB);
+        tenant2.applyToListing(listingA);
 
         entityManager.persistAndFlush(tenant1);
         entityManager.persistAndFlush(tenant2);

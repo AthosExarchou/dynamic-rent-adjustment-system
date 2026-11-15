@@ -14,7 +14,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "listings")
@@ -140,10 +142,8 @@ public class Listing {
     private Tenant tenant;
 
     /* Tenant applications relationship */
-    @ManyToMany(mappedBy = "appliedListings", cascade = {
-            CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH
-    })
-    private Set<Tenant> applicants = new HashSet<>();
+    @OneToMany(mappedBy = "listing", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<ListingApplication> applications = new HashSet<>();
 
     /* Users who added this listing to their favourites */
     @JsonIgnore
@@ -401,19 +401,51 @@ public class Listing {
         this.updatedAt = updatedAt;
     }
 
+    public Set<ListingApplication> getApplications() {
+        return applications;
+    }
+
+    public void setApplications(Set<ListingApplication> applications) {
+        this.applications = applications != null ? applications : new HashSet<>();
+    }
+
     public Set<Tenant> getApplicants() {
-        return applicants;
+        return applications.stream()
+                .map(ListingApplication::getTenant)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
     }
 
     public void setApplicants(Set<Tenant> applicants) {
-        this.applicants = applicants;
+        this.applications.clear();
+        if (applicants != null) {
+            for (Tenant tenant : applicants) {
+                addApplicant(tenant);
+            }
+        }
+    }
+
+    public boolean hasApplicant(Tenant tenant) {
+        if (tenant == null) return false;
+        return applications.stream().anyMatch(a -> {
+            if (a.getTenant() == null) return false;
+            if (a.getTenant() == tenant) return true;
+            return tenant.equals(a.getTenant());
+        });
+    }
+
+    public void addApplicant(Tenant tenant, String notes) {
+        if (!hasApplicant(tenant)) {
+            ListingApplication application = new ListingApplication(tenant, this, notes);
+            this.applications.add(application);
+            if (!tenant.hasAppliedToListing(this)) {
+                tenant.getApplications().add(application);
+            }
+        }
     }
 
     public void addApplicant(Tenant tenant) {
-        if (!applicants.contains(tenant)) {
-            applicants.add(tenant);
-            tenant.getAppliedListings().add(this);
-        }
+        addApplicant(tenant, null);
     }
 
     public void disable() {
@@ -475,8 +507,15 @@ public class Listing {
     }
 
     public void removeApplicant(Tenant tenant) {
-        this.applicants.remove(tenant); // removes tenant from listing's applicant list
-        tenant.getAppliedListings().remove(this); // removes listing from tenant's applied listings
+        if (tenant == null)
+            return;
+        this.applications.removeIf(a -> {
+            boolean match = (a.getTenant() == tenant || tenant.equals(a.getTenant()));
+            if (match && a.getTenant() != null) {
+                a.getTenant().getApplications().remove(a);
+            }
+            return match;
+        });
     }
 
     /**
@@ -484,7 +523,7 @@ public class Listing {
      */
     public List<Tenant> rentTo(Tenant winningTenant) {
 
-        if (!applicants.contains(winningTenant)) {
+        if (!hasApplicant(winningTenant)) {
             throw new IllegalStateException("Tenant did not apply");
         }
 
@@ -497,14 +536,19 @@ public class Listing {
 
         winningTenant.rent(this);
 
-        List<Tenant> rejected = new ArrayList<>(this.applicants);
-        rejected.remove(winningTenant);
+        List<Tenant> rejected = this.applications.stream()
+                .map(ListingApplication::getTenant)
+                .filter(t -> t != null && t != winningTenant && !t.equals(winningTenant))
+                .distinct()
+                .collect(Collectors.toList());
 
-        // Sync inverse side: remove this listing from each applicant's appliedListings
-        for (Tenant applicant : new ArrayList<>(this.applicants)) {
-            applicant.getAppliedListings().remove(this);
+        // Sync inverse side: remove this listing from each applicant's applications
+        for (ListingApplication app : new ArrayList<>(this.applications)) {
+            if (app.getTenant() != null) {
+                app.getTenant().getApplications().remove(app);
+            }
         }
-        this.applicants.clear();
+        this.applications.clear();
 
         return rejected;
     }

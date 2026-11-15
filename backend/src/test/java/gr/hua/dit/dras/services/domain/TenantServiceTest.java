@@ -2,12 +2,14 @@ package gr.hua.dit.dras.services.domain;
 
 /* imports */
 import gr.hua.dit.dras.entities.Listing;
+import gr.hua.dit.dras.entities.ListingApplication;
 import gr.hua.dit.dras.entities.Owner;
 import gr.hua.dit.dras.entities.Role;
 import gr.hua.dit.dras.entities.Tenant;
 import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.model.enums.RentalStatus;
 import gr.hua.dit.dras.repositories.ListingRepository;
+import gr.hua.dit.dras.repositories.ListingApplicationRepository;
 import gr.hua.dit.dras.repositories.RoleRepository;
 import gr.hua.dit.dras.repositories.TenantRepository;
 import org.junit.jupiter.api.Test;
@@ -39,6 +41,9 @@ public class TenantServiceTest {
 
     @Mock
     private ListingRepository listingRepository;
+
+    @Mock
+    private ListingApplicationRepository listingApplicationRepository;
 
     @Mock
     private UserService userService;
@@ -133,6 +138,52 @@ public class TenantServiceTest {
         assertThat(listing.getApplicants()).containsExactly(tenant);
         verify(tenantRepository).save(tenant);
         verify(listingRepository).save(listing);
+    }
+
+    @Test
+    void submitApplication_withNotes_shouldApplyToListingAndStoreNotes() {
+        Tenant tenant = new Tenant();
+        ReflectionTestUtils.setField(tenant, "id", 1);
+        tenant.setListing(null);
+
+        Listing listing = new Listing();
+        ReflectionTestUtils.setField(listing, "id", 10);
+        listing.setApplicants(new HashSet<>());
+
+        when(userService.getCurrentUserId()).thenReturn(5);
+        when(tenantRepository.findByUserId(5)).thenReturn(Optional.of(tenant));
+        when(listingRepository.findById(10)).thenReturn(Optional.of(listing));
+
+        boolean result = tenantService.submitApplication(10, "Quiet professional working remotely");
+
+        assertThat(result).isFalse();
+        assertThat(tenant.getRentalStatus()).isEqualTo(RentalStatus.APPLIED);
+        assertThat(tenant.getAppliedListings()).containsExactly(listing);
+        ListingApplication app = tenant.getApplications().iterator().next();
+        assertThat(app.getNotes()).isEqualTo("Quiet professional working remotely");
+        verify(tenantRepository).save(tenant);
+        verify(listingRepository).save(listing);
+    }
+
+    @Test
+    void submitApplication_withNotesExceeding500Chars_shouldThrow() {
+        Tenant tenant = new Tenant();
+        ReflectionTestUtils.setField(tenant, "id", 1);
+        tenant.setListing(null);
+
+        Listing listing = new Listing();
+        ReflectionTestUtils.setField(listing, "id", 10);
+        listing.setApplicants(new HashSet<>());
+
+        when(userService.getCurrentUserId()).thenReturn(5);
+        when(tenantRepository.findByUserId(5)).thenReturn(Optional.of(tenant));
+        when(listingRepository.findById(10)).thenReturn(Optional.of(listing));
+
+        String longNotes = "a".repeat(501);
+
+        assertThatThrownBy(() -> tenantService.submitApplication(10, longNotes))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Rental notes cannot exceed 500 characters");
     }
 
     @Test

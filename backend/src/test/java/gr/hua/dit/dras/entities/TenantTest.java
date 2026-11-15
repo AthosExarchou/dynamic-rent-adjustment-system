@@ -36,6 +36,17 @@ class TenantTest {
     }
 
     @Test
+    void testApplyToListingWithNotes() {
+        tenant.applyToListing(listing1, "Non-smoker, no pets, ready to move in immediately");
+
+        assertThat(tenant.getAppliedListings()).containsExactly(listing1);
+        assertThat(listing1.getApplicants()).containsExactly(tenant);
+        ListingApplication app = tenant.getApplications().iterator().next();
+        assertThat(app.getNotes()).isEqualTo("Non-smoker, no pets, ready to move in immediately");
+        assertThat(app.getAppliedAt()).isNotNull();
+    }
+
+    @Test
     void testRent() {
         tenant.applyToListing(listing1);
         tenant.rent(listing1);

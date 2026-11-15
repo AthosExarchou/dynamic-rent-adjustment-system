@@ -5,6 +5,7 @@ import gr.hua.dit.dras.entities.*;
 import gr.hua.dit.dras.model.enums.RentalStatus;
 import gr.hua.dit.dras.repositories.TenantRepository;
 import gr.hua.dit.dras.repositories.ListingRepository;
+import gr.hua.dit.dras.repositories.ListingApplicationRepository;
 import gr.hua.dit.dras.repositories.RoleRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,17 +26,20 @@ public class TenantService {
 
     private final TenantRepository tenantRepository;
     private final ListingRepository listingRepository;
+    private final ListingApplicationRepository listingApplicationRepository;
     private final UserService userService;
     private final RoleRepository roleRepository;
 
     public TenantService(
             TenantRepository tenantRepository,
             ListingRepository listingRepository,
+            ListingApplicationRepository listingApplicationRepository,
             UserService userService,
             RoleRepository roleRepository
     ) {
         this.tenantRepository = tenantRepository;
         this.listingRepository = listingRepository;
+        this.listingApplicationRepository = listingApplicationRepository;
         this.userService = userService;
         this.roleRepository = roleRepository;
     }
@@ -139,6 +143,11 @@ public class TenantService {
 
     @Transactional
     public boolean submitApplication(Integer listingId) {
+        return submitApplication(listingId, null);
+    }
+
+    @Transactional
+    public boolean submitApplication(Integer listingId, String notes) {
 
         Integer userId = userService.getCurrentUserId();
 
@@ -156,7 +165,7 @@ public class TenantService {
                         )
                 );
 
-        if (listing.getApplicants().contains(tenant)) {
+        if (listingApplicationRepository.existsByListingIdAndTenantId(listingId, tenant.getId()) || listing.getApplicants().contains(tenant)) {
             return true; // already applied
         }
 
@@ -166,9 +175,17 @@ public class TenantService {
             );
         }
 
+        if (notes != null && notes.trim().length() > 500) {
+            throw new IllegalArgumentException("Rental notes cannot exceed 500 characters");
+        }
+
         tenant.setRentalStatus(RentalStatus.APPLIED);
 
-        tenant.applyToListing(listing);
+        ListingApplication application = tenant.applyToListing(listing, notes);
+
+        if (application != null) {
+            listingApplicationRepository.save(application);
+        }
 
         /* Ensures persistence */
         tenantRepository.save(tenant);
@@ -247,7 +264,10 @@ public class TenantService {
             listing.getApplicants().remove(tenant);
             listingRepository.save(listing);
         }
-        tenant.getAppliedListings().clear();
+        if (tenant.getId() != null) {
+            listingApplicationRepository.deleteByTenantId(tenant.getId());
+        }
+        tenant.getApplications().clear();
     }
 
     @Transactional(readOnly = true)
@@ -262,9 +282,13 @@ public class TenantService {
             return response;
         }
         Tenant tenant = tenantOpt.get();
-        List<Integer> appliedListingIds = tenant.getAppliedListings().stream()
-                .map(Listing::getId)
-                .collect(Collectors.toList());
+        List<ListingApplication> tenantApplications = tenant.getId() != null
+                ? listingApplicationRepository.findByTenantId(tenant.getId())
+                : null;
+
+        List<Integer> appliedListingIds = (tenantApplications != null && !tenantApplications.isEmpty())
+                ? tenantApplications.stream().map(app -> app.getListing().getId()).collect(Collectors.toList())
+                : tenant.getAppliedListings().stream().map(Listing::getId).collect(Collectors.toList());
 
         response.put("appliedListingIds", appliedListingIds);
         response.put("rentingListingId", tenant.getListing() != null ? tenant.getListing().getId() : null);

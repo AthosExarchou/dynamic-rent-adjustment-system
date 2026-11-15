@@ -7,6 +7,7 @@ import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.model.enums.PropertyType;
 import gr.hua.dit.dras.model.enums.RentalDuration;
 import gr.hua.dit.dras.repositories.RoleRepository;
+import gr.hua.dit.dras.repositories.ListingApplicationRepository;
 import gr.hua.dit.dras.services.domain.*;
 import gr.hua.dit.dras.services.infrastructure.EmailService;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +44,8 @@ class ListingApplicationServiceTest {
     private RoleRepository roleRepository;
     @Mock
     private EmailService emailService;
+    @Mock
+    private ListingApplicationRepository listingApplicationRepository;
 
     @InjectMocks
     private ListingApplicationService listingApplicationService;

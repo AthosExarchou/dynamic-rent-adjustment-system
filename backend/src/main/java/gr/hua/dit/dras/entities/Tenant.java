@@ -7,7 +7,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Entity
 public class Tenant {
@@ -43,15 +45,8 @@ public class Tenant {
     private Listing listing;
 
     /* Tenant applications relationship */
-    @ManyToMany(cascade = {
-            CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH
-    })
-    @JoinTable(
-            name = "tenant_listing_applications",
-            joinColumns = @JoinColumn(name = "tenant_id"),
-            inverseJoinColumns = @JoinColumn(name = "listing_id")
-    )
-    private Set<Listing> appliedListings = new HashSet<>();
+    @OneToMany(mappedBy = "tenant", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<ListingApplication> applications = new HashSet<>();
 
     /* Tenant-User relationship */
     @OneToOne(cascade = {
@@ -125,20 +120,55 @@ public class Tenant {
         this.rentalStatus = rentalStatus;
     }
 
+    public Set<ListingApplication> getApplications() {
+        return applications;
+    }
+
+    public void setApplications(Set<ListingApplication> applications) {
+        this.applications = applications != null ? applications : new HashSet<>();
+    }
+
     public Set<Listing> getAppliedListings() {
-        return appliedListings;
+        return applications.stream()
+                .map(ListingApplication::getListing)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
     }
 
     public void setAppliedListings(Set<Listing> appliedListings) {
-        this.appliedListings = appliedListings;
+        this.applications.clear();
+        if (appliedListings != null) {
+            for (Listing listing : appliedListings) {
+                applyToListing(listing);
+            }
+        }
     }
 
-    public void applyToListing(Listing listing) {
+    public boolean hasAppliedToListing(Listing listing) {
+        if (listing == null) return false;
+        return applications.stream().anyMatch(a -> {
+            if (a.getListing() == null)
+                return false;
+            if (a.getListing() == listing)
+                return true;
+            return listing.equals(a.getListing());
+        });
+    }
 
-        if (!appliedListings.contains(listing)) {
-            appliedListings.add(listing);
-            listing.getApplicants().add(this); // bidirectional relationship
+    public ListingApplication applyToListing(Listing listing, String notes) {
+        if (hasAppliedToListing(listing)) {
+            return null;
         }
+        ListingApplication application = new ListingApplication(this, listing, notes);
+        this.applications.add(application);
+        if (!listing.hasApplicant(this)) {
+            listing.getApplications().add(application);
+        }
+        return application;
+    }
+
+    public ListingApplication applyToListing(Listing listing) {
+        return applyToListing(listing, null);
     }
 
     /**
@@ -150,7 +180,7 @@ public class Tenant {
             throw new IllegalStateException("Tenant is already renting another listing.");
         }
 
-        this.appliedListings.remove(listing); // the winner is no longer an applicant
+        this.applications.removeIf(a -> a.getListing() == listing || (listing != null && listing.equals(a.getListing())));
         this.listing = listing;
         this.rentalStatus = RentalStatus.RENTING;
     }
@@ -161,9 +191,9 @@ public class Tenant {
      */
     public void processRejection(Listing listing) {
 
-        this.appliedListings.remove(listing);
+        this.applications.removeIf(a -> a.getListing() == listing || (listing != null && listing.equals(a.getListing())));
 
-        if (this.appliedListings.isEmpty() && this.listing == null) {
+        if (this.applications.isEmpty() && this.listing == null) {
             this.rentalStatus = RentalStatus.CANCELED;
         }
     }

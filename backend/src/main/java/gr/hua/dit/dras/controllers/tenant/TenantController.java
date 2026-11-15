@@ -88,8 +88,17 @@ public class TenantController {
             );
         }
 
+        String notes = payload != null ? payload.get("notes") : null;
+        if (notes != null && notes.trim().length() > 500) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Rental notes cannot exceed 500 characters."));
+        }
+
         /* All preconditions validated - submit application */
-        tenantService.submitApplication(listingId);
+        if (notes != null && !notes.isBlank()) {
+            tenantService.submitApplication(listingId, notes.trim());
+        } else {
+            tenantService.submitApplication(listingId);
+        }
 
         return ResponseEntity.ok().build();
     }

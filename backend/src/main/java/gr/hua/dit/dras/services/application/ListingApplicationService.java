@@ -46,6 +46,7 @@ public class ListingApplicationService {
     private final UserService userService;
     private final RoleRepository roleRepository;
     private final EmailService emailService;
+    private final ListingApplicationRepository listingApplicationRepository;
 
     public ListingApplicationService(
             ListingService listingService,
@@ -53,7 +54,8 @@ public class ListingApplicationService {
             TenantService tenantService,
             UserService userService,
             RoleRepository roleRepository,
-            EmailService emailService
+            EmailService emailService,
+            ListingApplicationRepository listingApplicationRepository
     ) {
         this.listingService = listingService;
         this.ownerService = ownerService;
@@ -61,6 +63,7 @@ public class ListingApplicationService {
         this.userService = userService;
         this.roleRepository = roleRepository;
         this.emailService = emailService;
+        this.listingApplicationRepository = listingApplicationRepository;
     }
 
     /* Security / Helper methods */
@@ -278,6 +281,9 @@ public class ListingApplicationService {
                 emailService.sendListingDeletionEmail(ownerEmail, listing)
         );
 
+        /* Clean up application records */
+        listingApplicationRepository.deleteByListingId(listingId);
+
         /* Delegates deletion to domain service */
         listingService.deleteListing(listingId);
     }
@@ -416,7 +422,8 @@ public class ListingApplicationService {
 
         validateModificationRights(listing, user); // validates permissions
 
-        if (!listing.getApplicants().contains(tenant)) {
+        if (!listingApplicationRepository.existsByListingIdAndTenantId(listingId, tenantId)
+                && !listing.getApplicants().contains(tenant)) {
             throw new IllegalStateException("This tenant did not apply for this listing.");
         }
 
@@ -484,6 +491,7 @@ public class ListingApplicationService {
 
         validateModificationRights(listing, currentUser); // validates permissions
 
+        listingApplicationRepository.deleteByListingIdAndTenantId(listingId, tenantId);
         listingService.rejectApplicant(listing, tenant); // executes domain logic
 
         /* Send Email */
@@ -505,5 +513,13 @@ public class ListingApplicationService {
         Listing listing = requireListing(listingId);
         listingService.validateListingOwnership(listing, user);
         return listing;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ListingApplication> getApplicationsForListing(Integer listingId) {
+        User user = requireUser();
+        Listing listing = requireListing(listingId);
+        listingService.validateListingOwnership(listing, user);
+        return listingApplicationRepository.findByListingIdOrderByAppliedAtDesc(listingId);
     }
 }
