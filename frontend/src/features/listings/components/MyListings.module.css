@@ -237,9 +237,13 @@
 
 .rejectionNotice p {
   margin: 0;
-  color: #7f1d1d;
+  color: #b91c1c;
   line-height: 1.4;
   word-break: break-word;
+}
+
+[data-theme='dark'] .rejectionNotice p {
+  color: #fca5a5;
 }
 
 .rentedNotice {
