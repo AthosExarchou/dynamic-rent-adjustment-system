@@ -601,18 +601,31 @@ def parse_property_page(html_content: str) -> Dict[str, Any]:
         imgs: List[str] = []
 
         for img in soup.find_all("img"):
-            src = img.get("src") or img.get("data-src")
-            if src and "spitogatos" in src:
-                # Cleans URL of query parameters to check extension
-                src_clean = src.split("?")[0].lower()
-                if any(ext in src_clean for ext in VALID_EXTS):
-                    # Forces Spitogatos CDN to deliver a supported high-res size
-                    high_res = re.sub(
-                        r'_\d+x\d+\.',
-                        f'_{SPITOGATOS_IMAGE_SIZE}.',
-                        src
-                    )
-                    imgs.append(high_res)
+            # Lazy-loaded galleries put the real URL in data-original/data-src
+            # and a static thumbnail placeholder in src.
+            src = (img.get("data-original")
+                   or img.get("data-src")
+                   or img.get("src"))
+            if not src:
+                continue
+
+            src = src.strip()
+            if src.startswith("//"):
+                src = "https:" + src
+
+            if "spitogatos" not in src or "/main/phpthumb/static/" in src:
+                continue
+
+            # Cleans URL of query parameters to check extension
+            src_clean = src.split("?")[0].lower()
+            if any(ext in src_clean for ext in VALID_EXTS):
+                # Forces Spitogatos CDN to deliver a supported high-res size
+                high_res = re.sub(
+                    r'_\d+x\d+\.',
+                    f'_{SPITOGATOS_IMAGE_SIZE}.',
+                    src
+                )
+                imgs.append(high_res)
 
         # Deduplicates while preserving order
         detail_data["images"] = list(dict.fromkeys(imgs))
