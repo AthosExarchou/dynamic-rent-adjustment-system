@@ -231,6 +231,38 @@
   color: var(--color-primary-700, #1d4ed8);
 }
 
+.createUserBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 1.1rem;
+  background: linear-gradient(135deg, var(--color-success), #059669);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.createUserBtn:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.createUserBtn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+
+.createUserBtn:focus-visible {
+  outline: 2px solid var(--color-success);
+  outline-offset: 2px;
+}
+
 .approveBtn {
   padding: 0.6rem 1.5rem;
   background-color: var(--color-success);
@@ -278,33 +310,248 @@
 .tableContainer {
   background-color: var(--background-paper);
   border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
   box-shadow: var(--shadow-md);
   padding: 1.5rem;
   overflow-x: auto;
-  transition: all 0.3s ease-in-out;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
 .tableContainer:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+  border-color: rgba(79, 70, 229, 0.35);
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.18);
 }
 
 .table {
   width: 100%;
-  border-collapse: collapse;
+  min-width: 900px;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+/* Fixed column widths keep long usernames, emails, and role lists from
+   stretching the table and pushing rows taller. */
+.idCol {
+  width: 6%;
+}
+
+.usernameCol {
+  width: 17%;
+}
+
+.emailCol {
+  width: 21%;
+}
+
+.rolesCol {
+  width: 19%;
+}
+
+.actionsCol {
+  width: 37%;
 }
 
 .table th {
+  background: linear-gradient(180deg, var(--background-muted), var(--background-paper));
   border-bottom: 2px solid var(--border-color);
   text-align: left;
-  padding: 0.75rem;
-  color: var(--text-primary);
+  padding: 0.75rem 0.6rem;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.table thead th:first-child {
+  border-top-left-radius: var(--radius-lg);
+}
+
+.table thead th:last-child {
+  border-top-right-radius: var(--radius-lg);
+}
+
+.thContent {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.thContent svg {
+  flex-shrink: 0;
+  color: var(--color-primary-600);
 }
 
 .table td {
   border-bottom: 1px solid var(--border-color);
-  padding: 0.75rem;
+  padding: 0.75rem 0.6rem;
   color: var(--text-primary);
+  font-size: 0.9rem;
+  vertical-align: middle;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.table tbody tr:nth-child(even) td {
+  background-color: rgba(15, 23, 42, 0.02);
+}
+
+.table tbody tr:hover td {
+  background-color: rgba(79, 70, 229, 0.07);
+}
+
+.table tbody tr:hover td:first-child {
+  box-shadow: inset 3px 0 0 var(--color-primary-600);
+}
+
+[data-theme='dark'] .tableContainer {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme='dark'] .tableContainer:hover {
+  border-color: rgba(129, 140, 248, 0.4);
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme='dark'] .table tbody tr:nth-child(even) td {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+[data-theme='dark'] .table tbody tr:hover td {
+  background-color: rgba(129, 140, 248, 0.12);
+}
+
+[data-theme='dark'] .thContent svg {
+  color: #a5b4fc;
+}
+
+.usernameCell,
+.emailCell,
+.rolesCell {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userCell {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.userAvatar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-700));
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.usernameText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.roleList {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.roleBadge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0.14rem 0.45rem;
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.roleAdmin {
+  background-color: rgba(124, 58, 237, 0.12);
+  border-color: rgba(124, 58, 237, 0.22);
+  color: #6d28d9;
+}
+
+.roleOwner {
+  background-color: rgba(37, 99, 235, 0.12);
+  border-color: rgba(37, 99, 235, 0.22);
+  color: #1d4ed8;
+}
+
+.roleTenant {
+  background-color: rgba(217, 119, 6, 0.14);
+  border-color: rgba(217, 119, 6, 0.25);
+  color: #b45309;
+}
+
+.roleUser {
+  background-color: rgba(71, 85, 105, 0.12);
+  border-color: rgba(71, 85, 105, 0.22);
+  color: #475569;
+}
+
+.roleMore {
+  flex-shrink: 0;
+  padding: 0.14rem 0.4rem;
+  border-radius: 9999px;
+  background-color: var(--background-muted);
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.protectedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  background-color: var(--background-muted);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+[data-theme='dark'] .roleAdmin {
+  background-color: rgba(167, 139, 250, 0.16);
+  border-color: rgba(167, 139, 250, 0.3);
+  color: #c4b5fd;
+}
+
+[data-theme='dark'] .roleOwner {
+  background-color: rgba(96, 165, 250, 0.16);
+  border-color: rgba(96, 165, 250, 0.3);
+  color: #93c5fd;
+}
+
+[data-theme='dark'] .roleTenant {
+  background-color: rgba(251, 191, 36, 0.16);
+  border-color: rgba(251, 191, 36, 0.3);
+  color: #fcd34d;
+}
+
+[data-theme='dark'] .roleUser {
+  background-color: rgba(148, 163, 184, 0.16);
+  border-color: rgba(148, 163, 184, 0.3);
+  color: #cbd5e1;
 }
 
 .centerAlign {
@@ -313,7 +560,7 @@
 
 .roleActions {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
   justify-content: center;
   flex-wrap: wrap;
 }
@@ -321,7 +568,7 @@
 .addBtn, .removeBtn, .delBtn, .editBtn {
   font-size: 0.8rem;
   font-weight: 500;
-  padding: 0.35rem 0.7rem;
+  padding: 0.3rem 0.6rem;
   border-radius: var(--radius-md);
   border: 1px solid transparent;
   cursor: pointer;
@@ -358,6 +605,7 @@
 }
 
 .delBtn {
+  padding: 0.35rem 0.5rem;
   background-color: rgba(239, 68, 68, 0.1);
   color: var(--color-danger);
   border-color: rgba(239, 68, 68, 0.2);
@@ -371,6 +619,7 @@
 }
 
 .editBtn {
+  padding: 0.35rem 0.5rem;
   background-color: rgba(99, 102, 241, 0.1);
   color: var(--color-primary-600);
   border-color: rgba(99, 102, 241, 0.2);

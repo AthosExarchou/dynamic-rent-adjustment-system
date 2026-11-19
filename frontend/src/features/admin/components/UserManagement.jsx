@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Users, Search, Filter, Check, X, SlidersHorizontal, ChevronDown, ChevronUp, Calendar, UserCheck } from 'lucide-react';
+import { Users, Search, Filter, Check, X, SlidersHorizontal, ChevronDown, ChevronUp, Calendar, UserCheck, Pencil, Trash2, ShieldCheck, Hash, User, Mail, Settings } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
 import { useToast } from '../../../shared/components/Toast';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
@@ -24,6 +24,21 @@ const ROLE_FILTER_OPTIONS = [
 
 // Role sort priority: ADMIN first, then OWNER, TENANT, USER
 const ROLE_PRIORITY = { ADMIN: 0, OWNER: 1, TENANT: 2, USER: 3 };
+
+const ROLE_BADGE_CLASS = {
+  ADMIN: 'roleAdmin',
+  OWNER: 'roleOwner',
+  TENANT: 'roleTenant',
+  USER: 'roleUser',
+};
+
+/** Up to two initials for the avatar circle */
+function getInitials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
 
 function getTopRolePriority(roles) {
   if (!roles || roles.length === 0) return 99;
@@ -247,9 +262,8 @@ export default function UserManagement() {
           User Management Dashboard
         </h2>
         <button
-          className={styles.approveBtn}
+          className={styles.createUserBtn}
           onClick={() => setShowCreateModal(true)}
-          style={{ padding: '0.4rem 1rem' }}
         >
           + Create User
         </button>
@@ -423,40 +437,128 @@ export default function UserManagement() {
 
       <div className={styles.tableContainer}>
         <table className={styles.table}>
+          <colgroup>
+            <col className={styles.idCol} />
+            <col className={styles.usernameCol} />
+            <col className={styles.emailCol} />
+            <col className={styles.rolesCol} />
+            <col className={styles.actionsCol} />
+          </colgroup>
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Username</th>
-              <th>Email Address</th>
               <th>
-                Assigned Roles
-                <InfoTooltip text="Platform access permissions. Assigning the Owner role requires an existing Owner profile with contact details." />
+                <span className={styles.thContent}>
+                  <Hash size={14} />
+                  ID
+                </span>
               </th>
-              <th className={styles.centerAlign}>Manage Roles / Actions</th>
+              <th>
+                <span className={styles.thContent}>
+                  <User size={14} />
+                  Username
+                </span>
+              </th>
+              <th>
+                <span className={styles.thContent}>
+                  <Mail size={14} />
+                  Email Address
+                </span>
+              </th>
+              <th>
+                <span className={styles.thContent}>
+                  <ShieldCheck size={14} />
+                  Assigned Roles
+                  <InfoTooltip text="Platform access permissions. Assigning the Owner role requires an existing Owner profile with contact details." />
+                </span>
+              </th>
+              <th className={styles.centerAlign}>
+                <span className={styles.thContent}>
+                  <Settings size={14} />
+                  Manage Roles / Actions
+                </span>
+              </th>
             </tr>
           </thead>
           <tbody>
             {paginatedUsers.map(u => (
               <tr key={u.id}>
                 <td className={styles.idCell}>{u.id}</td>
-                <td>{u.username}</td>
-                <td>{u.email}</td>
-                <td>{u.roles.join(', ')}</td>
+                <td className={styles.usernameCell} title={u.username}>
+                  <div className={styles.userCell}>
+                    <span className={styles.userAvatar}>{getInitials(u.username)}</span>
+                    <span className={styles.usernameText}>{u.username}</span>
+                  </div>
+                </td>
+                <td className={styles.emailCell} title={u.email}>{u.email}</td>
+                <td className={styles.rolesCell} title={u.roles.join(', ')}>
+                  <div className={styles.roleList}>
+                    {u.roles.slice(0, 2).map(role => (
+                      <span
+                        key={role}
+                        className={`${styles.roleBadge} ${styles[ROLE_BADGE_CLASS[role]] || styles.roleUser}`}
+                      >
+                        {role}
+                      </span>
+                    ))}
+                    {u.roles.length > 2 && (
+                      <span className={styles.roleMore} title={u.roles.slice(2).join(', ')}>
+                        +{u.roles.length - 2}
+                      </span>
+                    )}
+                  </div>
+                </td>
                 <td>
                   <div className={styles.roleActions}>
-                    {!u.roles.includes('ADMIN') && !u.isSystem && (
+                    {!u.roles.includes('ADMIN') && !u.isSystem ? (
                       <>
-                        <button onClick={() => setEditingUser(u)} className={styles.editBtn}>Edit</button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingUser(u)}
+                          className={styles.editBtn}
+                          title={`Edit ${u.username}`}
+                          aria-label={`Edit ${u.username}`}
+                        >
+                          <Pencil size={15} />
+                        </button>
                         {roles.map(r => {
                           const hasRole = u.roles.some(ur => ur === r.name);
                           return hasRole ? (
-                            <button key={r.id} onClick={() => handleRemoveRole(u.id, r.id)} className={styles.removeBtn}>- {r.name}</button>
+                            <button
+                              key={r.id}
+                              type="button"
+                              onClick={() => handleRemoveRole(u.id, r.id)}
+                              className={styles.removeBtn}
+                              title={`Remove the ${r.name} role`}
+                            >
+                              - {r.name}
+                            </button>
                           ) : (
-                            <button key={r.id} onClick={() => handleAddRole(u.id, r.id)} className={styles.addBtn}>+ {r.name}</button>
+                            <button
+                              key={r.id}
+                              type="button"
+                              onClick={() => handleAddRole(u.id, r.id)}
+                              className={styles.addBtn}
+                              title={`Add the ${r.name} role`}
+                            >
+                              + {r.name}
+                            </button>
                           );
                         })}
-                        <button onClick={() => confirmDeleteUser(u.id)} className={styles.delBtn}>Delete</button>
+                        <button
+                          type="button"
+                          onClick={() => confirmDeleteUser(u.id)}
+                          className={styles.delBtn}
+                          title={`Delete ${u.username}`}
+                          aria-label={`Delete ${u.username}`}
+                        >
+                          <Trash2 size={15} />
+                        </button>
                       </>
+                    ) : (
+                      <span className={styles.protectedBadge}>
+                        <ShieldCheck size={14} />
+                        Protected
+                      </span>
                     )}
                   </div>
                 </td>
