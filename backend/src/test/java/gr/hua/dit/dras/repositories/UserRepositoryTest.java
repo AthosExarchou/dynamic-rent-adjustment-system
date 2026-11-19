@@ -1,6 +1,8 @@
 package gr.hua.dit.dras.repositories;
 
 import gr.hua.dit.dras.entities.Notification;
+import gr.hua.dit.dras.entities.Owner;
+import gr.hua.dit.dras.entities.Role;
 import gr.hua.dit.dras.entities.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -77,6 +79,32 @@ class UserRepositoryTest {
         assertThatThrownBy(() -> {
             userRepository.saveAndFlush(duplicateUser);
         }).isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    @DisplayName("countPlatformUsers excludes admin and system owner accounts")
+    void countPlatformUsers_ExcludesAdminAndSystemAccounts() {
+        Role adminRole = entityManager.persistAndFlush(new Role("ADMIN"));
+        Role userRole = entityManager.persistAndFlush(new Role("USER"));
+
+        User admin = buildUser("admin_count", "admin_count@test.com");
+        admin.getRoles().add(adminRole);
+        admin.getRoles().add(userRole);
+        entityManager.persistAndFlush(admin);
+
+        User systemUser = buildUser("system_count", "system_count@test.com");
+        systemUser.getRoles().add(userRole);
+        systemUser = entityManager.persistAndFlush(systemUser);
+
+        Owner systemOwner = new Owner("System", "Owner", "0000000099", true);
+        systemOwner.setUser(systemUser);
+        entityManager.persistAndFlush(systemOwner);
+
+        User regularUser = buildUser("regular_count", "regular_count@test.com");
+        regularUser.getRoles().add(userRole);
+        entityManager.persistAndFlush(regularUser);
+
+        assertThat(userRepository.countPlatformUsers()).isEqualTo(1L);
     }
 
     @Test

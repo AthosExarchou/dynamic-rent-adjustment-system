@@ -73,6 +73,18 @@ class OwnerRepositoryTest {
     }
 
     @Test
+    @DisplayName("countBySystemOwnerFalse excludes the system owner")
+    void countBySystemOwnerFalse_ExcludesSystemOwner() {
+        User systemUser = createUser("sys_user_count", "syscount@test.com");
+        createOwner(systemUser, "System", "Owner", "0000000001", true);
+
+        User normalUser = createUser("regular_user_count", "regularcount@test.com");
+        createOwner(normalUser, "Regular", "Owner", "6900000004", false);
+
+        assertThat(ownerRepository.countBySystemOwnerFalse()).isEqualTo(1L);
+    }
+
+    @Test
     @DisplayName("findBySystemOwnerTrue returns empty when no system owner is present")
     void findBySystemOwnerTrue_WhenNoneExists_ReturnsEmpty() {
         User normalUser = createUser("regular_user2", "regular2@test.com");

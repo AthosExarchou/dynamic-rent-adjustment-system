@@ -1,5 +1,6 @@
 package gr.hua.dit.dras.services.domain;
 
+/* imports */
 import gr.hua.dit.dras.dto.SystemStatusDTO;
 import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.repositories.ListingRepository;
@@ -85,8 +86,8 @@ public class AdminSystemService {
         String lastReloadedTimestamp = DateTimeFormatter.ISO_INSTANT.format(lastReloadedAt);
         String lastReloadedAge = formatAge(lastReloadedAt);
 
-        long totalUsers = userRepository.count();
-        long totalOwners = ownerRepository.count();
+        long totalUsers = userRepository.countPlatformUsers();
+        long totalOwners = ownerRepository.countBySystemOwnerFalse();
         long totalTenants = tenantRepository.count();
 
         long totalListings = listingRepository.count();

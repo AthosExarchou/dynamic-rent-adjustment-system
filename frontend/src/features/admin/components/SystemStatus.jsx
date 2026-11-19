@@ -340,7 +340,7 @@ export default function SystemStatus() {
             <div className={styles.statInfo}>
               <span className={styles.statNumber}>{status?.totalUsers ?? 0}</span>
               <span className={styles.statLabel}>Total Accounts</span>
-              <span className={styles.statSubtext}>Registered platform users</span>
+              <span className={styles.statSubtext}>Excludes admin and system accounts</span>
             </div>
           </div>
 

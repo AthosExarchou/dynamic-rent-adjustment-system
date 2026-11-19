@@ -1,5 +1,6 @@
 package gr.hua.dit.dras.services.domain;
 
+/* imports */
 import gr.hua.dit.dras.dto.MacroForecastDTO;
 import gr.hua.dit.dras.dto.SystemStatusDTO;
 import gr.hua.dit.dras.model.enums.ListingStatus;
@@ -45,8 +46,8 @@ class AdminSystemServiceTest {
     @Test
     @DisplayName("getSystemStatus populates all platform statistics and listing origin breakdowns")
     void testGetSystemStatus_Success() {
-        when(userRepository.count()).thenReturn(10L);
-        when(ownerRepository.count()).thenReturn(4L);
+        when(userRepository.countPlatformUsers()).thenReturn(10L);
+        when(ownerRepository.countBySystemOwnerFalse()).thenReturn(4L);
         when(tenantRepository.count()).thenReturn(5L);
 
         when(listingRepository.count()).thenReturn(12L);
@@ -80,8 +81,8 @@ class AdminSystemServiceTest {
     @Test
     @DisplayName("getSystemStatus handles uninitialized macro forecast gracefully")
     void testGetSystemStatus_UninitializedForecast() {
-        when(userRepository.count()).thenReturn(0L);
-        when(ownerRepository.count()).thenReturn(0L);
+        when(userRepository.countPlatformUsers()).thenReturn(0L);
+        when(ownerRepository.countBySystemOwnerFalse()).thenReturn(0L);
         when(tenantRepository.count()).thenReturn(0L);
         when(listingRepository.count()).thenReturn(0L);
         when(listingRepository.countByExternalFalse()).thenReturn(0L);
