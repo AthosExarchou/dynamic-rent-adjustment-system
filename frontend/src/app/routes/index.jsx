@@ -34,6 +34,7 @@ const SystemStatus = lazy(() => import('../../features/admin/components/SystemSt
 const MacroTrendsDashboard = lazy(() => import('../../features/analytics/components/MacroTrendsDashboard'));
 
 const TenantForm = lazy(() => import('../../features/tenants/components/TenantForm'));
+const MyApplications = lazy(() => import('../../features/tenants/components/MyApplications'));
 const OwnerForm = lazy(() => import('../../features/owners/components/OwnerForm'));
 
 // Professional loading fallback
@@ -108,6 +109,7 @@ export const router = createBrowserRouter([
       { path: 'listings/new', element: <ProtectedRoute requiredRole="OWNER">{withSuspense(ListingForm)}</ProtectedRoute> },
       { path: 'listings/edit/:listingId', element: <ProtectedRoute requiredRole={['OWNER', 'ADMIN']}>{withSuspense(ListingForm)}</ProtectedRoute> },
       { path: 'tenant/rent/:listingId', element: <ProtectedRoute>{withSuspense(TenantForm)}</ProtectedRoute> },
+      { path: 'my-applications', element: <ProtectedRoute requiredRole={['USER', 'TENANT']}>{withSuspense(MyApplications)}</ProtectedRoute> },
 
       // Owner Routes
       { path: 'my-listings', element: <ProtectedRoute requiredRole="OWNER">{withSuspense(MyListings)}</ProtectedRoute> },
