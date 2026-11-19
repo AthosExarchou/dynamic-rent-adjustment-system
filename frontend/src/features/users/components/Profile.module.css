@@ -170,7 +170,7 @@
 .btnPrimary:hover {
   background-color: #0b5ed7;
   color: #fff;
-  ox-shadow: 0 4px 6px rgba(13, 110, 253, 0.2);
+  box-shadow: 0 4px 6px rgba(13, 110, 253, 0.2);
 }
 
 .btnOutlinePrimary {
