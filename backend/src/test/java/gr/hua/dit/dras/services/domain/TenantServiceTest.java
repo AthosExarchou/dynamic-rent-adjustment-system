@@ -369,6 +369,8 @@ public class TenantServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.get("appliedListingIds")).isEqualTo(java.util.Collections.emptyList());
         assertThat(result.get("rentingListingId")).isNull();
+        assertThat(result.get("rentingListing")).isNull();
+        assertThat(result.get("applications")).isEqualTo(java.util.Collections.emptyList());
         assertThat(result.get("rentalStatus")).isEqualTo("NONE");
     }
 
@@ -395,5 +397,13 @@ public class TenantServiceTest {
         assertThat(result.get("appliedListingIds")).isEqualTo(List.of(101));
         assertThat(result.get("rentingListingId")).isEqualTo(202);
         assertThat(result.get("rentalStatus")).isEqualTo("RENTING");
+
+        List<?> applications = (List<?>) result.get("applications");
+        assertThat(applications).hasSize(1);
+        assertThat(((Map<?, ?>) applications.get(0)).get("listingId")).isEqualTo(101);
+
+        Map<?, ?> rentingListing = (Map<?, ?>) result.get("rentingListing");
+        assertThat(rentingListing).isNotNull();
+        assertThat(rentingListing.get("listingId")).isEqualTo(202);
     }
 }

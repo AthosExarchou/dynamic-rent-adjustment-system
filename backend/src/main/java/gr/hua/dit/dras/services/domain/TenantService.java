@@ -12,9 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -278,10 +281,14 @@ public class TenantService {
         if (tenantOpt.isEmpty()) {
             response.put("appliedListingIds", Collections.emptyList());
             response.put("rentingListingId", null);
+            response.put("rentingListing", null);
+            response.put("applications", Collections.emptyList());
             response.put("rentalStatus", "NONE");
             return response;
         }
         Tenant tenant = tenantOpt.get();
+        Listing rentedListing = tenant.getListing();
+        Integer rentingListingId = rentedListing != null ? rentedListing.getId() : null;
         List<ListingApplication> tenantApplications = tenant.getId() != null
                 ? listingApplicationRepository.findByTenantId(tenant.getId())
                 : null;
@@ -290,10 +297,51 @@ public class TenantService {
                 ? tenantApplications.stream().map(app -> app.getListing().getId()).collect(Collectors.toList())
                 : tenant.getAppliedListings().stream().map(Listing::getId).collect(Collectors.toList());
 
+        List<Map<String, Object>> applications = (tenantApplications != null && !tenantApplications.isEmpty())
+                ? tenantApplications.stream()
+                    .filter(app -> app.getListing() != null)
+                    .filter(app -> !Objects.equals(app.getListing().getId(), rentingListingId))
+                    .sorted(Comparator.comparing(
+                            ListingApplication::getAppliedAt,
+                            Comparator.nullsLast(Comparator.reverseOrder())))
+                    .map(this::toApplicationSummary)
+                    .collect(Collectors.toList())
+                : tenant.getAppliedListings().stream()
+                    .filter(listing -> listing != null && !Objects.equals(listing.getId(), rentingListingId))
+                    .map(this::toListingSummary)
+                    .collect(Collectors.toList());
+
         response.put("appliedListingIds", appliedListingIds);
-        response.put("rentingListingId", tenant.getListing() != null ? tenant.getListing().getId() : null);
+        response.put("rentingListingId", rentingListingId);
+        response.put("rentingListing", rentedListing != null ? toListingSummary(rentedListing) : null);
+        response.put("applications", applications);
         response.put("rentalStatus", tenant.getRentalStatus() != null ? tenant.getRentalStatus().name() : "NONE");
         return response;
+    }
+
+    private Map<String, Object> toApplicationSummary(ListingApplication application) {
+        Map<String, Object> summary = toListingSummary(application.getListing());
+        summary.put("applicationId", application.getId());
+        summary.put("appliedAt", application.getAppliedAt());
+        summary.put("notes", application.getNotes());
+        return summary;
+    }
+
+    private Map<String, Object> toListingSummary(Listing listing) {
+        Map<String, Object> summary = new LinkedHashMap<>();
+        summary.put("listingId", listing.getId());
+        summary.put("title", listing.getTitle());
+        summary.put("subtitle", listing.getSubtitle());
+        summary.put("address", listing.getAddress());
+        summary.put("price", listing.getPrice());
+        summary.put("propertyType", listing.getPropertyType() != null ? listing.getPropertyType().name() : null);
+        summary.put("sizeM2", listing.getSizeM2());
+        summary.put("bedrooms", listing.getBedrooms());
+        summary.put("bathrooms", listing.getBathrooms());
+        summary.put("status", listing.getStatus() != null ? listing.getStatus().name() : null);
+        List<String> images = listing.getImages();
+        summary.put("image", images != null && !images.isEmpty() ? images.get(0) : null);
+        return summary;
     }
 
 }
