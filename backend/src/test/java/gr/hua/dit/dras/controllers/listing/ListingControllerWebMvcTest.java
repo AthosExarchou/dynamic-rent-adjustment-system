@@ -560,4 +560,80 @@ class ListingControllerWebMvcTest {
                         .param("sizeM2", "50"))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    @DisplayName("GET /listings/price-suggestion without sizeM2 returns 400")
+    @WithMockUser(authorities = "USER")
+    void priceSuggestion_MissingSize_ReturnsBadRequest() throws Exception {
+        mockMvc.perform(get("/listings/price-suggestion"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Validation failed"))
+                .andExpect(jsonPath("$.details[0]").value("Size in m² is required for price estimation"));
+    }
+
+    @Test
+    @DisplayName("GET /listings/price-suggestion with out-of-range size returns 400")
+    @WithMockUser(authorities = "USER")
+    void priceSuggestion_SizeOutOfRange_ReturnsBadRequest() throws Exception {
+        assertPriceSuggestionRejected("sizeM2", "4", "Size must be at least 5 m²");
+        assertPriceSuggestionRejected("sizeM2", "1001", "Size cannot exceed 1000 m²");
+    }
+
+    @Test
+    @DisplayName("GET /listings/price-suggestion with out-of-range floor returns 400")
+    @WithMockUser(authorities = "USER")
+    void priceSuggestion_FloorOutOfRange_ReturnsBadRequest() throws Exception {
+        assertPriceSuggestionRejected("floor", "-4", "Floor cannot be less than -3");
+        assertPriceSuggestionRejected("floor", "101", "Floor cannot exceed 100");
+    }
+
+    @Test
+    @DisplayName("GET /listings/price-suggestion with out-of-range year built returns 400")
+    @WithMockUser(authorities = "USER")
+    void priceSuggestion_YearBuiltOutOfRange_ReturnsBadRequest() throws Exception {
+        assertPriceSuggestionRejected("yearBuilt", "1899", "Year built must be 1900 or later");
+        assertPriceSuggestionRejected("yearBuilt", "2101", "Invalid year built");
+    }
+
+    @Test
+    @DisplayName("GET /listings/price-suggestion with out-of-range room counts returns 400")
+    @WithMockUser(authorities = "USER")
+    void priceSuggestion_RoomCountsOutOfRange_ReturnsBadRequest() throws Exception {
+        assertPriceSuggestionRejected("bedrooms", "-1", "Bedrooms cannot be negative");
+        assertPriceSuggestionRejected("bedrooms", "11", "Bedrooms cannot exceed 10");
+        assertPriceSuggestionRejected("bathrooms", "-1", "Bathrooms cannot be negative");
+        assertPriceSuggestionRejected("bathrooms", "6", "Bathrooms cannot exceed 5");
+    }
+
+    @Test
+    @DisplayName("GET /listings/price-suggestion at minimum valid boundaries returns 200")
+    @WithMockUser(authorities = "USER")
+    void priceSuggestion_MinimumBoundaries_ReturnsOk() throws Exception {
+        mockMvc.perform(get("/listings/price-suggestion")
+                        .param("sizeM2", "5")
+                        .param("floor", "-3")
+                        .param("yearBuilt", "1900")
+                        .param("bedrooms", "0")
+                        .param("bathrooms", "0"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("GET /listings/price-suggestion with valid size returns 200")
+    @WithMockUser(authorities = "USER")
+    void priceSuggestion_ValidRequest_ReturnsOk() throws Exception {
+        mockMvc.perform(get("/listings/price-suggestion").param("sizeM2", "50"))
+                .andExpect(status().isOk());
+    }
+
+    private void assertPriceSuggestionRejected(String paramName, String value, String message) throws Exception {
+        var request = get("/listings/price-suggestion").param(paramName, value);
+        if (!"sizeM2".equals(paramName)) {
+            request.param("sizeM2", "50");
+        }
+        mockMvc.perform(request)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Validation failed"))
+                .andExpect(jsonPath("$.details[0]").value(message));
+    }
 }
