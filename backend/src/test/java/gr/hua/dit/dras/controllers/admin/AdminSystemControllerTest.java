@@ -2,7 +2,9 @@ package gr.hua.dit.dras.controllers.admin;
 
 import gr.hua.dit.dras.config.LoginSuccessHandler;
 import gr.hua.dit.dras.config.SecurityConfig;
+import gr.hua.dit.dras.dto.ExternalCleanupResult;
 import gr.hua.dit.dras.dto.SystemStatusDTO;
+import gr.hua.dit.dras.services.application.ExternalListingCleanupService;
 import gr.hua.dit.dras.services.domain.AdminSystemService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -31,6 +33,9 @@ class AdminSystemControllerTest {
 
     @MockitoBean
     private AdminSystemService adminSystemService;
+
+    @MockitoBean
+    private ExternalListingCleanupService externalListingCleanupService;
 
     @MockitoBean
     private LoginSuccessHandler loginSuccessHandler;
@@ -104,6 +109,49 @@ class AdminSystemControllerTest {
     @WithMockUser(authorities = {"USER"})
     void testReloadForecast_NonAdmin() throws Exception {
         mockMvc.perform(post("/api/admin/system/reload-forecast")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("POST /api/admin/system/cleanup-external-listings allows ADMIN")
+    @WithMockUser(authorities = {"ADMIN"})
+    void testCleanupExternalListings_Admin() throws Exception {
+        when(externalListingCleanupService.cleanup(30, true))
+                .thenReturn(new ExternalCleanupResult(3, 0, true, 30, 5L, true));
+
+        mockMvc.perform(post("/api/admin/system/cleanup-external-listings")
+                        .param("graceDays", "30")
+                        .param("dryRun", "true")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.matched").value(3))
+                .andExpect(jsonPath("$.dryRun").value(true));
+
+        verify(externalListingCleanupService).cleanup(30, true);
+    }
+
+    @Test
+    @DisplayName("POST /api/admin/system/cleanup-external-listings rejects non-positive graceDays")
+    @WithMockUser(authorities = {"ADMIN"})
+    void testCleanupExternalListings_InvalidGraceDays() throws Exception {
+        when(externalListingCleanupService.cleanup(0, false))
+                .thenThrow(new IllegalArgumentException("graceDays must be greater than zero"));
+
+        mockMvc.perform(post("/api/admin/system/cleanup-external-listings")
+                        .param("graceDays", "0")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("graceDays must be greater than zero"));
+
+        verify(externalListingCleanupService).cleanup(0, false);
+    }
+
+    @Test
+    @DisplayName("POST /api/admin/system/cleanup-external-listings forbids non-ADMIN users")
+    @WithMockUser(authorities = {"USER"})
+    void testCleanupExternalListings_NonAdmin() throws Exception {
+        mockMvc.perform(post("/api/admin/system/cleanup-external-listings")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
     }

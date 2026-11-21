@@ -20,6 +20,10 @@ app:
     initial-password: ${ADMIN_INITIAL_PASSWORD:}
   scraper:
     api-key: ${SCRAPER_API_KEY:}
+  cleanup:
+    grace-days: ${CLEANUP_GRACE_DAYS:30}
+    batch-size: ${CLEANUP_BATCH_SIZE:200}
+    cron: ${CLEANUP_CRON:0 30 3 * * *}
 
 management:
   endpoints:

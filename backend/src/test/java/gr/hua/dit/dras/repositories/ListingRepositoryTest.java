@@ -14,7 +14,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -126,28 +125,4 @@ class ListingRepositoryTest {
         assertThat(pending.get(0).getTitle()).isEqualTo("Pending 1");
     }
 
-    @Test
-    @DisplayName("deleteByExternalTrueAndDateScrapedBefore deletes stale scraped listings")
-    void deleteByExternalTrueAndDateScrapedBefore_DeletesStaleOnly() {
-        Instant now = Instant.now();
-        Instant cutoff = now.minus(30, ChronoUnit.DAYS);
-
-        Listing staleScraped = createListing(
-                null, "Stale", true, "https://example.com/stale",
-                ListingStatus.APPROVED, now.minus(40, ChronoUnit.DAYS));
-        Listing freshScraped = createListing(
-                null, "Fresh", true, "https://example.com/fresh",
-                ListingStatus.APPROVED, now.minus(5, ChronoUnit.DAYS));
-        Listing localOld = createListing(
-                null, "Local Old", false, null,
-                ListingStatus.APPROVED, now.minus(40, ChronoUnit.DAYS));
-
-        listingRepository.deleteByExternalTrueAndDateScrapedBefore(cutoff);
-        entityManager.flush();
-        entityManager.clear();
-
-        assertThat(entityManager.find(Listing.class, staleScraped.getId())).isNull();
-        assertThat(entityManager.find(Listing.class, freshScraped.getId())).isNotNull();
-        assertThat(entityManager.find(Listing.class, localOld.getId())).isNotNull();
-    }
 }

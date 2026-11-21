@@ -13,7 +13,6 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.Year;
 import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -400,14 +399,6 @@ public class ListingService {
         listing.enable();
 
         listingRepository.save(listing);
-    }
-
-    @Transactional
-    public void cleanupExternalListings(int graceDays) {
-        /* Deletes if last scraped date is older than cutoff */
-        Instant cutoff = Instant.now().minus(graceDays, ChronoUnit.DAYS);
-        listingRepository.deleteByExternalTrueAndDateScrapedBefore(cutoff);
-
     }
 
     public void validateListingOwnership(Listing listing, User currentUser) {

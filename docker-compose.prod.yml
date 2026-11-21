@@ -29,6 +29,9 @@ services:
       - MAIL_PASSWORD=${MAIL_PASSWORD}
       - APP_PUBLIC_URL=${APP_PUBLIC_URL:-http://dras.abrdns.com}
       - SCRAPER_API_KEY=${SCRAPER_API_KEY:-}
+      - CLEANUP_GRACE_DAYS=${CLEANUP_GRACE_DAYS:-30}
+      - CLEANUP_BATCH_SIZE=${CLEANUP_BATCH_SIZE:-200}
+      - "CLEANUP_CRON=${CLEANUP_CRON:-0 30 3 * * *}"
     volumes:
       - ./analytics/outputs:/app/analytics/outputs:ro
       - ./analytics/data/images:/app/analytics/data/images:ro
