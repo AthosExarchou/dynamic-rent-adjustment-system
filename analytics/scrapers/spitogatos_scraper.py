@@ -36,8 +36,8 @@ Key Features:
 - Incremental dataset updates with deduplication
 - Image downloading with retry logic and garbage collection
 - Backend integration via chunked API requests
-- Configurable execution modes (fast vs full, normal vs weekly)
-- Virtual display support for headless environments
+- Image download toggle (--full) and history mode (normal vs weekly)
+- Xvfb virtual display for headful runs on display-less machines
 - Save state and resume capability for long-running scraping sessions
 
 Outputs:
@@ -54,7 +54,8 @@ Outputs:
 
 Usage:
     python spitogatos_scraper.py
-        -> Executes in fast mode (default mode scraping only search results).
+        -> Runs headless, scrapes search and detail pages, skips image downloads
+           and backend push, and scrapes one search page.
 
     python spitogatos_scraper.py --full
         -> Enables full mode with image downloading and local storage.
@@ -62,8 +63,8 @@ Usage:
     python spitogatos_scraper.py --mode weekly
         -> Stores aggregated results in the weekly historical dataset.
 
-    python spitogatos_scraper.py --max-pages 3 --display-mode virtual
-        -> Runs in fast mode using a virtual display and scrapes up to 3 pages.
+    python spitogatos_scraper.py --headful --max-pages 3 --display-mode virtual
+        -> Runs headful on an Xvfb display and scrapes up to 3 pages.
 
     python spitogatos_scraper.py --push-backend
         -> Pushes validated listings to the backend using SCRAPER_API_KEY.
@@ -378,8 +379,8 @@ def name_for_path(s: str) -> str:
 
 def filename_from_url(url: str) -> str | None:
     """
-    Creates a hashed filename for any URL, but enforces jpg/jpeg/webp.
-    Returns a short safe filename.
+    Creates a hashed filename for any URL, using an extension from VALID_EXTS
+    (jpg, jpeg, webp, png). Returns a short safe filename.
     """
     if not url:
         return None
@@ -418,7 +419,7 @@ def is_valid_image_url(url: str) -> bool:
 
 def download_image(img_url: str, folder: Path, user_agent: str, referer_url: str) -> str | None:
     """
-    Downloads image to 'target_folder' with Retry Logic.
+    Downloads image to `folder` with retry logic.
     Returns local path or None.
     """
     try:
@@ -874,7 +875,10 @@ def safe_get(page: Page, url: str, retries: int = 3) -> bool:
 
 
 def get_stealth_ua(browser: Browser) -> str:
-    """Gets a clean user agent without the 'HeadlessChrome' identifier."""
+    """Reads navigator.userAgent and replaces 'HeadlessChrome' with 'Chrome'.
+
+    The replacement has no effect in headful mode, where the token is absent.
+    """
     temp_context = browser.new_context()
     try:
         temp_page = temp_context.new_page()
@@ -1177,7 +1181,6 @@ def send_chunks_to_backend(
 def push_to_backend(df: pd.DataFrame, api_url: Optional[str] = None, api_key: Optional[str] = None):
     """
     Transforms the scraped DataFrame and pushes it to the Spring Boot REST API.
-    The Java backend handles mapping the raw Greek strings to Enums.
     """
     resolved_url = api_url or DEFAULT_BACKEND_URL
     resolved_key = api_key if api_key is not None else os.getenv("SCRAPER_API_KEY", "")
@@ -1364,21 +1367,19 @@ def run_scraper(config: ScraperConfig):
             If False, skips image downloading.
 
         mode : str
-            Defines the execution and storage strategy:
+            Selects the history CSV that receives the daily aggregate:
 
             "normal" (default)
-                Scrapes listings and appends results to the default
-                historical dataset.
+                Writes an aggregated price-per-m2 record to spitogatos_history.csv.
 
             "weekly"
-                Scrapes listings and appends results to a weekly
-                historical dataset.
+                Writes an aggregated price-per-m2 record to spitogatos_history_weekly.csv.
 
         display_mode : str
-            Controls display environment handling:
+            Controls display environment handling in headful mode only:
 
             "auto"
-                Automatically enables virtual display on headless Linux.
+                Starts a virtual display when running headful on Linux without DISPLAY.
 
             "virtual"
                 Forces use of a virtual display (Xvfb).
@@ -1386,11 +1387,15 @@ def run_scraper(config: ScraperConfig):
             "native"
                 Uses the system's native display.
 
+        headless : bool
+            If True (default), renders off-screen and ignores display_mode.
+
     Returns
     -------
     None
-        Writes processed listings, images, and metrics to disk.
-        Optionally pushes cleaned data to backend service.
+        Writes processed listings and an aggregated metric to disk.
+        Writes images only when full is True. Optionally pushes cleaned data
+        to the backend service.
     """
     # Extracts params
     max_pages = config.max_pages
@@ -1965,7 +1970,7 @@ def run_scraper(config: ScraperConfig):
         import sys
         exc_type, _, _ = sys.exc_info()
 
-        logger.info("Shutting down browser and virtual display")
+        logger.info("Shutting down browser")
         if exc_type is KeyboardInterrupt:
             logger.warning("KeyboardInterrupt detected. Skipping graceful Playwright shutdown to prevent deadlocks.")
         else:
@@ -1987,6 +1992,7 @@ def run_scraper(config: ScraperConfig):
 
         if display:
             try:
+                logger.info("Stopping virtual display")
                 display.stop()
             except Exception:
                 logger.exception("Error while stopping virtual display")
