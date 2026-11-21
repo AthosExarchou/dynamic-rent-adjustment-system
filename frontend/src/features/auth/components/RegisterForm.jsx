@@ -6,7 +6,7 @@ import { useToast } from '../../../shared/components/Toast';
 import styles from './AuthForm.module.css';
 
 export default function RegisterForm() {
-  const { register } = useAuth();
+  const { register, login } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
   const [formData, setFormData] = useState({ username: '', email: '', password: '' });
@@ -23,8 +23,16 @@ export default function RegisterForm() {
 
     try {
       await register(formData.username, formData.email, formData.password);
-      toast.success('Account created successfully! Please sign in.');
-      navigate('/login');
+      try {
+        await login(formData.email, formData.password);
+      } catch {
+        // The account exists even if sign-in fails
+        toast.info('Account created. Please sign in.');
+        navigate('/login');
+        return;
+      }
+      toast.success('Account created successfully!');
+      navigate('/');
     } catch (err) {
       const errorMsg = err.message || 'Registration failed. Please check your details and try again.';
       setError(errorMsg);
