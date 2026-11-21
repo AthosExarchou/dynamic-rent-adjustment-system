@@ -6,6 +6,7 @@ import { useFavourites } from '../../features/favourites';
 import apiClient from '../api/client';
 import { isNavigablePath } from '../utils/routeUtils';
 import { useToast } from '../components/Toast';
+import UserAvatar from '../components/UserAvatar';
 import Sidebar from './Sidebar';
 import styles from './MainLayout.module.css';
 
@@ -386,7 +387,7 @@ export default function MainLayout() {
                     aria-expanded={isDropdownOpen}
                     aria-haspopup="true"
                   >
-                    <UserCircle size={18} /> Account
+                    {isAuthenticated ? <UserAvatar user={user} size={22} /> : <UserCircle size={18} />} Account
                   </button>
 
                   {isDropdownOpen && (

@@ -7,6 +7,7 @@ import DatePicker from '../../../shared/components/DatePicker';
 import { Pagination } from '../../../shared/components/Pagination';
 import { Select } from '../../../shared/components/Select';
 import { InfoTooltip } from '../../../shared/components/InfoTooltip';
+import UserAvatar from '../../../shared/components/UserAvatar';
 import styles from './AdminDashboard.module.css';
 import EditUserModal from './EditUserModal';
 import AdminProfileCreationModal from './AdminProfileCreationModal';
@@ -31,14 +32,6 @@ const ROLE_BADGE_CLASS = {
   TENANT: 'roleTenant',
   USER: 'roleUser',
 };
-
-/** Up to two initials for the avatar circle */
-function getInitials(name) {
-  if (!name) return '?';
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[1][0]).toUpperCase();
-}
 
 function getTopRolePriority(roles) {
   if (!roles || roles.length === 0) return 99;
@@ -485,7 +478,7 @@ export default function UserManagement() {
                 <td className={styles.idCell}>{u.id}</td>
                 <td className={styles.usernameCell} title={u.username}>
                   <div className={styles.userCell}>
-                    <span className={styles.userAvatar}>{getInitials(u.username)}</span>
+                    <UserAvatar user={u} size={32} />
                     <span className={styles.usernameText}>{u.username}</span>
                   </div>
                 </td>

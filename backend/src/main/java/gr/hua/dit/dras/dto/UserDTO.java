@@ -1,6 +1,8 @@
 package gr.hua.dit.dras.dto;
 
 /* imports */
+import gr.hua.dit.dras.entities.Owner;
+import gr.hua.dit.dras.entities.Tenant;
 import gr.hua.dit.dras.entities.User;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,6 +16,8 @@ public class UserDTO {
     private Integer id;
     private String username;
     private String email;
+    private String firstName;
+    private String lastName;
     private List<String> roles;
     private LocalDateTime createdAt;
     private LocalDateTime lastLogin;
@@ -22,17 +26,45 @@ public class UserDTO {
 
     public UserDTO() {}
 
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
     public UserDTO(User user) {
         this.id = user.getId();
         this.username = user.getUsername();
         this.email = user.getEmail();
-        this.roles = user.getRoles().stream()
-                .map(r -> r.getName())
-                .collect(Collectors.toList());
+
+        Owner owner = user.getOwner();
+        Tenant tenant = user.getTenant();
+
+        String resolvedFirstName = null;
+        String resolvedLastName = null;
+
+        if (owner != null) {
+            resolvedFirstName = owner.getFirstName();
+            resolvedLastName = owner.getLastName();
+        }
+
+        boolean ownerNameMissing = isBlank(resolvedFirstName) || isBlank(resolvedLastName);
+
+        if (ownerNameMissing && tenant != null) {
+            resolvedFirstName = tenant.getFirstName();
+            resolvedLastName = tenant.getLastName();
+        }
+
+        this.firstName = resolvedFirstName;
+        this.lastName = resolvedLastName;
+
+        this.roles = user.getRoles() == null
+                ? List.of()
+                : user.getRoles().stream()
+                        .map(r -> r.getName())
+                        .collect(Collectors.toList());
         this.createdAt = user.getCreatedAt();
         this.lastLogin = user.getLastLogin();
         this.passwordChangedAt = user.getPasswordChangedAt();
-        this.isSystem = user.getOwner() != null && user.getOwner().isSystemOwner();
+        this.isSystem = owner != null && owner.isSystemOwner();
     }
 
     public Integer getId() {
@@ -52,6 +84,18 @@ public class UserDTO {
     }
     public void setEmail(String email) {
         this.email = email;
+    }
+    public String getFirstName() {
+        return firstName;
+    }
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+    public String getLastName() {
+        return lastName;
+    }
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
     public List<String> getRoles() {
         return roles;

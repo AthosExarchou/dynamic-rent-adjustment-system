@@ -1,8 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth';
-import { UserCircle, Mail, Shield, Settings, Key, Trash2, Briefcase, Calendar, Clock, Lock } from 'lucide-react';
+import { UserCircle, Shield, Settings, Key, Trash2, Briefcase, Calendar, Clock, Lock } from 'lucide-react';
 import { InfoTooltip } from '../../../shared/components/InfoTooltip';
+import UserAvatar from '../../../shared/components/UserAvatar';
 import styles from './Profile.module.css';
 
 const formatDate = (dateStr) => {
@@ -14,6 +15,10 @@ const formatDate = (dateStr) => {
 
 export default function Profile() {
   const { user, roles } = useAuth();
+  const nameParts = [user?.firstName, user?.lastName].map(part => (part || '').trim()).filter(Boolean);
+  const repeatedName = nameParts.length === 2 && nameParts[0].toLowerCase() === nameParts[1].toLowerCase();
+  const displayName = repeatedName ? nameParts[0] : nameParts.join(' ') || user?.username || 'User';
+  const hasName = nameParts.length > 0;
 
   return (
     <div className={styles.container}>
@@ -31,21 +36,17 @@ export default function Profile() {
         </div>
 
         <div className={styles.body}>
+          <div className={styles.profileIdentity}>
+            <UserAvatar user={user} size={72} />
+            <div className={styles.identityText}>
+              <h3 className={styles.identityName}>{displayName}</h3>
+              <p className={styles.identityEmail}>
+                {hasName ? `${user?.username} · ${user?.email}` : user?.email}
+              </p>
+            </div>
+          </div>
+
           <div className={styles.profileGrid}>
-            <div className={styles.infoGroup}>
-              <div className={styles.infoLabel}>
-                <UserCircle size={18} /> Username
-              </div>
-              <div className={styles.infoValue}>{user?.username}</div>
-            </div>
-
-            <div className={styles.infoGroup}>
-              <div className={styles.infoLabel}>
-                <Mail size={18} /> Email Address
-              </div>
-              <div className={styles.infoValue}>{user?.email}</div>
-            </div>
-
             <div className={styles.infoGroup}>
               <div className={styles.infoLabel}>
                 <Calendar size={18} /> Member Since
