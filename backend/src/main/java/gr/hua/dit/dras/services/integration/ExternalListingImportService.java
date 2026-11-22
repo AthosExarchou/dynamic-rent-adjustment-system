@@ -4,11 +4,11 @@ package gr.hua.dit.dras.services.integration;
 import gr.hua.dit.dras.dto.ExternalListingDTO;
 import gr.hua.dit.dras.entities.Listing;
 import gr.hua.dit.dras.entities.Owner;
-import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.model.enums.PropertyType;
 import gr.hua.dit.dras.model.enums.RentalDuration;
 import gr.hua.dit.dras.repositories.ListingRepository;
 import gr.hua.dit.dras.repositories.OwnerRepository;
+import gr.hua.dit.dras.services.domain.ListingImagePolicy;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.slf4j.Logger;
@@ -30,15 +30,18 @@ public class ExternalListingImportService {
     private final ListingRepository listingRepository;
     private final OwnerRepository ownerRepository;
     private final Validator validator;
+    private final ListingImagePolicy imagePolicy;
 
     public ExternalListingImportService(
             ListingRepository listingRepository,
             OwnerRepository ownerRepository,
-            Validator validator
+            Validator validator,
+            ListingImagePolicy imagePolicy
     ) {
         this.listingRepository = listingRepository;
         this.ownerRepository = ownerRepository;
         this.validator = validator;
+        this.imagePolicy = imagePolicy;
     }
 
     /**
@@ -106,16 +109,7 @@ public class ExternalListingImportService {
                 }
                 listing.setDateScraped(Instant.now());
 
-                /* Replaces images if valid image URLs are provided */
-                if (dto.getImages() != null && !dto.getImages().isEmpty()) {
-                    listing.setImages(
-                            new ArrayList<>(
-                                    dto.getImages().stream()
-                                            .filter(img -> img != null && !img.isBlank())
-                                            .toList()
-                            )
-                    );
-                }
+                listing.setImages(new ArrayList<>(resolveImportedImages(listing, dto.getImages())));
 
                 listingsToSave.add(listing);
                 successCount++;
@@ -128,6 +122,18 @@ public class ExternalListingImportService {
 
         log.info("Import complete. Success: {}, Failed: {}", successCount, failCount);
         return successCount;
+    }
+
+    /**
+     * Uses accepted paths from the current payload when present. Otherwise it keeps
+     * existing local paths, filtering out remote references and missing scraped files.
+     */
+    private List<String> resolveImportedImages(Listing listing, List<String> incomingImages) {
+        List<String> accepted = imagePolicy.forExternalImport(incomingImages);
+        if (!accepted.isEmpty()) {
+            return accepted;
+        }
+        return imagePolicy.forListing(listing);
     }
 
     /**

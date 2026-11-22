@@ -34,7 +34,7 @@ pipeline {
         }
 
         // Validate frontend with a disposable container and a persistent npm cache
-        stage('Frontend Lint') {
+        stage('Frontend Tests and Lint') {
             steps {
                 sh '''
                     USER_ID=$(id -u)
@@ -44,7 +44,7 @@ pipeline {
                         -v jenkins_npm_cache:/root/.npm \
                         -w /app \
                         node:20-alpine \
-                        sh -c "npm ci && npm run lint; STATUS=\$?; chown -R ${USER_ID}:${GROUP_ID} /app/node_modules 2>/dev/null || true; exit \$STATUS"
+                        sh -c "npm ci && npm test && npm run lint; STATUS=\$?; chown -R ${USER_ID}:${GROUP_ID} /app/node_modules 2>/dev/null || true; exit \$STATUS"
                 '''
             }
         }

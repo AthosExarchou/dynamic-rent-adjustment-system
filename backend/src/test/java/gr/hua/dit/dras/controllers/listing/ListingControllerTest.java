@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,12 @@ class ListingControllerTest {
     private PriceSuggestionService priceSuggestionService;
     @Mock
     private ImageStorageService imageStorageService;
+
+    @Spy
+    private ListingImagePolicy imagePolicy = new ListingImagePolicy(false, "target/test-images");
+
+    @Spy
+    private ListingResponseMapper listingMapper = new ListingResponseMapper(imagePolicy);
 
     @Mock
     private BindingResult bindingResult;

@@ -8,6 +8,8 @@ import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.repositories.UserRepository;
 import gr.hua.dit.dras.services.domain.FavouriteService;
+import gr.hua.dit.dras.services.domain.ListingImagePolicy;
+import gr.hua.dit.dras.services.domain.ListingResponseMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,7 +30,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(FavouriteController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, ListingImagePolicy.class, ListingResponseMapper.class})
 class FavouriteControllerTest {
 
     @Autowired

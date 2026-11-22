@@ -1,10 +1,10 @@
 package gr.hua.dit.dras.controllers.user;
 
 /* imports */
-import gr.hua.dit.dras.controllers.listing.ListingController;
 import gr.hua.dit.dras.entities.User;
 import gr.hua.dit.dras.repositories.UserRepository;
 import gr.hua.dit.dras.services.domain.FavouriteService;
+import gr.hua.dit.dras.services.domain.ListingResponseMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -18,10 +18,16 @@ public class FavouriteController {
 
     private final FavouriteService favouriteService;
     private final UserRepository userRepository;
+    private final ListingResponseMapper listingMapper;
 
-    public FavouriteController(FavouriteService favouriteService, UserRepository userRepository) {
+    public FavouriteController(
+            FavouriteService favouriteService,
+            UserRepository userRepository,
+            ListingResponseMapper listingMapper
+    ) {
         this.favouriteService = favouriteService;
         this.userRepository = userRepository;
+        this.listingMapper = listingMapper;
     }
 
     private User getAuthenticatedUser(Authentication authentication) {
@@ -41,7 +47,7 @@ public class FavouriteController {
         }
         List<Map<String, Object>> favourites = favouriteService.getFavouriteListings(user.getId())
                 .stream()
-                .map(ListingController::mapListing)
+                .map(listingMapper::map)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(favourites);
     }

@@ -33,7 +33,7 @@ import { Pagination } from '../../../shared/components/Pagination';
 import { Select } from '../../../shared/components/Select';
 import { NumberInput } from '../../../shared/components/NumberInput';
 import { LISTING_CONSTRAINTS } from '../models/listing';
-import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
+import { getImageUrl, DEFAULT_LISTING_IMAGE, handleListingImageError } from '../../../shared/utils/imageUtils';
 import { InfoTooltip } from '../../../shared/components/InfoTooltip';
 
 const PAGE_SIZE = 9;
@@ -720,13 +720,7 @@ export default function ListingList() {
                       className={styles.image}
                       loading="lazy"
                       decoding="async"
-                      onError={(e) => {
-                        if (e.target.src.includes('demo/image1.jpg')) {
-                          e.target.src = REMOTE_FALLBACK_IMAGE;
-                        } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
-                          e.target.src = DEFAULT_LISTING_IMAGE;
-                        }
-                      }}
+                      onError={handleListingImageError}
                     />
                   </Link>
                   {hasImages ? (

@@ -32,19 +32,22 @@ public class TenantService {
     private final ListingApplicationRepository listingApplicationRepository;
     private final UserService userService;
     private final RoleRepository roleRepository;
+    private final ListingImagePolicy imagePolicy;
 
     public TenantService(
             TenantRepository tenantRepository,
             ListingRepository listingRepository,
             ListingApplicationRepository listingApplicationRepository,
             UserService userService,
-            RoleRepository roleRepository
+            RoleRepository roleRepository,
+            ListingImagePolicy imagePolicy
     ) {
         this.tenantRepository = tenantRepository;
         this.listingRepository = listingRepository;
         this.listingApplicationRepository = listingApplicationRepository;
         this.userService = userService;
         this.roleRepository = roleRepository;
+        this.imagePolicy = imagePolicy;
     }
 
     @Transactional(readOnly = true)
@@ -339,8 +342,8 @@ public class TenantService {
         summary.put("bedrooms", listing.getBedrooms());
         summary.put("bathrooms", listing.getBathrooms());
         summary.put("status", listing.getStatus() != null ? listing.getStatus().name() : null);
-        List<String> images = listing.getImages();
-        summary.put("image", images != null && !images.isEmpty() ? images.get(0) : null);
+        List<String> images = imagePolicy.forListing(listing);
+        summary.put("image", images.isEmpty() ? null : images.get(0));
         return summary;
     }
 

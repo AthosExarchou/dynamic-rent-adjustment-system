@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -46,6 +47,9 @@ class ListingApplicationServiceTest {
     private EmailService emailService;
     @Mock
     private ListingApplicationRepository listingApplicationRepository;
+
+    @Spy
+    private ListingImagePolicy imagePolicy = new ListingImagePolicy(false, "target/test-images");
 
     @InjectMocks
     private ListingApplicationService listingApplicationService;
@@ -330,7 +334,7 @@ class ListingApplicationServiceTest {
         dto.setFloor(3);
         dto.setBedrooms(2);
         dto.setBathrooms(1);
-        dto.setImages(List.of("https://example.com/updated.jpg"));
+        dto.setImages(List.of("https://example.com/updated.jpg", "/images/demo/image1.jpg"));
 
         User adminUser = new User();
         adminUser.setUsername("admin");
@@ -348,7 +352,7 @@ class ListingApplicationServiceTest {
         assertThat(testListing.getSubtitle()).isEqualTo("Updated Subtitle");
         assertThat(testListing.getPrice()).isEqualTo(750);
         assertThat(testListing.getStatus()).isEqualTo(ListingStatus.PENDING);
-        assertThat(testListing.getImages()).containsExactly("https://example.com/updated.jpg");
+        assertThat(testListing.getImages()).containsExactly("/images/demo/image1.jpg");
 
         verify(listingService).validateListingModificationRights(testListing, testUser);
         verify(listingService).updateListing(testListing);

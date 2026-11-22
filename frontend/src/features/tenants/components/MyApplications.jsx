@@ -12,7 +12,7 @@ import {
   Building2
 } from 'lucide-react';
 import apiClient from '../../../shared/api/client';
-import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
+import { getImageUrl, DEFAULT_LISTING_IMAGE, handleListingImageError } from '../../../shared/utils/imageUtils';
 import styles from './MyApplications.module.css';
 
 const formatAppliedDate = (dateString) => {
@@ -34,14 +34,6 @@ const resolveImage = (image) => {
   return image ? (getImageUrl(image) || DEFAULT_LISTING_IMAGE) : DEFAULT_LISTING_IMAGE;
 };
 
-const handleImageError = (e) => {
-  if (e.target.src.includes('demo/image1.jpg')) {
-    e.target.src = REMOTE_FALLBACK_IMAGE;
-  } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
-    e.target.src = DEFAULT_LISTING_IMAGE;
-  }
-};
-
 function PropertyThumb({ listing }) {
   const hasImage = Boolean(listing.image);
   return (
@@ -54,7 +46,7 @@ function PropertyThumb({ listing }) {
           className={styles.image}
           loading="lazy"
           decoding="async"
-          onError={handleImageError}
+          onError={handleListingImageError}
         />
       </Link>
       {!hasImage && (

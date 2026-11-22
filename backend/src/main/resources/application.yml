@@ -25,6 +25,11 @@ app:
     batch-size: ${CLEANUP_BATCH_SIZE:200}
     cron: ${CLEANUP_CRON:0 30 3 * * *}
 
+dras:
+  external-images:
+    enabled: ${EXTERNAL_IMAGES_ENABLED:true}
+    dir: ${DRAS_EXTERNAL_IMAGES_DIR:analytics/data/images}
+
 management:
   endpoints:
     web:
@@ -74,6 +79,9 @@ management:
     mail:
       enabled: false
 ---
+dras:
+  external-images:
+    enabled: ${EXTERNAL_IMAGES_ENABLED:false}
 spring:
   config:
     activate:

@@ -6,7 +6,7 @@ import { useAuth } from '../../auth';
 import { useToast } from '../../../shared/components/Toast';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
 import { Pagination } from '../../../shared/components/Pagination';
-import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
+import { getImageUrl, DEFAULT_LISTING_IMAGE, handleListingImageError } from '../../../shared/utils/imageUtils';
 import styles from './MyListings.module.css';
 
 const PAGE_SIZE = 9;
@@ -140,13 +140,7 @@ export default function MyListings() {
                     className={styles.image}
                     loading="lazy"
                     decoding="async"
-                    onError={(e) => {
-                      if (e.target.src.includes('demo/image1.jpg')) {
-                        e.target.src = REMOTE_FALLBACK_IMAGE;
-                      } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
-                        e.target.src = DEFAULT_LISTING_IMAGE;
-                      }
-                    }}
+                    onError={handleListingImageError}
                   />
                 </Link>
                 <span className={`${styles.imageStatusBadge} ${getStatusBadgeClass(l.status)}`}>

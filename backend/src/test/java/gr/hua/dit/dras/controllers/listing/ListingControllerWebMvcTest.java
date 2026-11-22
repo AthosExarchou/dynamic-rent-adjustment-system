@@ -10,6 +10,8 @@ import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.model.enums.PropertyType;
 import gr.hua.dit.dras.services.application.ListingApplicationService;
 import gr.hua.dit.dras.services.domain.ImageStorageService;
+import gr.hua.dit.dras.services.domain.ListingImagePolicy;
+import gr.hua.dit.dras.services.domain.ListingResponseMapper;
 import gr.hua.dit.dras.services.domain.ListingService;
 import gr.hua.dit.dras.services.domain.OwnerService;
 import gr.hua.dit.dras.services.domain.PriceSuggestionService;
@@ -44,7 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ListingController.class)
-@Import({SecurityConfig.class, RestExceptionHandler.class})
+@Import({SecurityConfig.class, RestExceptionHandler.class, ListingImagePolicy.class, ListingResponseMapper.class})
 class ListingControllerWebMvcTest {
 
     @Autowired

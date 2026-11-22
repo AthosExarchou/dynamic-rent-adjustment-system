@@ -181,6 +181,9 @@ Docker Compose, and Jenkins inside an Ubuntu 24.04 VM.
    - Set **Definition** to **Pipeline script from SCM**, choose **Git**, specify your repository URL, and set **Script Path** to `Jenkinsfile`.
    - Click **Build Now**.
 6. **Access Application:** Once the deployment pipeline completes, the application is accessible at `http://localhost:8082` (forwarded to internal Nginx on port 80). Port `8082` is used so that host port `8080` remains available for the production Jenkins SSH tunnel.
+7. **Scraped Images:** Images downloaded by a host scraper under `analytics/data/images` are synced to
+   `/opt/dras/scraped-images`, outside the Jenkins workspace. `bootstrap.sh` sets `DRAS_SCRAPED_IMAGES_HOST_DIR`
+   in the Jenkins service, and `docker-compose.yml` mounts that path into the backend and nginx containers.
 
 ### Useful Vagrant Commands
 From `infrastructure/vagrant`:
@@ -200,7 +203,8 @@ From `infrastructure/vagrant`:
 
 ## 5. CI/CD Pipeline (Jenkins Setup)
 
-Jenkins automatically handles deployments when you push to GitHub. The project includes a `Jenkinsfile` for CI/CD, containing stages for Backend Tests, Frontend Lint, Docker Image Build, Deploy, Smoke Test, and Archive Logs.
+Jenkins automatically handles deployments when you push to GitHub. The project includes a `Jenkinsfile` for CI/CD,
+containing stages for Backend Tests, Frontend Tests and Lint, Docker Image Build, Deploy, Smoke Test, and Archive Logs.
 
 ### Initial Setup (Local Vagrant Environment)
 Follow the step-by-step instructions in [Section 4: Steps to Run Vagrant Environment](#steps-to-run-vagrant-environment).

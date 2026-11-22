@@ -505,15 +505,17 @@ async function markOneNotificationRead(client, label) {
   }
 }
 
-async function importExternalListing(images) {
+async function importExternalListing() {
   if (!SCRAPER_API_KEY) {
     console.log('Skipping external listing: SCRAPER_API_KEY is not set');
     return;
   }
 
+  // The scraper import path carries only downloaded scraper paths. Seed data
+  // has none, so the local placeholder is shown for this listing.
   const payload = {
     ...EXTERNAL_LISTING,
-    images: images && images.length > 0 ? images.slice(0, 2) : []
+    images: []
   };
 
   const res = await fetch(`${API_URL}/external-import/listings`, {
@@ -747,9 +749,8 @@ async function seed() {
     }
   }
 
-  // External listing through the scraper import path, reusing an uploaded image
-  const imageSource = listings.get('Ampelokipi Modern Apartment');
-  await importExternalListing(imageSource?.images || []);
+  // External listing through the scraper import path
+  await importExternalListing();
 
   listings = await fetchAllListings();
 

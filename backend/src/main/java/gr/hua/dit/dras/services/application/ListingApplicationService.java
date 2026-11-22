@@ -5,6 +5,7 @@ import gr.hua.dit.dras.dto.ListingCreateDTO;
 import gr.hua.dit.dras.entities.*;
 import gr.hua.dit.dras.model.enums.ListingStatus;
 import gr.hua.dit.dras.repositories.*;
+import gr.hua.dit.dras.services.domain.ListingImagePolicy;
 import gr.hua.dit.dras.services.domain.ListingService;
 import gr.hua.dit.dras.services.domain.OwnerService;
 import gr.hua.dit.dras.services.domain.TenantService;
@@ -47,6 +48,7 @@ public class ListingApplicationService {
     private final RoleRepository roleRepository;
     private final EmailService emailService;
     private final ListingApplicationRepository listingApplicationRepository;
+    private final ListingImagePolicy imagePolicy;
 
     public ListingApplicationService(
             ListingService listingService,
@@ -55,7 +57,8 @@ public class ListingApplicationService {
             UserService userService,
             RoleRepository roleRepository,
             EmailService emailService,
-            ListingApplicationRepository listingApplicationRepository
+            ListingApplicationRepository listingApplicationRepository,
+            ListingImagePolicy imagePolicy
     ) {
         this.listingService = listingService;
         this.ownerService = ownerService;
@@ -64,6 +67,7 @@ public class ListingApplicationService {
         this.roleRepository = roleRepository;
         this.emailService = emailService;
         this.listingApplicationRepository = listingApplicationRepository;
+        this.imagePolicy = imagePolicy;
     }
 
     /* Security / Helper methods */
@@ -195,11 +199,7 @@ public class ListingApplicationService {
         listing.setBedrooms(dto.getBedrooms());
         listing.setBathrooms(dto.getBathrooms());
         if (dto.getImages() != null) {
-            listing.setImages(new ArrayList<>(
-                    dto.getImages().stream()
-                            .filter(img -> img != null && !img.isBlank())
-                            .toList()
-            ));
+            listing.setImages(new ArrayList<>(imagePolicy.filterImages(dto.getImages())));
         }
 
         /* Reset status to PENDING for admin review if an owner edits an APPROVED or REJECTED listing */

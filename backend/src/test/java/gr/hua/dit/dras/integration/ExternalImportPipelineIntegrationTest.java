@@ -17,9 +17,14 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,6 +37,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 class ExternalImportPipelineIntegrationTest {
+
+    private static final Path IMAGE_ROOT = Path.of("target/test-images/external-import");
+
+    static {
+        try {
+            Files.createDirectories(IMAGE_ROOT.resolve("101"));
+            Files.writeString(IMAGE_ROOT.resolve("101/a1.jpg"), "test");
+            Files.writeString(IMAGE_ROOT.resolve("101/a2.jpg"), "test");
+        } catch (IOException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
+    @DynamicPropertySource
+    static void imageProperties(DynamicPropertyRegistry registry) {
+        registry.add("dras.external-images.dir", IMAGE_ROOT::toString);
+    }
 
     @Autowired
     private MockMvc mockMvc;
@@ -46,7 +68,7 @@ class ExternalImportPipelineIntegrationTest {
     private EmailService emailService;
 
     @Test
-    @DisplayName("Batch import external listings persists records linked to systemOwner with auto-approval and images")
+    @DisplayName("Batch import keeps local image paths and rejects source-site URLs")
     @WithMockUser(authorities = "ADMIN")
     void importPipeline_PersistsLinkedToSystemOwner() throws Exception {
         String sourceUrl1 = "https://spitogatos.gr/listing/" + System.currentTimeMillis() + "_1";
@@ -65,7 +87,11 @@ class ExternalImportPipelineIntegrationTest {
                         "propertyType": "διαμέρισμα",
                         "rentalDuration": "LONG_TERM",
                         "sourceUrl": "%s",
-                        "images": ["https://images.spitogatos.gr/img1.jpg", "https://images.spitogatos.gr/img2.jpg"]
+                        "images": [
+                            "data/images/101/a1.jpg",
+                            "data/images/101/a2.jpg",
+                            "https://images.spitogatos.gr/blocked.jpg"
+                        ]
                     },
                     {
                         "title": "Cozy Studio Near Syntagma",
@@ -112,8 +138,8 @@ class ExternalImportPipelineIntegrationTest {
         assertThat(listing1.getYearBuilt()).isEqualTo(2015);
         assertThat(listing1.getDateScraped()).isNotNull();
         assertThat(listing1.getImages()).containsExactly(
-                "https://images.spitogatos.gr/img1.jpg",
-                "https://images.spitogatos.gr/img2.jpg"
+                "data/images/101/a1.jpg",
+                "data/images/101/a2.jpg"
         );
 
         Optional<Listing> listing2Opt = listingRepository.findBySourceUrl(sourceUrl2);
@@ -158,6 +184,68 @@ class ExternalImportPipelineIntegrationTest {
         assertThat(updatedListing1.getId()).isEqualTo(listing1.getId()); // Same entity
         assertThat(updatedListing1.getPrice()).isEqualTo(800);
         assertThat(updatedListing1.getTitle()).isEqualTo("Modern Apartment in Pangrati (Updated)");
+        assertThat(updatedListing1.getImages()).containsExactly(
+                "data/images/101/a1.jpg",
+                "data/images/101/a2.jpg"
+        );
+    }
+
+    @Test
+    @DisplayName("Rejecting source-site URLs on update keeps existing local image paths")
+    @WithMockUser(authorities = "ADMIN")
+    void importPipeline_KeepsLocalImagesWhenIncomingUrlsAreRejected() throws Exception {
+        String sourceUrl = "https://spitogatos.gr/listing/" + System.currentTimeMillis() + "_remote";
+
+        String initialJson = String.format("""
+                [
+                    {
+                        "title": "Listing With Local Image",
+                        "description": "Local scraped image is kept.",
+                        "price": 700,
+                        "pricePerM2": 10,
+                        "address": "Athens 10",
+                        "sizeM2": 70,
+                        "propertyType": "διαμέρισμα",
+                        "rentalDuration": "LONG_TERM",
+                        "sourceUrl": "%s",
+                        "images": ["data/images/101/a1.jpg"]
+                    }
+                ]
+                """, sourceUrl);
+
+        mockMvc.perform(post("/external-import/listings")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(initialJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.imported").value(1));
+
+        String updateJson = String.format("""
+                [
+                    {
+                        "title": "Listing With Remote Image",
+                        "description": "Remote image must not be stored.",
+                        "price": 720,
+                        "pricePerM2": 11,
+                        "address": "Athens 10",
+                        "sizeM2": 70,
+                        "propertyType": "διαμέρισμα",
+                        "rentalDuration": "LONG_TERM",
+                        "sourceUrl": "%s",
+                        "images": ["https://images.spitogatos.gr/blocked.jpg"]
+                    }
+                ]
+                """, sourceUrl);
+
+        mockMvc.perform(post("/external-import/listings")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(updateJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.imported").value(1));
+
+        Listing updated = listingRepository.findBySourceUrl(sourceUrl).orElseThrow();
+        assertThat(updated.getImages()).containsExactly("data/images/101/a1.jpg");
     }
 
     @Test

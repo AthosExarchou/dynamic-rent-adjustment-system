@@ -93,6 +93,10 @@ from bs4 import BeautifulSoup
 from pathlib import Path
 from urllib.parse import urlparse, unquote, urljoin
 from typing import List, Dict, Any, Optional
+try:
+    from .image_paths import to_app_image_paths
+except ImportError:
+    from image_paths import to_app_image_paths
 from dataclasses import dataclass
 from logging.handlers import RotatingFileHandler
 import textwrap
@@ -1215,9 +1219,7 @@ def push_to_backend(df: pd.DataFrame, api_url: Optional[str] = None, api_key: Op
         price_per_m2_raw = safe_float(row.get("price_per_m2"))
         price_per_m2 = int(round(price_per_m2_raw)) if price_per_m2_raw is not None else None
 
-        images = [
-            img for img in ensure_list(row.get("images")) if is_valid_image_url(img)
-        ]
+        images = to_app_image_paths(row.get("image_paths_local"), BASE_DIR)
 
         dto = {
             "sourceUrl": source_url,

@@ -20,7 +20,7 @@ import { useFavourites } from '../context/FavouritesContext';
 import { useAuth } from '../../auth';
 import FavouriteButton from './FavouriteButton';
 import PriceDropIndicator, { computeAvgPricePerM2 } from '../../listings/components/PriceDropIndicator';
-import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
+import { getImageUrl, DEFAULT_LISTING_IMAGE, handleListingImageError } from '../../../shared/utils/imageUtils';
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog';
 import { useToast } from '../../../shared/components/Toast';
 import { Pagination } from '../../../shared/components/Pagination';
@@ -315,13 +315,7 @@ export default function FavouritesPage() {
                       className={styles.image}
                       loading="lazy"
                       decoding="async"
-                      onError={(e) => {
-                        if (e.target.src.includes('demo/image1.jpg')) {
-                          e.target.src = REMOTE_FALLBACK_IMAGE;
-                        } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
-                          e.target.src = DEFAULT_LISTING_IMAGE;
-                        }
-                      }}
+                      onError={handleListingImageError}
                     />
                   </Link>
                   {hasImages ? (

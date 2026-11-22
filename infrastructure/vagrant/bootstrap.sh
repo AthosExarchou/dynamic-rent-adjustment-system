@@ -60,6 +60,14 @@ if ! getent group docker | grep -q "\bjenkins\b"; then
     systemctl restart jenkins
 fi
 
+# Point Jenkins pipelines at the dedicated scraped-image mount
+mkdir -p /etc/systemd/system/jenkins.service.d
+cat << 'EOF' > /etc/systemd/system/jenkins.service.d/dras-images.conf
+[Service]
+Environment="DRAS_SCRAPED_IMAGES_HOST_DIR=/opt/dras/scraped-images"
+EOF
+systemctl daemon-reload
+
 # Preconfigure required pipeline credentials in Jenkins with default values
 mkdir -p /var/lib/jenkins/init.groovy.d
 cat << 'EOF' > /var/lib/jenkins/init.groovy.d/add-credentials.groovy
@@ -97,5 +105,6 @@ creds.each { c ->
 }
 EOF
 chown -R jenkins:jenkins /var/lib/jenkins/init.groovy.d
+systemctl restart jenkins
 
 echo "Provisioning complete!"

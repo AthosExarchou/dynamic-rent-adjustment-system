@@ -31,11 +31,13 @@ services:
       - CLEANUP_GRACE_DAYS=${CLEANUP_GRACE_DAYS:-30}
       - CLEANUP_BATCH_SIZE=${CLEANUP_BATCH_SIZE:-200}
       - "CLEANUP_CRON=${CLEANUP_CRON:-0 30 3 * * *}"
+      - EXTERNAL_IMAGES_ENABLED=true
+      - DRAS_EXTERNAL_IMAGES_DIR=/app/analytics/data/images
     ports:
       - "8081:8080"
     volumes:
       - ./analytics/outputs:/app/analytics/outputs:ro
-      - ./analytics/data/images:/app/analytics/data/images:ro
+      - ${DRAS_SCRAPED_IMAGES_HOST_DIR:-./analytics/data/images}:/app/analytics/data/images:ro
       - ./uploads:/app/uploads
     depends_on:
       db:
@@ -59,7 +61,7 @@ services:
       - frontend_dist:/usr/share/nginx/html:ro
       - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./uploads:/var/www/uploads:ro
-      - ./analytics/data/images:/var/www/analytics/data/images:ro
+      - ${DRAS_SCRAPED_IMAGES_HOST_DIR:-./analytics/data/images}:/var/www/analytics/data/images:ro
     depends_on:
       backend:
         condition: service_started

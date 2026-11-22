@@ -22,7 +22,7 @@ import {
   Info
 } from 'lucide-react';
 import { useAuth } from '../../auth';
-import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
+import { getImageUrl, DEFAULT_LISTING_IMAGE, handleListingImageError } from '../../../shared/utils/imageUtils';
 import styles from './LandingPage.module.css';
 
 const FAQ_ITEMS = [
@@ -347,13 +347,7 @@ export default function LandingPage() {
                             className={styles.image}
                             loading="lazy"
                             decoding="async"
-                            onError={(e) => {
-                              if (e.target.src.includes('demo/image1.jpg')) {
-                                e.target.src = REMOTE_FALLBACK_IMAGE;
-                              } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
-                                e.target.src = DEFAULT_LISTING_IMAGE;
-                              }
-                            }}
+                            onError={handleListingImageError}
                           />
                         </div>
                       ) : (
@@ -364,13 +358,7 @@ export default function LandingPage() {
                             className={styles.image}
                             loading="lazy"
                             decoding="async"
-                            onError={(e) => {
-                              if (e.target.src.includes('demo/image1.jpg')) {
-                                e.target.src = REMOTE_FALLBACK_IMAGE;
-                              } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
-                                e.target.src = DEFAULT_LISTING_IMAGE;
-                              }
-                            }}
+                            onError={handleListingImageError}
                           />
                         </Link>
                       )}
@@ -469,13 +457,7 @@ export default function LandingPage() {
                             className={styles.image}
                             loading="lazy"
                             decoding="async"
-                            onError={(e) => {
-                              if (e.target.src.includes('demo/image1.jpg')) {
-                                e.target.src = REMOTE_FALLBACK_IMAGE;
-                              } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
-                                e.target.src = DEFAULT_LISTING_IMAGE;
-                              }
-                            }}
+                            onError={handleListingImageError}
                           />
                         </div>
                       ) : (
@@ -486,13 +468,7 @@ export default function LandingPage() {
                             className={styles.image}
                             loading="lazy"
                             decoding="async"
-                            onError={(e) => {
-                              if (e.target.src.includes('demo/image1.jpg')) {
-                                e.target.src = REMOTE_FALLBACK_IMAGE;
-                              } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
-                                e.target.src = DEFAULT_LISTING_IMAGE;
-                              }
-                            }}
+                            onError={handleListingImageError}
                           />
                         </Link>
                       )}

@@ -27,7 +27,7 @@ import {
 import apiClient from '../../../shared/api/client';
 import { useAuth } from '../../auth';
 import { FavouriteButton } from '../../favourites';
-import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
+import { getImageUrl, DEFAULT_LISTING_IMAGE, handleListingImageError } from '../../../shared/utils/imageUtils';
 import { InfoTooltip } from '../../../shared/components/InfoTooltip';
 import { LocationMap } from '../../../shared/components/Map';
 import styles from './ListingDetail.module.css';
@@ -253,13 +253,7 @@ export default function ListingDetail() {
                 className={styles.heroImage}
                 decoding="async"
                 onClick={() => setIsLightboxOpen(true)}
-                onError={(e) => {
-                  if (e.target.src.includes('demo/image1.jpg')) {
-                    e.target.src = REMOTE_FALLBACK_IMAGE;
-                  } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
-                    e.target.src = DEFAULT_LISTING_IMAGE;
-                  }
-                }}
+                onError={handleListingImageError}
               />
 
               <div className={styles.photoCountBadge}>
@@ -330,11 +324,7 @@ export default function ListingDetail() {
                         className={styles.thumbnailImg}
                         loading="lazy"
                         decoding="async"
-                        onError={(e) => {
-                          if (e.target.src !== DEFAULT_LISTING_IMAGE) {
-                            e.target.src = DEFAULT_LISTING_IMAGE;
-                          }
-                        }}
+                        onError={handleListingImageError}
                       />
                     </button>
                   );
@@ -509,13 +499,7 @@ export default function ListingDetail() {
                 alt={listing.title ? `${listing.title} full view` : 'Property view'}
                 className={styles.lightboxImage}
                 decoding="async"
-                onError={(e) => {
-                  if (e.target.src.includes('demo/image1.jpg')) {
-                    e.target.src = REMOTE_FALLBACK_IMAGE;
-                  } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
-                    e.target.src = DEFAULT_LISTING_IMAGE;
-                  }
-                }}
+                onError={handleListingImageError}
               />
             </div>
 

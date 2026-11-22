@@ -5,7 +5,7 @@ import apiClient from '../../../shared/api/client';
 import { useToast } from '../../../shared/components/Toast';
 import { Pagination } from '../../../shared/components/Pagination';
 import { LISTING_CONSTRAINTS } from '../../listings/models/listing';
-import { getImageUrl, DEFAULT_LISTING_IMAGE, REMOTE_FALLBACK_IMAGE } from '../../../shared/utils/imageUtils';
+import { getImageUrl, DEFAULT_LISTING_IMAGE, handleListingImageError } from '../../../shared/utils/imageUtils';
 import { InfoTooltip } from '../../../shared/components/InfoTooltip';
 import styles from './AdminDashboard.module.css';
 import modalStyles from './AdminModals.module.css';
@@ -147,13 +147,7 @@ export default function PendingApprovals() {
                     className={styles.image}
                     loading="lazy"
                     decoding="async"
-                    onError={(e) => {
-                      if (e.target.src.includes('demo/image1.jpg')) {
-                        e.target.src = REMOTE_FALLBACK_IMAGE;
-                      } else if (e.target.src !== DEFAULT_LISTING_IMAGE && e.target.src !== REMOTE_FALLBACK_IMAGE) {
-                        e.target.src = DEFAULT_LISTING_IMAGE;
-                      }
-                    }}
+                    onError={handleListingImageError}
                   />
                 </Link>
                 {hasImages ? (

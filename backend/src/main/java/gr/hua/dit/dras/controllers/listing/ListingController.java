@@ -31,6 +31,8 @@ public class ListingController {
     private final ListingApplicationService listingApplicationService;
     private final PriceSuggestionService priceSuggestionService;
     private final ImageStorageService imageStorageService;
+    private final ListingImagePolicy imagePolicy;
+    private final ListingResponseMapper listingMapper;
 
     public ListingController(
             UserService userService,
@@ -39,7 +41,9 @@ public class ListingController {
             TenantService tenantService,
             ListingApplicationService listingApplicationService,
             PriceSuggestionService priceSuggestionService,
-            ImageStorageService imageStorageService
+            ImageStorageService imageStorageService,
+            ListingImagePolicy imagePolicy,
+            ListingResponseMapper listingMapper
     ) {
         this.userService = userService;
         this.listingService = listingService;
@@ -48,49 +52,20 @@ public class ListingController {
         this.listingApplicationService = listingApplicationService;
         this.priceSuggestionService = priceSuggestionService;
         this.imageStorageService = imageStorageService;
-    }
-
-    public static Map<String, Object> mapListing(Listing l) {
-        Map<String, Object> map = new java.util.HashMap<>();
-        map.put("id", l.getId());
-        map.put("title", l.getTitle());
-        map.put("subtitle", l.getSubtitle() != null ? l.getSubtitle() : "");
-        map.put("description", l.getDescription());
-        map.put("price", l.getPrice());
-        map.put("pricePerM2", l.getPricePerM2());
-        map.put("address", l.getAddress());
-        map.put("propertyType", l.getPropertyType() != null ? l.getPropertyType().name() : null);
-        map.put("rentalDuration", l.getRentalDuration() != null ? l.getRentalDuration().name() : null);
-        map.put("yearBuilt", l.getYearBuilt());
-        map.put("sizeM2", l.getSizeM2());
-        map.put("floor", l.getFloor());
-        map.put("bedrooms", l.getBedrooms());
-        map.put("bathrooms", l.getBathrooms());
-        map.put("images", l.getImages());
-        map.put("status", l.getStatus().name());
-        map.put("rented", l.isRented());
-        map.put("rejectionReason", l.getRejectionReason());
-        if (l.getOwner() != null) {
-            Map<String, Object> ownerMap = new java.util.HashMap<>();
-            ownerMap.put("id", l.getOwner().getId());
-            if (l.getOwner().getUser() != null) {
-                ownerMap.put("userId", l.getOwner().getUser().getId());
-            }
-            map.put("owner", ownerMap);
-        }
-        return map;
+        this.imagePolicy = imagePolicy;
+        this.listingMapper = listingMapper;
     }
 
     /* Public listings */
     @GetMapping({"", "/"})
     public ResponseEntity<?> showListings() {
-        List<Map<String, Object>> res = listingService.getListings().stream().map(ListingController::mapListing).collect(Collectors.toList());
+        List<Map<String, Object>> res = listingService.getListings().stream().map(this.listingMapper::map).collect(Collectors.toList());
         return ResponseEntity.ok(res);
     }
 
     @GetMapping("/local")
     public ResponseEntity<?> showLocalListings() {
-        List<Map<String, Object>> res = listingService.getLocalListings().stream().map(ListingController::mapListing).collect(Collectors.toList());
+        List<Map<String, Object>> res = listingService.getLocalListings().stream().map(this.listingMapper::map).collect(Collectors.toList());
         return ResponseEntity.ok(res);
     }
 
@@ -110,12 +85,12 @@ public class ListingController {
     @GetMapping("/{id}")
     public ResponseEntity<?> showListing(@PathVariable Integer id) {
         Listing l = listingService.getListing(id);
-        return ResponseEntity.ok(mapListing(l));
+        return ResponseEntity.ok(this.listingMapper.map(l));
     }
 
     @GetMapping("/filter")
     public ResponseEntity<?> filterListings(@Valid @ModelAttribute ListingFilterDTO filter) {
-        List<Map<String, Object>> res = listingService.filterListings(filter).stream().map(ListingController::mapListing).collect(Collectors.toList());
+        List<Map<String, Object>> res = listingService.filterListings(filter).stream().map(this.listingMapper::map).collect(Collectors.toList());
         return ResponseEntity.ok(res);
     }
 
@@ -123,7 +98,7 @@ public class ListingController {
     @Secured("OWNER")
     @GetMapping("/mylisting")
     public ResponseEntity<?> myListings() {
-        List<Map<String, Object>> res = listingApplicationService.getOwnerListingsForCurrentUser().stream().map(ListingController::mapListing).collect(Collectors.toList());
+        List<Map<String, Object>> res = listingApplicationService.getOwnerListingsForCurrentUser().stream().map(this.listingMapper::map).collect(Collectors.toList());
         return ResponseEntity.ok(res);
     }
 
@@ -161,17 +136,12 @@ public class ListingController {
         listing.setBathrooms(listingDTO.getBathrooms());
 
         List<String> combinedImages = new java.util.ArrayList<>();
-        if (listingDTO.getImages() != null) {
-            combinedImages.addAll(listingDTO.getImages().stream()
-                    .filter(s -> s != null && !s.isBlank())
-                    .map(String::trim)
-                    .toList());
-        }
+        combinedImages.addAll(imagePolicy.filterImages(listingDTO.getImages()));
         if (listingDTO.getImageFiles() != null && !listingDTO.getImageFiles().isEmpty()) {
             combinedImages.addAll(imageStorageService.storeImages(listingDTO.getImageFiles()));
         }
         if (combinedImages.size() > 10) {
-            combinedImages = combinedImages.subList(0, 10);
+            combinedImages = new java.util.ArrayList<>(combinedImages.subList(0, 10));
         }
         listing.setImages(combinedImages);
         listingDTO.setImages(combinedImages);
@@ -198,22 +168,17 @@ public class ListingController {
         }
 
         List<String> combinedImages = new java.util.ArrayList<>();
-        if (listingDTO.getImages() != null) {
-            combinedImages.addAll(listingDTO.getImages().stream()
-                    .filter(s -> s != null && !s.isBlank())
-                    .map(String::trim)
-                    .toList());
-        }
+        combinedImages.addAll(imagePolicy.filterImages(listingDTO.getImages()));
         if (listingDTO.getImageFiles() != null && !listingDTO.getImageFiles().isEmpty()) {
             combinedImages.addAll(imageStorageService.storeImages(listingDTO.getImageFiles()));
         }
         if (combinedImages.size() > 10) {
-            combinedImages = combinedImages.subList(0, 10);
+            combinedImages = new java.util.ArrayList<>(combinedImages.subList(0, 10));
         }
         listingDTO.setImages(combinedImages);
 
         Listing updated = listingApplicationService.editListing(id, listingDTO);
-        return ResponseEntity.ok(mapListing(updated));
+        return ResponseEntity.ok(this.listingMapper.map(updated));
     }
 
     /* Delete listing */
@@ -250,7 +215,7 @@ public class ListingController {
     @Secured("ADMIN")
     @GetMapping("/forapproval")
     public ResponseEntity<?> listingsForApproval() {
-        List<Map<String, Object>> res = listingService.getPendingListings().stream().map(ListingController::mapListing).collect(Collectors.toList());
+        List<Map<String, Object>> res = listingService.getPendingListings().stream().map(this.listingMapper::map).collect(Collectors.toList());
         return ResponseEntity.ok(res);
     }
 
@@ -341,7 +306,7 @@ public class ListingController {
             .collect(Collectors.toList());
 
         Map<String, Object> response = new java.util.HashMap<>();
-        response.put("listing", mapListing(listing));
+        response.put("listing", this.listingMapper.map(listing));
         response.put("applicants", applicants);
 
         if (listing.getTenant() != null) {

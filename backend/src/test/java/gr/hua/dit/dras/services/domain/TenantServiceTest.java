@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 import org.junit.jupiter.api.DisplayName;
@@ -50,6 +51,9 @@ public class TenantServiceTest {
 
     @Mock
     private RoleRepository roleRepository;
+
+    @Spy
+    private ListingImagePolicy imagePolicy = new ListingImagePolicy(false, "target/test-images");
 
     @InjectMocks
     private TenantService tenantService;
@@ -405,5 +409,25 @@ public class TenantServiceTest {
         Map<?, ?> rentingListing = (Map<?, ?>) result.get("rentingListing");
         assertThat(rentingListing).isNotNull();
         assertThat(rentingListing.get("listingId")).isEqualTo(202);
+    }
+
+    @Test
+    @DisplayName("Tenant listing summaries use the filtered first image")
+    void getTenantApplicationsInfo_FiltersListingImage() {
+        when(userService.getCurrentUserId()).thenReturn(1);
+
+        Listing listing = new Listing();
+        ReflectionTestUtils.setField(listing, "id", 101);
+        listing.setImages(List.of("https://cdn.example.com/photo.jpg", "/images/demo/image1.jpg"));
+
+        Tenant tenant = new Tenant();
+        tenant.setAppliedListings(Set.of(listing));
+        when(tenantRepository.findByUserId(1)).thenReturn(Optional.of(tenant));
+
+        Map<String, Object> result = tenantService.getTenantApplicationsInfo();
+
+        List<?> applications = (List<?>) result.get("applications");
+        Map<?, ?> summary = (Map<?, ?>) applications.get(0);
+        assertThat(summary.get("image")).isEqualTo("/images/demo/image1.jpg");
     }
 }

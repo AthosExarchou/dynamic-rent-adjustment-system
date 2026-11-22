@@ -91,6 +91,20 @@ python3 analytics/scrapers/spitogatos_scraper.py --push-backend \
   --backend-url http://localhost:8082/api/external-import/listings
 ```
 
+Image references follow the backend setting `dras.external-images.enabled`:
+
+- Local and Vagrant backends set it to `true`. A scrape with `--full` stores downloaded files under
+  `analytics/data/images/<listing_id>/` and pushes normalized paths such as `data/images/<id>/<file>`.
+  The UI serves those files from the local image handler. A scrape without `--full` pushes no image
+  paths and keeps the local placeholder.
+- For Vagrant, the scraper still runs on the host. `infrastructure/vagrant/Vagrantfile` syncs the host
+  `analytics/data/images` directory to `/opt/dras/scraped-images` in the VM. `bootstrap.sh` sets
+  `DRAS_SCRAPED_IMAGES_HOST_DIR` for Jenkins, and `docker-compose.yml` mounts that path into the backend
+  and nginx containers. Run `vagrant reload --provision` after changing the Vagrantfile or bootstrap script.
+- Production sets it to `false`. Every imported or updated listing is stored with an empty image list,
+  so scraped URLs and downloaded scraped files are never displayed in production. The original
+  `sourceUrl` is kept only as provenance for deduplication.
+
 **Replay chunks saved in `failed_payloads/` without re-scraping:**
 ```bash
 python3 analytics/scrapers/spitogatos_scraper.py --replay-failed \
@@ -173,9 +187,9 @@ The script outputs:
 - `data/bank_of_greece_apartment_index.csv`: Normalized CSV time series ready for analytics
 
 ### 4. Running Unit Tests
-Execute the analytical and data update unit test suite:
+Execute the analytics and scraper unit test suite:
 ```bash
-python3 -m unittest analytics/tests/test_arima_macro.py
+python3 -m unittest analytics/tests/test_arima_macro.py analytics/tests/test_image_paths.py
 ```
 
 ## Project Structure
