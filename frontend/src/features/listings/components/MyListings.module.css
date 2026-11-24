@@ -185,16 +185,6 @@
   min-width: 0;
 }
 
-.badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 50px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  flex-shrink: 0;
-}
-
 .badgeApproved { background-color: #d1e7dd; color: #0f5132; }
 .badgePending { background-color: #fff3cd; color: #856404; }
 .badgeRejected { background-color: #fee2e2; color: #991b1b; }
@@ -462,4 +452,10 @@
   color: var(--text-primary, #0f172a);
   word-break: break-word;
   overflow-wrap: anywhere;
+}
+
+.priceInfo {
+  display: flex;
+  align-items: center;
+  min-width: 0;
 }

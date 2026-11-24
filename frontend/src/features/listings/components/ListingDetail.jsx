@@ -184,7 +184,7 @@ export default function ListingDetail() {
   if (error || !listing) return (
     <div className={styles.loadingContainer}>
       <p>{error || "Listing not found."}</p>
-      <Link to="/listings" className={styles.backBtn}>Return to listings</Link>
+      <Link to="/listings" className={styles.backLink}>Return to listings</Link>
     </div>
   );
 

@@ -235,3 +235,21 @@
     z-index: 1030;
   }
 }
+
+/* Standalone active class */
+.active {
+  background: rgba(59, 130, 246, 0.06);
+  color: white;
+  position: relative;
+}
+
+.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 15%;
+  bottom: 15%;
+  width: 4px;
+  background: linear-gradient(180deg, #3b82f6, #a855f7);
+  border-radius: 4px;
+}

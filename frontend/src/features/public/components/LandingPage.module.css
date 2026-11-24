@@ -640,3 +640,8 @@
 [data-theme="dark"] .faqAnswer strong {
   color: #f8fafc;
 }
+
+.btnIcon {
+  display: inline-flex;
+  align-items: center;
+}

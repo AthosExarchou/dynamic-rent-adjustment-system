@@ -318,28 +318,6 @@
   min-width: 230px;
 }
 
-.sortSelect {
-  padding: 0.65rem 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  background: var(--background-paper);
-  color: var(--text-primary);
-  font-size: 0.925rem;
-  cursor: pointer;
-  outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.sortSelect option {
-  background-color: var(--background-paper);
-  color: var(--text-primary);
-}
-
-.sortSelect:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-}
-
 .clearAllBtn {
   display: inline-flex;
   align-items: center;
@@ -465,18 +443,6 @@
   pointer-events: none;
   z-index: 2;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
-}
-
-.noImage {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  height: 100%;
-  color: var(--text-muted);
-  font-size: 0.875rem;
 }
 
 .cardBody {
@@ -751,4 +717,13 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.headerIcon {
+  color: #dc2626;
+}
+
+.syncBannerIcon {
+  color: #fca5a5;
+  flex-shrink: 0;
 }

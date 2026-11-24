@@ -383,3 +383,21 @@
     align-items: flex-start;
   }
 }
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+[data-theme='dark'] .badgePending {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: #fde68a;
+}
+
+[data-theme='dark'] .badgeUnavailable {
+  background-color: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+}
+

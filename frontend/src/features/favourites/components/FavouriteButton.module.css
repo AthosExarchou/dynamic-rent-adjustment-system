@@ -142,3 +142,14 @@
     transform: scale(1);
   }
 }
+
+/* Standalone active class */
+.active {
+  color: #ef4444;
+  background: var(--background-paper, #ffffff);
+}
+
+[data-theme='dark'] .active {
+  color: #f87171;
+  background: var(--background-paper, #1e1e1e);
+}
