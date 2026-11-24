@@ -38,7 +38,7 @@
   color: #2563eb;
   text-decoration: none;
   padding: 0.25rem 0.6rem;
-  border-radius: var(--radius-sm, 6px);
+  border-radius: var(--radius-md);
   background-color: rgba(37, 99, 235, 0.08);
   border: 1px solid rgba(37, 99, 235, 0.2);
   transition: all 0.2s ease;

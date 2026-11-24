@@ -578,7 +578,7 @@ export default function LandingPage() {
         </section>
 
         {/* FAQ Section */}
-        <section className={`${styles.section} ${styles.faqSection}`}>
+        <section id="faq" className={`${styles.section} ${styles.faqSection}`}>
           <h2 className={styles.sectionTitle}>Frequently Asked Questions</h2>
           <div className={styles.faqList}>
             {FAQ_ITEMS.map((item, index) => (
@@ -592,11 +592,9 @@ export default function LandingPage() {
                   <span>{item.question}</span>
                   {openFaq === index ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                 </button>
-                {openFaq === index && (
-                  <div className={styles.faqAnswer}>
-                    {item.answer}
-                  </div>
-                )}
+                <div className={`${styles.faqAnswer} ${openFaq === index ? styles.faqAnswerOpen : ''}`}>
+                  {item.answer}
+                </div>
               </div>
             ))}
           </div>

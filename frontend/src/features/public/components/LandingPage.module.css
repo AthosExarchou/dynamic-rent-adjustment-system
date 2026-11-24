@@ -613,9 +613,18 @@
 }
 
 .faqAnswer {
-  padding: 0 1.5rem 1.5rem 1.5rem;
+  overflow: hidden;
+  max-height: 0;
+  visibility: hidden;
+  padding: 0 1.5rem 0 1.5rem;
   color: var(--color-neutral-800, #1e293b);
   line-height: 1.6;
+  transition: max-height 0.3s ease, visibility 0.3s ease;
+}
+
+.faqAnswerOpen {
+  max-height: 40rem;
+  visibility: visible;
 }
 
 .faqAnswer strong {

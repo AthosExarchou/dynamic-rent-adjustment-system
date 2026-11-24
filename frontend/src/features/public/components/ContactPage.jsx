@@ -276,7 +276,7 @@ export default function ContactPage() {
             Find answers to common questions about creating an owner profile, listing a property, or submitting tenant applications on our homepage.
           </p>
         </div>
-        <Link to="/" className={styles.faqBtn}>
+        <Link to="/#faq" className={styles.faqBtn}>
           View FAQs
         </Link>
       </section>
