@@ -626,7 +626,6 @@
 
 .lightboxNav:hover {
   background-color: var(--color-primary-600);
-  border-color: var(--color-primary-600);
   transform: translateY(-50%) scale(1.1);
 }
 

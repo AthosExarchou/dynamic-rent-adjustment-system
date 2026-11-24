@@ -227,7 +227,6 @@
 
 .viewBtn:hover {
   background-color: rgba(37, 99, 235, 0.08);
-  border-color: var(--color-primary-600, #2563eb);
   color: var(--color-primary-700, #1d4ed8);
 }
 
@@ -319,7 +318,6 @@
 
 .tableContainer:hover {
   transform: translateY(-4px);
-  border-color: rgba(79, 70, 229, 0.35);
   box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.18);
 }
 
@@ -411,7 +409,6 @@
 }
 
 [data-theme='dark'] .tableContainer:hover {
-  border-color: rgba(129, 140, 248, 0.4);
   box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.6);
 }
 
@@ -571,7 +568,6 @@
 .addBtn:hover {
   background-color: var(--color-success);
   color: white;
-  border-color: var(--color-success);
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);
 }
@@ -584,7 +580,6 @@
 .removeBtn:hover {
   background-color: var(--color-warning);
   color: white;
-  border-color: var(--color-warning);
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(245, 158, 11, 0.2);
 }
@@ -598,7 +593,6 @@
 .delBtn:hover {
   background-color: var(--color-danger);
   color: white;
-  border-color: var(--color-danger);
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(239, 68, 68, 0.2);
 }
@@ -612,7 +606,6 @@
 .editBtn:hover {
   background-color: var(--color-primary-600);
   color: white;
-  border-color: var(--color-primary-600);
   transform: translateY(-1px);
   box-shadow: 0 4px 6px rgba(99, 102, 241, 0.2);
 }
@@ -718,7 +711,6 @@
 
 .advancedToggleBtn:hover {
   background: rgba(13, 110, 253, 0.08);
-  border-color: var(--color-primary-600);
   color: var(--color-primary-600);
 }
 
@@ -784,7 +776,6 @@
 }
 
 .filterResetBtn:hover {
-  border-color: var(--color-danger, #dc2626);
   color: var(--color-danger, #dc2626);
 }
 

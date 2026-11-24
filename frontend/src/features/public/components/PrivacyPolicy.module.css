@@ -20,7 +20,6 @@
 .header:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
-  border-color: rgba(99, 102, 241, 0.25);
 }
 
 .headerBadge {
@@ -102,7 +101,6 @@
 
 .sidebarWrapper:hover {
   box-shadow: var(--shadow-md);
-  border-color: rgba(99, 102, 241, 0.25);
 }
 
 /* Mobile collapsible toggle */
@@ -262,7 +260,6 @@
 .contentSection:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.1), 0 4px 8px -2px rgba(0, 0, 0, 0.05);
-  border-color: rgba(99, 102, 241, 0.3);
 }
 
 .contentSection p {
@@ -351,7 +348,6 @@
 
 .subCard:hover {
   transform: translateY(-3px);
-  border-color: rgba(99, 102, 241, 0.35);
   box-shadow: var(--shadow-sm);
   background-color: var(--background-paper);
 }
@@ -457,7 +453,6 @@
 
 .highlightBlock:hover {
   transform: translateY(-2px);
-  border-color: rgba(59, 130, 246, 0.35);
   box-shadow: var(--shadow-sm);
 }
 
@@ -504,7 +499,6 @@
 
 .rightCard:hover {
   transform: translateY(-3px);
-  border-color: rgba(99, 102, 241, 0.35);
   box-shadow: var(--shadow-sm);
   background-color: var(--background-paper);
 }
@@ -537,7 +531,6 @@
 
 .contactCard:hover {
   transform: translateY(-3px);
-  border-color: rgba(99, 102, 241, 0.35);
   box-shadow: var(--shadow-sm);
 }
 

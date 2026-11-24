@@ -88,7 +88,6 @@
 .tableCard:hover {
   transform: translateY(-3px);
   box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.12);
-  border-color: rgba(13, 110, 253, 0.35);
 }
 
 [data-theme="dark"] .ownerSummaryCard:hover,
@@ -99,7 +98,6 @@
 [data-theme="dark"] .chartCard:hover,
 [data-theme="dark"] .tableCard:hover {
   box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.45);
-  border-color: rgba(96, 165, 250, 0.4);
 }
 
 /* Owner Market Overview Card */
@@ -171,7 +169,6 @@
   background-color: #dbeafe;
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(13, 110, 253, 0.15);
-  border-color: #93c5fd;
 }
 
 [data-theme="dark"] .guideToggleBtn {
@@ -182,7 +179,6 @@
 
 [data-theme="dark"] .guideToggleBtn:hover {
   background-color: rgba(30, 58, 138, 0.6);
-  border-color: #60a5fa;
   color: #ffffff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
@@ -276,7 +272,6 @@
 
 .ownerSummaryMetric:hover {
   transform: translateY(-2px);
-  border-color: rgba(13, 110, 253, 0.3);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
@@ -286,7 +281,6 @@
 }
 
 [data-theme="dark"] .ownerSummaryMetric:hover {
-  border-color: rgba(56, 189, 248, 0.35);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
@@ -447,7 +441,6 @@
 
 .diagnosticsToggleBtn:hover {
   transform: translateY(-2px);
-  border-color: var(--color-primary-600);
   color: var(--color-primary-600);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
 }
@@ -459,7 +452,6 @@
 }
 
 [data-theme="dark"] .diagnosticsToggleBtn:hover {
-  border-color: #38bdf8;
   color: #38bdf8;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
@@ -770,7 +762,6 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
   color: var(--text-primary);
-  border-color: var(--color-primary-600);
 }
 
 .tabBtnActive {
@@ -782,7 +773,6 @@
 
 .tabBtnActive:hover {
   background-color: var(--color-primary-700);
-  border-color: #0a58ca;
   color: #ffffff;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(13, 110, 253, 0.35);
@@ -796,7 +786,6 @@
 
 [data-theme="dark"] .tabBtn:hover {
   color: var(--text-primary, #f8fafc);
-  border-color: #38bdf8;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
 }
 

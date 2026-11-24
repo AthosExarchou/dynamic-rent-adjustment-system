@@ -452,7 +452,6 @@
 
 .viewBtn:hover {
   transform: translateY(-2px);
-  border-color: rgba(109, 40, 217, 0.5);
   box-shadow: 0 4px 12px rgba(109, 40, 217, 0.18);
 }
 
@@ -483,7 +482,6 @@
 }
 
 [data-theme="dark"] .viewBtn:hover {
-  border-color: rgba(192, 132, 252, 0.5);
   box-shadow: 0 4px 12px rgba(192, 132, 252, 0.2);
 }
 

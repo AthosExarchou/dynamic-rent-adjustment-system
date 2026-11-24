@@ -134,7 +134,6 @@
 
 .advancedToggleBtn:hover {
   background: rgba(13, 110, 253, 0.08);
-  border-color: var(--color-primary-600);
   color: var(--color-primary-600);
 }
 

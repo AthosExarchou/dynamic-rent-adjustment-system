@@ -237,7 +237,6 @@
 .syncDiscardBtn:hover:not(:disabled) {
   background-color: rgba(0, 0, 0, 0.05);
   color: var(--text-primary);
-  border-color: var(--text-muted);
 }
 
 [data-theme='dark'] .syncDiscardBtn:hover:not(:disabled) {
@@ -335,7 +334,6 @@
 
 .clearAllBtn:hover {
   background-color: rgba(239, 68, 68, 0.16);
-  border-color: #ef4444;
 }
 
 [data-theme='dark'] .clearAllBtn {
@@ -346,7 +344,6 @@
 
 [data-theme='dark'] .clearAllBtn:hover {
   background-color: rgba(239, 68, 68, 0.25);
-  border-color: #f87171;
 }
 
 /* Listings Grid */
@@ -597,12 +594,10 @@
 
 .viewBtn:hover {
   background: var(--background-default);
-  border-color: var(--text-muted);
 }
 
 [data-theme='dark'] .viewBtn:hover {
   background: rgba(255, 255, 255, 0.06);
-  border-color: var(--text-muted);
 }
 
 .applyBtn {
@@ -624,7 +619,6 @@
 
 .applyBtn:hover {
   background: var(--color-primary-700);
-  border-color: var(--color-primary-700);
   color: #ffffff;
 }
 
