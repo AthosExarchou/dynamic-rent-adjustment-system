@@ -29,7 +29,7 @@
 .tooltipContainer:hover .helpIcon,
 .tooltipContainer:focus .helpIcon {
   opacity: 1;
-  color: var(--color-primary-600, #0d6efd);
+  color: var(--color-primary-600, var(--color-primary-600));
 }
 
 [data-theme="dark"] .tooltipContainer:hover .helpIcon,

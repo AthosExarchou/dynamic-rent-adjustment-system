@@ -18,7 +18,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border-left-color: #0d6efd;
+  border-left-color: var(--color-primary-600);
   animation: spin 1s linear infinite;
   margin-bottom: 1rem;
 }
@@ -35,7 +35,7 @@
 .backLink {
   background: none;
   border: none;
-  color: #0d6efd;
+  color: var(--color-primary-600);
   font-size: 1rem;
   font-weight: 500;
   display: inline-flex;
@@ -70,7 +70,7 @@
 }
 
 .header {
-  background-color: #0d6efd;
+  background-color: var(--color-primary-600);
   color: #fff;
   padding: 1.25rem 1.5rem;
 }
@@ -237,7 +237,7 @@
 }
 
 .specLabel svg {
-  color: #0d6efd;
+  color: var(--color-primary-600);
   flex-shrink: 0;
 }
 
@@ -271,7 +271,7 @@
   height: 42px;
   border-radius: 0.5rem;
   background-color: rgba(13, 110, 253, 0.1);
-  color: #0d6efd;
+  color: var(--color-primary-600);
   flex-shrink: 0;
 }
 
@@ -321,13 +321,13 @@
 }
 
 .btnPrimary {
-  background-color: #0d6efd;
+  background-color: var(--color-primary-600);
   color: #fff;
   box-shadow: 0 4px 6px rgba(13, 110, 253, 0.2);
 }
 
 .btnPrimary:hover {
-  background-color: #0b5ed7;
+  background-color: var(--color-primary-700);
   color: #fff;
   box-shadow: 0 6px 12px rgba(13, 110, 253, 0.3);
 }
@@ -459,7 +459,7 @@
 }
 
 .expandButton:hover {
-  background-color: #0d6efd;
+  background-color: var(--color-primary-600);
   transform: scale(1.1);
 }
 
@@ -492,7 +492,7 @@
 }
 
 .navButton:hover {
-  background-color: #0d6efd;
+  background-color: var(--color-primary-600);
   transform: translateY(-50%) scale(1.1);
 }
 
@@ -528,7 +528,7 @@
 
 .activeThumbnail {
   opacity: 1;
-  border-color: #0d6efd;
+  border-color: var(--color-primary-600);
   transform: translateY(-2px);
 }
 
@@ -625,8 +625,8 @@
 }
 
 .lightboxNav:hover {
-  background-color: #0d6efd;
-  border-color: #0d6efd;
+  background-color: var(--color-primary-600);
+  border-color: var(--color-primary-600);
   transform: translateY(-50%) scale(1.1);
 }
 

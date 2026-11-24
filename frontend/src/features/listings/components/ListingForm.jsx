@@ -332,7 +332,7 @@ export default function ListingForm() {
     return (
       <div className={styles.container}>
         <div className={styles.card}>
-          <h2 className={styles.title} style={{ color: '#0d6efd', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <h2 className={styles.title} style={{ color: 'var(--color-primary-600)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Lock size={26} /> Property Locked
           </h2>
           <div className={styles.noticeBanner} style={{ backgroundColor: '#eff6ff', borderColor: '#bfdbfe', color: '#1e40af' }}>

@@ -94,11 +94,11 @@
 }
 
 .btnPrimary {
-  background-color: #0d6efd;
+  background-color: var(--color-primary-600);
   color: #fff;
 }
 
 .btnPrimary:hover {
-  background-color: #0b5ed7;
+  background-color: var(--color-primary-700);
   color: #fff;
 }

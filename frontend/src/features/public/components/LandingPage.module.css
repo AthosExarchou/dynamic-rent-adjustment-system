@@ -52,14 +52,29 @@
   border-radius: 0 0 3rem 3rem;
   text-align: center;
   overflow: hidden;
-  transition: all 0.4s ease;
   margin-bottom: 3rem;
+
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  isolation: isolate;
+}
+
+.heroSection::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #1674ff 0%, #0055bd 100%);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+  z-index: -1;
 }
 
 .heroSection:hover {
   transform: translateY(-5px);
   box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.3);
-  background: linear-gradient(135deg, #0075ff 0%, #003f9a 100%);
+}
+
+.heroSection:hover::before {
+  opacity: 1;
 }
 
 .heroOverlay {
@@ -84,8 +99,10 @@
   margin-bottom: 1.5rem;
   background: linear-gradient(90deg, #3b82f6, #a855f7);
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
+  background-clip: text;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  filter: drop-shadow(0 2px 8px rgba(0, 12, 45, 0.4));
 }
 
 .heroSubtitle {
@@ -112,7 +129,7 @@
 .heroBtn:hover {
   transform: scale(1.05);
   box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.2);
-  color: #0062ff !important;
+  color: var(--color-primary-600) !important;
 }
 
 /* Features Grid */
@@ -142,7 +159,7 @@
 }
 
 .featureIcon {
-  color: #0062ff;
+  color: var(--color-primary-600);
   margin-bottom: 1.5rem;
   transition: transform 0.25s ease;
 }
@@ -371,7 +388,7 @@
   border-radius: 0.25rem;
 }
 
-.badgePrimary { background-color: #0d6efd; color: #fff; }
+.badgePrimary { background-color: var(--color-primary-600); color: #fff; }
 .badgeSecondary { background-color: #6c757d; color: #fff; }
 .badgeInfo { background-color: #0dcaf0; color: #000; }
 .badgeLight { background-color: #f8f9fa; color: #000; border: 1px solid #dee2e6; }
@@ -528,13 +545,13 @@
 .btnSuccess:hover { background-color: #157347; color: #fff !important; box-shadow: 0 4px 12px rgba(25, 135, 84, 0.4); }
 
 .btnOutline {
-  border: 1px solid #0d6efd;
-  color: #0d6efd;
+  border: 1px solid var(--color-primary-600);
+  color: var(--color-primary-600);
 }
-.btnOutline:hover { background-color: #0d6efd; color: #fff !important; }
+.btnOutline:hover { background-color: var(--color-primary-600); color: #fff !important; }
 
 .btnPrimary {
-  background-color: #0d6efd;
+  background-color: var(--color-primary-600);
   color: #fff !important;
 }
 .btnPrimary:hover { color: #fff !important; box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4); }

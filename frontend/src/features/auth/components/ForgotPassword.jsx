@@ -285,7 +285,7 @@ export default function ForgotPassword() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#0d6efd',
+                  color: 'var(--color-primary-600)',
                   cursor: 'pointer',
                   padding: 0,
                   display: 'flex',

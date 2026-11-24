@@ -73,7 +73,7 @@ const GlobalErrorBoundary = () => {
       </p>
       <button
         onClick={() => window.location.href = '/'}
-        style={{ padding: '0.5rem 1.5rem', backgroundColor: '#0d6efd', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+        style={{ padding: '0.5rem 1.5rem', backgroundColor: 'var(--color-primary-600)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
       >
         Return to Home
       </button>

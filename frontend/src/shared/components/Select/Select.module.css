@@ -27,7 +27,7 @@
 .trigger:focus,
 .triggerActive {
   outline: none;
-  border-color: #0d6efd;
+  border-color: var(--color-primary-600);
   box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
 }
 
@@ -70,7 +70,7 @@
 
 .chevronOpen {
   transform: rotate(180deg);
-  color: #0d6efd;
+  color: var(--color-primary-600);
 }
 
 /* Floating menu */

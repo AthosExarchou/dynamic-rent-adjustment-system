@@ -55,9 +55,9 @@
 }
 
 .toolBtn:hover {
-  background-color: #0d6efd;
+  background-color: var(--color-primary-600);
   color: #ffffff;
-  border-color: #0d6efd;
+  border-color: var(--color-primary-600);
   transform: translateY(-1px);
   box-shadow: 0 4px 10px rgba(13, 110, 253, 0.25);
 }
@@ -127,7 +127,7 @@
   width: 34px;
   height: 34px;
   border: 3px solid rgba(13, 110, 253, 0.15);
-  border-top-color: #0d6efd;
+  border-top-color: var(--color-primary-600);
   border-radius: 50%;
   animation: mapSpin 0.9s linear infinite;
 }
@@ -143,7 +143,7 @@
 }
 
 .fallbackLink {
-  color: #0d6efd;
+  color: var(--color-primary-600);
   text-decoration: none;
   font-weight: 500;
   font-size: 0.9rem;
@@ -239,7 +239,7 @@
 }
 
 :global(.leaflet-control-zoom a:hover) {
-  background-color: #0d6efd !important;
+  background-color: var(--color-primary-600) !important;
   color: #ffffff !important;
 }
 

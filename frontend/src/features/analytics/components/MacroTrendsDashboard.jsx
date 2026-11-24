@@ -212,7 +212,7 @@ export default function MacroTrendsDashboard() {
         {showGuide && (
           <div className={styles.guideCard}>
             <h3 className={styles.guideHeading}>
-              <Info size={18} color="#0d6efd" /> Guidance for Property Owners &amp; Landlords
+              <Info size={18} color="var(--color-primary-600)" /> Guidance for Property Owners &amp; Landlords
             </h3>
             <div className={styles.guideGrid}>
               <div className={styles.guideItem}>
@@ -373,7 +373,7 @@ export default function MacroTrendsDashboard() {
         <div className={styles.diagnosticsCard}>
           <div className={styles.diagnosticsHeader}>
             <h3 className={styles.diagnosticsTitle}>
-              <Activity size={18} color="#0d6efd" /> Statistical SARIMA Model Diagnostics
+              <Activity size={18} color="var(--color-primary-600)" /> Statistical SARIMA Model Diagnostics
             </h3>
             <span className={styles.diagnosticsNote}>
               Fit diagnostics on Athens quarterly series ({macro.numObservations || 82} historical quarters)
@@ -515,7 +515,7 @@ export default function MacroTrendsDashboard() {
       {/* Interactive SVG Chart */}
       <div className={styles.chartCard}>
         <h2 className={styles.cardTitle}>
-          <TrendingUp size={20} color="#0d6efd" />
+          <TrendingUp size={20} color="var(--color-primary-600)" />
           Athens Apartment Price Index - Historical Trajectory &amp; 8-Quarter SARIMA Projection
         </h2>
 
@@ -679,7 +679,7 @@ export default function MacroTrendsDashboard() {
         {activeTab === 'forecast' ? (
           <>
             <h2 className={styles.cardTitle}>
-              <Calendar size={20} color="#0d6efd" />
+              <Calendar size={20} color="var(--color-primary-600)" />
               Quarterly SARIMA Forecast Schedule (Athens)
             </h2>
 
@@ -729,7 +729,7 @@ export default function MacroTrendsDashboard() {
         ) : (
           <>
             <h2 className={styles.cardTitle}>
-              <History size={20} color="#0d6efd" />
+              <History size={20} color="var(--color-primary-600)" />
               Official Bank of Greece Historical Time Series (Dataset 5)
             </h2>
 

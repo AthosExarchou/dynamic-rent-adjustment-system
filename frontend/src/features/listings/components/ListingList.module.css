@@ -23,7 +23,7 @@
 }
 
 .pageIcon {
-  color: #0d6efd;
+  color: var(--color-primary-600);
 }
 
 .divider {
@@ -51,7 +51,7 @@
 }
 
 .filterHeader {
-  background-color: #0d6efd;
+  background-color: var(--color-primary-600);
   color: #fff;
   padding: 1rem 1.5rem;
   border-top-left-radius: 0.5rem;
@@ -106,7 +106,7 @@
 
 .input:focus {
   outline: none;
-  border-color: #0d6efd;
+  border-color: var(--color-primary-600);
   box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
 }
 
@@ -134,8 +134,8 @@
 
 .advancedToggleBtn:hover {
   background: rgba(13, 110, 253, 0.08);
-  border-color: #0d6efd;
-  color: #0d6efd;
+  border-color: var(--color-primary-600);
+  color: var(--color-primary-600);
 }
 
 .advancedGrid {
@@ -283,7 +283,7 @@
 }
 
 .cardIcon {
-  color: #0d6efd;
+  color: var(--color-primary-600);
   flex-shrink: 0;
   margin-top: 0.1rem;
 }
@@ -324,7 +324,7 @@
 }
 
 .infoItem svg {
-  color: #0d6efd;
+  color: var(--color-primary-600);
   flex-shrink: 0;
 }
 
@@ -377,7 +377,7 @@
 }
 
 .btnPrimary {
-  background-color: #0d6efd;
+  background-color: var(--color-primary-600);
   color: #fff;
 }
 .btnPrimary:hover {
@@ -386,12 +386,12 @@
 }
 
 .btnOutlinePrimary {
-  border-color: #0d6efd;
-  color: #0d6efd;
+  border-color: var(--color-primary-600);
+  color: var(--color-primary-600);
   background: transparent;
 }
 .btnOutlinePrimary:hover {
-  background-color: #0d6efd;
+  background-color: var(--color-primary-600);
   color: #fff;
 }
 
@@ -441,10 +441,10 @@
 }
 
 [data-theme='dark'] .filterHeader {
-  background-color: #0d6efd;
+  background-color: var(--color-primary-600);
 }
 
 [data-theme='dark'] .infoItem svg,
 [data-theme='dark'] .cardIcon {
-  color: #0d6efd;
+  color: var(--color-primary-600);
 }
