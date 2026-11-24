@@ -179,21 +179,6 @@
   font-size: 0.9rem;
 }
 
-.checkboxGroup {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.checkbox {
-  cursor: pointer;
-}
-
-.checkboxLabel {
-  color: var(--text-primary);
-  cursor: pointer;
-}
-
 .forgotLink {
   color: #0d6efd;
   text-decoration: none;

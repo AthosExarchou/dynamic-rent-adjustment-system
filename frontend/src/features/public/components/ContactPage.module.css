@@ -234,11 +234,6 @@
   transform: translateX(2px);
 }
 
-.itemSubtext {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
 .hoursList {
   display: flex;
   flex-direction: column;

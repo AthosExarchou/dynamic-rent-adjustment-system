@@ -166,41 +166,6 @@
   cursor: not-allowed;
 }
 
-.addBtn {
-  padding: 0.5rem 1rem;
-  background-color: var(--color-secondary, #0284c7);
-  color: white;
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  margin-top: 0.5rem;
-  transition: all 0.2s ease;
-  font-weight: 600;
-}
-
-.addBtn:hover {
-  background-color: var(--color-secondary-hover, #0369a1);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.removeBtn {
-  padding: 0.25rem 0.5rem;
-  background-color: var(--color-danger, #e74c3c);
-  color: white;
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-weight: bold;
-}
-
-.removeBtn:hover {
-  background-color: #c0392b;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
 /* Informational Notice Banner */
 .noticeBanner {
   display: flex;
@@ -423,7 +388,7 @@
 }
 
 .uploadErrorMessage {
-  color: #dc3545;
+  color: #dc2626;
   font-size: 0.85rem;
   margin: 0.6rem 0 0 0;
   display: flex;
